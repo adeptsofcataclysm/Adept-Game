@@ -1,0 +1,276 @@
+{
+  "themes": [
+    "Дед прими таблетки",
+    "Тактики",
+    "Петомцы",
+    "Треш",
+    "Цитаты и Фразы",
+    "Великие подвиги",
+    "НаЯборот",
+    "Абилки"
+  ],
+  "questions": [
+    [
+      {
+        "text": "",
+        "questionUrl": "/ded-primi-tabletki-100-question.mp4",
+        "answerText": "Плащ из чешуи Ониксии",
+        "answerUrl": "/ded-primi-tabletki-100-answer.png"
+      },
+      {
+        "text": "",
+        "questionUrl": "/ded-primi-tabletki-200-question.mp4",
+        "answerText": "1) Нужно было поговорить с ЭТИМ огром.\n2) Глазки заметили ДЕДА",
+        "answerUrl": "/ded-primi-tabletki-200-answer.png"
+      },
+      {
+        "text": "",
+        "questionUrl": "/ded-primi-tabletki-300-question.mp4",
+        "answerText": "1) На самом южном островке\n2) Дед должен взять только 1 тушилку. По сути, он и \"может\" только 1 взять. Это уникальный предмет.",
+        "answerUrl": "/ded-primi-tabletki-300-answer.png"
+      },
+      {
+        "text": "",
+        "questionUrl": "/ded-primi-tabletki-400-question.mp4",
+        "answerText": "Жужки на фрост резист фармятся с  химер",
+        "answerUrl": "/ded-primi-tabletki-400-answer.png"
+      },
+      {
+        "text": "",
+        "questionUrl": "/ded-primi-tabletki-500-question.mp4",
+        "answerText": "На ласт фазе выходят 5 жуков. Пристам нужно было зашаклить ровно 3, не больше. Иначе Кел'Тузад их освободит.",
+        "answerUrl": "/ded-primi-tabletki-500-answer.png"
+      }
+    ],
+    [
+      {
+        "text": "🎉СЕКРЕТНЫЙ ВОПРОС-ИВЕНТ🎉\n\nКарусель, карусель!\nКто успель - тот присель\nВот такая наша \nкарусеееееееель!\n\nВспомни и назови такие энкаунтеры, в тактике которых рейд должен двигаться по кругу. \nЗа каждый верный ответ получаешь по 100 очков.",
+        "questionUrl": "",
+        "answerText": "1)К'тун, 2)Скрытень из глубин, 3)Малигос,\n4)Мимирон, 5)Лич кинг(3 фаза), 6)Халион,\n7)Халфий, 8)Гибель Нефариана, 9)Хагара,\n10)Императорский визирь Зор'лок, 11)Гаралон,\n12)Вечные Защитники, 13)Дуруму Позабытый,\n14)Изначалий",
+        "answerUrl": ""
+      },
+      {
+        "text": "",
+        "questionUrl": "/tactics-200-question.mp4",
+        "answerText": "Вы получаете 3 крутки Колеса Адептов",
+        "answerUrl": "/freebie-400-question.png"
+      },
+      {
+        "text": "Чтобы лучше запомнить тактику на этого босса, достаточно посмотреть на свою клавиатуру.",
+        "questionUrl": "",
+        "answerText": "Тадиус (-----БОСС++++)",
+        "answerUrl": "/tactics-300-answer.png"
+      },
+      {
+        "text": "Как известно, у Адептов когда-то был творец эпохальных разборов на рейдовые подземелья. Какие-то доделаны до конца, а какие-то заброшены. Так вот, если бы сейчас появился эпохальный обзор на Осаду Оргримара, то каким по счёту он бы был?",
+        "questionUrl": "",
+        "answerText": "10-й\n\nЧто было:\n1) Чёрный храм\n2) Плато Солнечного Колодца\n3) Ульдуар\n4) Цитадель Ледяной Короны\n5) Твердыня Крыла Тьмы\n6) Сумеречный Бастион\n7) Трон Четырёх Ветров\n8) Огненные Просторы\n9) Душа Дракона",
+        "answerUrl": "/tactics-400-answer.png",
+        "splashUrl": "/raccoon.png"
+      },
+      {
+        "text": "Перед походом в \"Чёрный Храм\" Адептов просили полететь в Забытый город за семенами колючечника. Для какого босса нужен был этот расходник и как его применяли?",
+        "questionUrl": "",
+        "answerText": "Матушка Шахраз. Чтобы её стяжка 3-х игроков иногда прокала на этих мобов с семечек.",
+        "answerUrl": "/tactics-500-answer.png"
+      }
+    ],
+    [
+      {
+        "text": "Есть особое достижение на каменных стражах в ПМШ. В чём суть этого достижения?",
+        "questionUrl": "",
+        "answerText": "\"Любовь к собакам обязательна\" — необходимо убить босса с рейдом из призванных собаками.",
+        "answerUrl": "/pets-100-answer.png",
+        "splashUrl": "/raccoon.png"
+      },
+      {
+        "text": "В WoW TBC Classic чернокнижникам в середине патча дали нового питомца. Какого?",
+        "questionUrl": "",
+        "answerText": "Инкубус",
+        "answerUrl": "https://wow.zamimg.com/uploads/screenshots/normal/1049275-.jpg"
+      },
+      {
+        "text": "Нет!!! Будьте вы прокляты, незваные гости! Армии Короля-лича поймают вас! Вы не сбежите от своей гибели...\n\nИменно это вы услышите в свой адрес (а также ухудшите шанс дропа на хороший лут) если убьёте...",
+        "questionUrl": "",
+        "answerText": "Мистер Бигглсоуорт (Кот Бегемот)",
+        "answerUrl": "https://warcraft-wiki.ru/images/thumb/f/f8/Mr._Bigglesworth_HS_Scholomance.jpg/290px-Mr._Bigglesworth_HS_Scholomance.jpg"
+      },
+      {
+        "text": "Этот питомец может превратить вас в лягушку.",
+        "questionUrl": "",
+        "answerText": "Моджо",
+        "answerUrl": "https://wow.zamimg.com/uploads/screenshots/normal/63437-%D0%BC%D0%BE%D0%B4%D0%B6%D0%BE-jungle-love.jpg"
+      },
+      {
+        "text": "Что такого особенного было в питомце «Омерзительный слизнючёнышь», который очень редко падал с сумок, добываемых со слизнюков?",
+        "questionUrl": "",
+        "answerText": "При призыве пет накладывал дебафф на −20 ко всем резистам (есть инфа, что на одного человека, но есть инфа что на всю пати).",
+        "answerUrl": "https://digiseller.mycdn.ink/imgwebp.ashx?idp=300641&dc=645926400&w=576"
+      }
+    ],
+    [
+      {
+        "text": "В каком рейде впервые появился так называемый suppression room?",
+        "questionUrl": "",
+        "answerText": "ЛКТ / БВЛ",
+        "answerUrl": "https://external-preview.redd.it/has-your-guild-been-wiping-on-suppression-room-for-hours-v0-9nZ-fIhhjmaxdcAaFth4fboliSwZ8KWKFkjXU-YxaDY.png?width=1080&crop=smart&format=pjpg&auto=webp&s=c0bd7e10461ffc669b7b4b92d884bac7b63ed8c9"
+      },
+      {
+        "text": "Одна из самых страшных фраз, что можно услышать после многих вайпов на боссе.",
+        "questionUrl": "",
+        "answerText": "«Здесь трешь реснулся.» (Рес треша происходит через 2 часа после его убийства, если жив босс перед трешом.)",
+        "answerUrl": ""
+      },
+      {
+        "text": "Назовите рейдовое подземелье, в котором вообще нет треша как такового.",
+        "questionUrl": "",
+        "answerText": "(1)Испытание крестоносца, (2)Око вечности(где Малигос летает),\n(3)Трончетырёх ветров (Алакир).",
+        "answerUrl": ""
+      },
+      {
+        "text": "В каком рейде нужно убить некоторое количество треша, чтобы заспавнился босс?",
+        "questionUrl": "",
+        "answerText": "Огненные просторы",
+        "answerUrl": "/trash-400-answer.png"
+      },
+      {
+        "text": "Ящик Пандоры",
+        "questionUrl": "/halyava-500-question.mp4",
+        "answerText": "нужно сделать либо отдельный таймер на сайте, специально для таких евентов, либо как-то по другому.",
+        "answerUrl": ""
+      }
+    ],
+    [
+      {
+        "text": "Что заиграет после этого?\n— Trifiling gnome! Your arrogance will be your undoing!\n— But i'm in charge here...\n— [...]",
+        "questionUrl": "",
+        "answerText": "",
+        "answerUrl": "/quotes-100-answer.mp4"
+      },
+      {
+        "text": "Дополните фразу:\n[...]. Я...этого...не хотела.",
+        "questionUrl": "",
+        "answerText": "",
+        "answerUrl": "/quotes-200-answer.mp4",
+        "splashUrl": "/raccoon.png"
+      },
+      {
+        "text": "Дополните цитату:\nНе бывает в игре багов [...]",
+        "questionUrl": "",
+        "answerText": "",
+        "answerUrl": "/quotes-300-answer.mp4"
+      },
+      {
+        "text": "Кто это сказал?\n«От вас будет пахнуть огнём!»",
+        "questionUrl": "",
+        "answerText": "Киирилл",
+        "answerUrl": "/quotes-400-answer.mp4"
+      },
+      {
+        "text": "",
+        "questionUrl": "/quotes-500-question.mp4",
+        "answerText": "Вы получаете 3 крутки Колеса Адептов",
+        "answerUrl": "/freebie-400-question.png"
+      }
+    ],
+    [
+      {
+        "text": "Ачивка называется — «Крутостью мне заложило уши!». Что нужно было сделать, чтобы получить данную ачивку?",
+        "questionUrl": "",
+        "answerText": "Победить Синестру в героическом режиме с первой попытки, не допустив смерти ни одного из участников рейда.",
+        "answerUrl": "/feats-100-answer.png"
+      },
+      {
+        "text": "Добейтесь того, чтобы пираты из шайки Кровавого Паруса начали относиться к вам с уважением, а обитатели Пиратской бухты, Круговзора, Прибамбасска, Кебестана, Ярморки Новолуния и поместья Чёрного Ворона стали вас превозносить.",
+        "questionUrl": "",
+        "answerText": "Чокнутый",
+        "answerUrl": "/feats-200-answer.png"
+      },
+      {
+        "text": "В течение одного сохранённого рейда убейте всех боссов в Наксрамасе на 10 игроков, не допустив смерти ни одного участника рейда.",
+        "questionUrl": "",
+        "answerText": "Неумирающий",
+        "answerUrl": "https://wow.zamimg.com/uploads/screenshots/normal/409843-%D0%BD%D0%B5%D1%83%D0%BC%D0%B8%D1%80%D0%B0%D1%8E%D1%89%D0%B8%D0%B9.jpg",
+        "splashUrl": "/raccoon.png"
+      },
+      {
+        "text": "Назовите ачивку, для которой нужно убить всех лидеров фракции противника в их столицах. Наградой будет огромный Чёрный боевой медведь.",
+        "questionUrl": "",
+        "answerText": "За Альянс!",
+        "answerUrl": "/feats-400-answer.png"
+      },
+      {
+        "text": "Назовите великий подвиг, связанный с этой фигуркой.",
+        "questionUrl": "https://wow.zamimg.com/uploads/screenshots/normal/289826-%D1%81%D1%82%D1%80%D0%B0%D0%BD%D0%BD%D0%B0%D1%8F-%D1%84%D0%B8%D0%B3%D1%83%D1%80%D0%BA%D0%B0-%D0%B2%D0%B5%D1%80%D0%B1%D0%BB%D1%8E%D0%B4%D0%B0.jpg",
+        "answerText": "Перед нами на картинке \"Странная фигурка верблюда\". Фигурку можно найти в Ульдуме, при нажатии на фигурку вас отправляет в \"Дымящиеся озёра\", где вам предстоит силой вызволить посеревшего от страха верблюда из лап Дормуса.\nПодвиг за освобождение верблюда из лап Дормуса называется - \"Странник вечных песков\".",
+        "answerUrl": "https://wow.zamimg.com/uploads/screenshots/normal/289826-%D1%81%D1%82%D1%80%D0%B0%D0%BD%D0%BD%D0%B0%D1%8F-%D1%84%D0%B8%D0%B3%D1%83%D1%80%D0%BA%D0%B0-%D0%B2%D0%B5%D1%80%D0%B1%D0%BB%D1%8E%D0%B4%D0%B0.jpg"
+      }
+    ],
+    [
+      {
+        "text": "Солнцетень",
+        "questionUrl": "",
+        "answerText": "Луносвет",
+        "answerUrl": "/nayaborot-100-answer.webp"
+      },
+      {
+        "text": "Равнины пространства",
+        "questionUrl": "",
+        "answerText": "Пещеры времени",
+        "answerUrl": "/nayaborot-200-answer.jpg"
+      },
+      {
+        "text": "Мокрая компашка",
+        "questionUrl": "",
+        "answerText": "Пылающий легион",
+        "answerUrl": "/nayaborot-300-answer.webp"
+      },
+      {
+        "text": "Слив конца",
+        "questionUrl": "",
+        "answerText": "Источник вечности",
+        "answerUrl": "/nayaborot-400-answer.png?v=7e000c8a"
+      },
+      {
+        "text": "Квадростоп Наполнения",
+        "questionUrl": "",
+        "answerText": "Круговерть Путоты",
+        "answerUrl": "/nayaborot-500-answer.jpg",
+        "headerUrl": "/wheel.png"
+      }
+    ],
+    [
+      {
+        "text": "Назовите эту способность.",
+        "questionUrl": "https://wow.zamimg.com/images/wow/icons/large/spell_holy_sealofsacrifice.jpg",
+        "answerText": "Длань Жертвенности",
+        "answerUrl": ""
+      },
+      {
+        "text": "Как называют всё это вот?",
+        "questionUrl": "/abilities-200-question.jpg",
+        "answerText": "Лужи",
+        "answerUrl": ""
+      },
+      {
+        "text": "Опишите эту способность:",
+        "questionUrl": "/abilities-300-question.jpg",
+        "answerText": "«Цеповуха» К'Туна. Чем дальше скачет — тем больше урон.",
+        "splashUrl": "/raccoon.png",
+        "answerUrl": ""
+      },
+      {
+        "text": "Назовите абилку по описанию:\nДруид получает одну из способностей связанного с ним класса. Выбор зависит от специализации. Цель также получает одну из способностей друида. Время действия — 1 ч. Эффект сохраняется после смерти.",
+        "questionUrl": "",
+        "answerText": "Симбиоз.",
+        "answerUrl": "/abilities-400-answer.png"
+      },
+      {
+        "text": "Почему тут аж три камня здоровья?",
+        "questionUrl": "/abilities-500-question.png",
+        "answerText": "Когда-то у варлока были разные уровни заклинания для камней здоровья. Эти камушки не стакались между собой в инвентаре.",
+        "answerUrl": ""
+      }
+    ]
+  ]
+}

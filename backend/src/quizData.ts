@@ -1,0 +1,93 @@
+import { readFileSync } from "node:fs";
+import { dirname, join } from "node:path";
+import { fileURLToPath } from "node:url";
+import type { RoundIndex } from "./phase.js";
+
+/** Matches persisted quiz JSON (derived from legacy default board files). */
+export type QuestionCell = {
+  text: string;
+  questionUrl: string;
+  answerText: string;
+  answerUrl: string;
+  splashUrl?: string;
+  splashVariant?: "spiral" | "dedFly";
+  splashAudioUrl?: string;
+  splashDismissHostOnly?: boolean;
+  headerUrl?: string;
+  headerCornerUrl?: string;
+};
+
+export type RoundPackJson = {
+  themes: string[];
+  questions: QuestionCell[][];
+};
+
+export type RoundBoardRuntime = {
+  themes: string[];
+  questions: QuestionCell[][];
+  revealed: boolean[][];
+  /** Same shape as `questions`: point value per cell (column 100–500 when width is 5). */
+  pointValues: number[][];
+};
+
+const DATA_DIR = join(dirname(fileURLToPath(import.meta.url)), "..", "data");
+
+const STANDARD_FIVE = [100, 200, 300, 400, 500];
+
+function validatePack(pack: RoundPackJson, fileLabel: string): void {
+  if (!Array.isArray(pack.themes) || pack.themes.length === 0) {
+    throw new Error(`${fileLabel}: themes[] required`);
+  }
+  if (!Array.isArray(pack.questions) || pack.questions.length !== pack.themes.length) {
+    throw new Error(`${fileLabel}: questions[][] must match themes length`);
+  }
+  const firstLen = pack.questions[0]?.length;
+  if (typeof firstLen !== "number" || firstLen < 1) {
+    throw new Error(`${fileLabel}: first questions row invalid`);
+  }
+  for (let i = 0; i < pack.questions.length; i++) {
+    const row = pack.questions[i];
+    if (!Array.isArray(row) || row.length !== firstLen) {
+      throw new Error(`${fileLabel}: questions row ${i} length mismatch`);
+    }
+  }
+}
+
+function pointRowForWidth(width: number): number[] {
+  if (width === 5) return [...STANDARD_FIVE];
+  return Array.from({ length: width }, (_, i) => (i + 1) * 100);
+}
+
+function parsePackJson(raw: string, fileLabel: string): RoundPackJson {
+  const j = JSON.parse(raw) as unknown;
+  if (!j || typeof j !== "object") throw new Error(`${fileLabel}: invalid JSON`);
+  const o = j as Record<string, unknown>;
+  if (!Array.isArray(o["themes"]) || !Array.isArray(o["questions"])) {
+    throw new Error(`${fileLabel}: themes and questions required`);
+  }
+  return j as RoundPackJson;
+}
+
+export function loadRoundBoardFile(roundFile: 1 | 2 | 3 | 4): RoundBoardRuntime {
+  const fileName = `round-${roundFile}.json`;
+  const filePath = join(DATA_DIR, fileName);
+  const pack = parsePackJson(readFileSync(filePath, "utf8"), fileName);
+  validatePack(pack, fileName);
+
+  const revealed = pack.themes.map((_, ri) => pack.questions[ri]!.map(() => false));
+  const pointValues = pack.themes.map((_, ri) => {
+    const w = pack.questions[ri]!.length;
+    return pointRowForWidth(w);
+  });
+
+  return {
+    themes: pack.themes,
+    questions: pack.questions,
+    revealed,
+    pointValues,
+  };
+}
+
+export function loadRoundBoard(round: RoundIndex): RoundBoardRuntime {
+  return loadRoundBoardFile(round);
+}

@@ -1,0 +1,31 @@
+{
+  "themes": ["СУПЕР ИГРА!"],
+  "questions": [
+    [
+      {
+        "text": "",
+        "questionUrl": "/super-game-card-1.png",
+        "answerText": "",
+        "answerUrl": ""
+      },
+      {
+        "text": "",
+        "questionUrl": "/super-game-card-2.png",
+        "answerText": "",
+        "answerUrl": ""
+      },
+      {
+        "text": "",
+        "questionUrl": "/super-game-card-3.png",
+        "answerText": "",
+        "answerUrl": ""
+      },
+      {
+        "text": "",
+        "questionUrl": "/super-game-card-4.png",
+        "answerText": "",
+        "answerUrl": ""
+      }
+    ]
+  ]
+}

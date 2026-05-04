@@ -1,0 +1,276 @@
+{
+  "themes": [
+    "Боссы",
+    "Пасхалки",
+    "Цитаты и Фразы",
+    "Лор WOW",
+    "Всратый косплей",
+    "Халява",
+    "Локации",
+    "Профессии"
+  ],
+  "questions": [
+    [
+      {
+        "text": "Что это за босс?",
+        "questionUrl": "/bossy-100.mp4",
+        "answerText": "Ониксия",
+        "answerUrl": "/bossy-100-answer.jpg"
+      },
+      {
+        "text": "В битве с этим боссом лучше лишний раз не шуметь, чтобы не дать себя обнаружить.",
+        "questionUrl": "",
+        "answerText": "Атрамед",
+        "answerUrl": "/bossy-200-answer.jpg"
+      },
+      {
+        "text": "Назовите босса, бывшего нам союзника, который перед впадением в безумие бафает рейд, чтобы рейду было проще с ним справиться.",
+        "questionUrl": "",
+        "answerText": "Валестраз",
+        "answerUrl": "/bossy-300-answer.webp"
+      },
+      {
+        "text": "Назовите этого босса?",
+        "questionUrl": "https://wow.zamimg.com/uploads/screenshots/normal/945708-controlling-the-elements.jpg",
+        "answerText": "Ал'акир",
+        "answerUrl": ""
+      },
+      {
+        "text": "Жители Даларана! Поднимите глаза и взгляните на это небо!\nЕсли вы это слышите, значит кто-то победил...",
+        "questionUrl": "",
+        "answerText": "Алгалона",
+        "answerUrl": "/bossy-500-answer.jpg",
+        "splashUrl": "/raccoon.png"
+      }
+    ],
+    [
+      {
+        "text": "Имя этого NPC — гибрид имени актёра Харрисона Форда и его героя Индианы Джонса. Вся цепочка квестов в Ульдуме с его участием копирует сцены из фильмов про знаменитого археолога.",
+        "questionUrl": "",
+        "answerText": "Харрисон Джонс",
+        "answerUrl": "/pashalki-100-answer.jpg",
+        "splashUrl": "/raccoon.png"
+      },
+      {
+        "text": "В ЛБРС рука робота около лавы — к чему эта пасхалка?",
+        "questionUrl": "",
+        "answerText": "Терминатор 2",
+        "answerUrl": "/pashalki-200-answer.jpg"
+      },
+      {
+        "text": "",
+        "questionUrl": "/pashalki-300-question.mp4",
+        "answerText": "Вы получаете 3 крутки Колеса Адептов",
+        "answerUrl": "/freebie-400-question.png"
+      },
+      {
+        "text": "На одном из островов в Низине Шолазар находится люк с выбитыми на нём цифрами 5, 9, 16, 17, 24, 43. Это почти точная копия загадочного люка из сериала. Назовите сериал?",
+        "questionUrl": "",
+        "answerText": "Остаться в живых (Lost)",
+        "answerUrl": "/pashalki-400-answer.jpg"
+      },
+      {
+        "text": "Эта иконка является «плейсхолдером» иконок некоторых скилов в старых версиях WoW. Вопрос: кто на ней изображён?",
+        "questionUrl": "https://wow.zamimg.com/images/wow/icons/large/classic_temp.jpg",
+        "answerText": "Сэмуайз Дидье — арт-директор Blizzard Entertainment (бывший, проработал там почти с основания компании и до 2023 года)",
+        "answerUrl": "/pashalki-500-answer.jpg"
+      }
+    ],
+    [
+      {
+        "text": "Кто это говорит?\n«Вы не готовы!»",
+        "questionUrl": "",
+        "answerText": "Иллидан",
+        "answerUrl": "/vy-ne-gotovy.mp4"
+      },
+      {
+        "text": "Продолжите цитату:\nAllright chamss. Let's do this, [...]",
+        "questionUrl": "",
+        "answerText": "LEEEEROY JANKINS",
+        "answerUrl": "/leeroy.mp4"
+      },
+      {
+        "text": "Разрешите доебаться... (с)",
+        "questionUrl": "",
+        "answerText": "Джентельменыч",
+        "answerUrl": "/razreshite.mp4"
+      },
+      {
+        "text": "Закончите уравнение:\n3x³ + [...]",
+        "questionUrl": "",
+        "answerText": "const... ну что там?",
+        "answerUrl": "/3x3.mp4"
+      },
+      {
+        "text": "Закончите цитату:\nYou think you do, [...]",
+        "questionUrl": "",
+        "answerText": "but you don't.",
+        "answerUrl": "/you-think.mp4"
+      }
+    ],
+    [
+      {
+        "text": "Как назывался единый континент на Азероте до Великого Раскола?",
+        "questionUrl": "",
+        "answerText": "Калимдор",
+        "answerUrl": "/lor-wow-100-answer.webp",
+        "headerUrl": "/wheel.png"
+      },
+      {
+        "text": "Чем закончилась Первая война против орды?",
+        "questionUrl": "",
+        "answerText": "Разрушением Штормграда",
+        "answerUrl": "/lor-wow-200-answer.jpg"
+      },
+      {
+        "text": "Какого известного персонажа победил Артас перед тем, как взобраться на Ледяную Корону?",
+        "questionUrl": "",
+        "answerText": "Иллидан",
+        "answerUrl": "/lor-wow-300-answer.jpg"
+      },
+      {
+        "text": "Почти на всех мирах существовали духи стихии: воды, огня, воздуха, земли. Но не первобытный Дренор. Каким элементом он был пропитан?",
+        "questionUrl": "",
+        "answerText": "Дух Жизни",
+        "answerUrl": "/lor-wow-400-answer.webp"
+      },
+      {
+        "text": "Какое событие изображено на картинке?",
+        "questionUrl": "https://warcraft-wiki.ru/images/thumb/2/20/Chronicle3_Bolvar_and_Dranosh.jpg/450px-Chronicle3_Bolvar_and_Dranosh.jpg",
+        "answerText": "Битва у Врат Гнева",
+        "answerUrl": "",
+        "splashUrl": "/raccoon.png"
+      }
+    ],
+    [
+      {
+        "text": "",
+        "questionUrl": "/cosplay-100-question.jpg",
+        "answerText": "",
+        "answerUrl": "/cosplay-100-answer.jpg"
+      },
+      {
+        "text": "",
+        "questionUrl": "/cosplay-200-question.jpg",
+        "answerText": "",
+        "answerUrl": "/cosplay-200-answer.jpg"
+      },
+      {
+        "text": "",
+        "questionUrl": "/cosplay-300-question.jpg",
+        "answerText": "",
+        "answerUrl": "/cosplay-300-answer.jpg"
+      },
+      {
+        "text": "",
+        "questionUrl": "/cosplay-400-question.jpg",
+        "answerText": "",
+        "answerUrl": "/cosplay-400-answer.jpg"
+      },
+      {
+        "text": "",
+        "questionUrl": "/cosplay-500-question.jpg",
+        "answerText": "Ауриайя",
+        "answerUrl": "/cosplay-500-answer.jpg"
+      }
+    ],
+    [
+      {
+        "text": "100",
+        "questionUrl": "",
+        "answerText": "100",
+        "answerUrl": ""
+      },
+      {
+        "text": "200",
+        "questionUrl": "",
+        "answerText": "200",
+        "answerUrl": ""
+      },
+      {
+        "text": "300",
+        "questionUrl": "",
+        "answerText": "300",
+        "answerUrl": "",
+        "splashUrl": "/raccoon.png"
+      },
+      {
+        "text": "",
+        "questionUrl": "/freebie-400-question.mp4",
+        "answerText": "Вы получаете 3 крутки Колеса Адептов",
+        "answerUrl": "/freebie-400-question.png"
+      },
+      {
+        "text": "Ящик Пандоры",
+        "questionUrl": "/halyava-500-question.mp4",
+        "answerText": "",
+        "answerUrl": ""
+      }
+    ],
+    [
+      {
+        "text": "В какой локации расположен вход в легендарное подземелье «Огненные Недра» (Molten Core)?",
+        "questionUrl": "",
+        "answerText": "Чёрная гора",
+        "answerUrl": "/locations-200-answer.jpg"
+      },
+      {
+        "text": "Как называется город-крепость, который служит главной столицей Орды в Калимдоре?",
+        "questionUrl": "",
+        "answerText": "Оргриммар",
+        "answerUrl": "/locations-100-answer.jpg"
+      },
+      {
+        "text": "Как называлось Мировое древо, у которого располагалась столица ночных эльфов Дарнас?",
+        "questionUrl": "",
+        "answerText": "Тельдрасил",
+        "answerUrl": "/locations-300-answer.webp"
+      },
+      {
+        "text": "Через какой перевал в Восточных королевствах можно попасть в локацию Болото Печали, если идти из Сумеречного леса?",
+        "questionUrl": "",
+        "answerText": "Перевал мёртвого ветра",
+        "answerUrl": "/locations-400-answer.jpg"
+      },
+      {
+        "text": "В какой локации Пандарии игроки могли выращивать собственные овощи и строить отношения с фракцией Земледельцев?",
+        "questionUrl": "",
+        "answerText": "Ферма солнечной песни",
+        "answerUrl": "/locations-500-answer.webp"
+      }
+    ],
+    [
+      {
+        "text": "«Гоблинская» и «Гномская» — о какой профессии идёт речь?",
+        "questionUrl": "",
+        "answerText": "Инженерия",
+        "answerUrl": "/professions-100-answer.png"
+      },
+      {
+        "text": "Обладатели какой профессии могли изготавливать волшебные масла?",
+        "questionUrl": "",
+        "answerText": "Наложение чар",
+        "answerUrl": "/professions-200-answer.png",
+        "splashUrl": "/raccoon.png"
+      },
+      {
+        "text": "Какая новая профессия появилась в WotLK?",
+        "questionUrl": "",
+        "answerText": "Начертание",
+        "answerUrl": "/professions-300-answer.png"
+      },
+      {
+        "text": "С помощью какой профессии призывался один из боссов в дополнении TBC?",
+        "questionUrl": "",
+        "answerText": "Рыбалка",
+        "answerUrl": "/professions-400-answer.png"
+      },
+      {
+        "text": "Сколько специализаций в кузнечном деле было в TBC? Бонус: назовите их.",
+        "questionUrl": "",
+        "answerText": "4: бронник, оружейник-мечи, оружейник-булавы, оружейник-топоры.",
+        "answerUrl": "/professions-500-answer.png"
+      }
+    ]
+  ]
+}
