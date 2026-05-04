@@ -2,7 +2,7 @@ import { useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import { MAX_CHAT_MESSAGES, type Phase, type Role, type RoundBoardRuntime } from "@/sessionTypes";
 import { useSessionWs } from "@/useSessionWs";
-import { getDisplayName } from "@/storage";
+import { getDisplayName, getHostSecret } from "@/storage";
 import { GamePageHeader } from "@/components/GamePageHeader";
 import { ChatPanel } from "@/components/ChatPanel";
 import { PlayersPanel } from "@/components/PlayersPanel";
@@ -59,19 +59,25 @@ function phaseBadgeLabel(phase: Phase | undefined): string {
   }
 }
 
+function isPlayerRole(r: Role): boolean {
+  return r === "player";
+}
+
 export function ShowPage() {
   const showId = useMemo(() => {
     const q = new URLSearchParams(window.location.search).get("showId");
     return q?.trim() || "default";
   }, []);
 
-  const [role] = useState<Role>("spectator");
+  const hostSecretStored = getHostSecret();
+  let role: Role = "spectator";
+  if (hostSecretStored) role = "host";
   const name = getDisplayName();
   const { snapshot, lastError, connected, send } = useSessionWs({
     showId,
     role,
     enabled: name.length > 0,
-    hostSecret: undefined,
+    hostSecret: hostSecretStored || undefined,
   });
 
   const [chatText, setChatText] = useState("");
@@ -92,7 +98,13 @@ export function ShowPage() {
 
   return (
     <div className="adepts-show-shell">
-      <GamePageHeader badgeLabel={phaseBadgeLabel(snapshot?.phase)} connected={connected} />
+      <GamePageHeader
+        badgeLabel={phaseBadgeLabel(snapshot?.phase)}
+        connected={connected}
+        viewerName={name}
+        viewerRole={role}
+      />
+
       <div className="adepts-show-body adepts-show-body--column">
         <div className="adepts-show-body--grid">
           <aside className="adepts-show-chat-col">
@@ -145,7 +157,7 @@ export function ShowPage() {
           </div>
         ) : null}
 
-        {snapshot?.phase.kind === "donations" && role === "player" ? (
+        {snapshot?.phase.kind === "donations" && isPlayerRole(role) ? (
           <div className="card">
             <h3>Donations (REQ-12)</h3>
             <div className="row">
