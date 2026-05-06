@@ -1,0 +1,37 @@
+---
+description: Frontend rules for the Vite + React 19 SPA (WebSocket projections, role-gated views)
+globs: frontend/**/*.{ts,tsx}
+alwaysApply: false
+---
+# Frontend (Vite + React + React Router SPA)
+
+Render projections of the server snapshot (REQ-15.1). The Node session service is the source of truth (ADR-1).
+
+## WebSocket and snapshot
+
+- Use `useSessionWs` for the single WebSocket per show (ADR-2). Do not open a second socket from a component or page.
+- Treat `snapshot` as read-only. Never mutate it locally to "look ahead" — send an intent and wait for the next `snapshot` broadcast.
+- Mirror the server `SessionSnapshot` exactly in `src/sessionTypes.ts`. When the backend adds a field, add it here too.
+
+## Sending intents
+
+- Always send `{ type, payload }` via `send` from `useSessionWs` (it queues until `OPEN` and after `join`).
+- The client never decides legality — phase transitions, score changes, role permissions are all server-validated. Surface `lastError` from `useSessionWs` when the server rejects.
+
+## Role-gated UI (REQ-7, REQ-14)
+
+- `/admin` is the Host route (REQ-14.2). Gate Host-only controls behind `getHostSecret()` + `role === "host"`. Hide them entirely from other roles, do not just disable.
+- During main rounds, do not render Player-level controls for `role === "spectator"`. Mini-game inputs follow the same gating (`role === "player"` for donations, etc.).
+
+## Routing (ADR-3, SPA)
+
+- Routes live in `App.tsx` via React Router `<Route>`. Deep links such as `/admin` must work — never rely on server-rendered HTML.
+- Read `showId` from `URLSearchParams` once with `useMemo`, default to `"default"`.
+
+## Component conventions
+
+- Functional components and hooks only — no class components, no default-export-only files for shared components.
+- Import via the `@/` alias for `src/*` (configured in `vite.config.ts` + `tsconfig.json`).
+- Type `Phase`, `Role`, `SessionSnapshot`, `RoundBoardRuntime` from `@/sessionTypes` instead of restating shapes inline.
+- Strict TypeScript: no `any`, no untyped state. Narrow union members with `phase.kind === ...` switches.
+- Keep visual styling in `src/index.css`. Inline styles only for ad-hoc layout already established in the file.

@@ -1,23 +1,162 @@
-import { useMemo, useState } from "react";
-import { Link } from "react-router-dom";
-import type { Phase } from "@/sessionTypes";
-import { useSessionWs } from "@/useSessionWs";
-import { getDisplayName, getHostSecret, setHostSecret } from "@/storage";
+import { useMemo, useState, useRef } from "react";
+import { useNavigate } from "react-router-dom";
+import { motion, AnimatePresence } from "framer-motion";
+import { getDisplayName, getOrCreateParticipantId, setDisplayName, setHostSecret } from "@/storage";
+import { buildWsUrl } from "@/wsUrl";
 
-const PHASE_PRESETS: { label: string; phase: Phase }[] = [
-  { label: "lobby (incl. opening the show)", phase: { kind: "lobby" } },
-  { label: "spectator_picks", phase: { kind: "spectator_picks" } },
-  { label: "round 1", phase: { kind: "round", roundIndex: 1 } },
-  { label: "round 2", phase: { kind: "round", roundIndex: 2 } },
-  { label: "mini_wheel 1", phase: { kind: "mini_wheel", roundIndex: 1 } },
-  { label: "mini_roulette 1", phase: { kind: "mini_roulette", roundIndex: 1 } },
-  { label: "story_video", phase: { kind: "story_video" } },
-  { label: "donations", phase: { kind: "donations" } },
-  { label: "round 3", phase: { kind: "round", roundIndex: 3 } },
-  { label: "between_final", phase: { kind: "between_final" } },
-  { label: "final", phase: { kind: "final" } },
-  { label: "game_over", phase: { kind: "game_over" } },
-];
+const OK_TEXT = "★  Ладно, заходи!";
+const FAIL_TEXT = "✖  Иди нахуй отсюда!";
+
+function OkAnimation() {
+  return (
+    <motion.div
+      style={{ display: "flex", justifyContent: "center", gap: 0, overflow: "visible" }}
+    >
+      {OK_TEXT.split("").map((ch, i) => (
+        <motion.span
+          key={i}
+          initial={{ opacity: 0, y: -40, scale: 1.6 }}
+          animate={{ opacity: 1, y: 0, scale: 1 }}
+          transition={{
+            delay: i * 0.06,
+            type: "spring",
+            stiffness: 280,
+            damping: 14,
+          }}
+          style={{
+            display: "inline-block",
+            color: "#2ecc71",
+            fontFamily: "monospace",
+            fontWeight: 700,
+            fontSize: "clamp(18px, 3vw, 26px)",
+            textShadow: "0 0 16px #2ecc71, 0 0 32px rgba(46,204,113,0.6)",
+            whiteSpace: "pre",
+          }}
+        >
+          {ch}
+        </motion.span>
+      ))}
+    </motion.div>
+  );
+}
+
+function FailAnimation() {
+  const shakeX = [0, -14, 18, -22, 16, -10, 20, -16, 8, -6, 0];
+  const shakeY = [0, 4, -4, 3, -5, 4, -3, 5, -2, 3, 0];
+
+  return (
+    <motion.div
+      initial={{ scale: 0, rotate: -8 }}
+      animate={{
+        scale: [0, 1.35, 1],
+        rotate: [-8, 4, 0],
+        x: shakeX,
+        y: shakeY,
+      }}
+      transition={{
+        scale: { duration: 0.25, times: [0, 0.5, 1] },
+        rotate: { duration: 0.25 },
+        x: { delay: 0.3, duration: 0.9, ease: "easeOut" },
+        y: { delay: 0.3, duration: 0.9, ease: "easeOut" },
+      }}
+      style={{ display: "flex", justifyContent: "center", overflow: "visible" }}
+    >
+      {FAIL_TEXT.split("").map((ch, i) => (
+        <motion.span
+          key={i}
+          animate={{
+            opacity: [1, 0.3, 1, 0.6, 1],
+            color: ["#e74c3c", "#ff6b6b", "#e74c3c", "#c0392b", "#e74c3c"],
+          }}
+          transition={{
+            delay: 0.25 + i * 0.03,
+            duration: 0.4,
+            repeat: 2,
+            repeatType: "reverse",
+          }}
+          style={{
+            display: "inline-block",
+            fontFamily: "monospace",
+            fontWeight: 700,
+            fontSize: "clamp(18px, 3vw, 26px)",
+            textShadow: "0 0 16px #e74c3c, 0 0 32px rgba(231,76,60,0.7)",
+            whiteSpace: "pre",
+          }}
+        >
+          {ch}
+        </motion.span>
+      ))}
+    </motion.div>
+  );
+}
+
+function verifyHostLogin(params: {
+  showId: string;
+  displayName: string;
+  participantId: string;
+  hostSecret: string;
+  timeoutMs?: number;
+}): Promise<boolean> {
+  const timeoutMs = params.timeoutMs ?? 10_000;
+  return new Promise((resolve) => {
+    let settled = false;
+    const ws = new WebSocket(buildWsUrl(params.showId));
+
+    const finish = (ok: boolean) => {
+      if (settled) return;
+      settled = true;
+      window.clearTimeout(timer);
+      try {
+        ws.close();
+      } catch {
+        /* ignore */
+      }
+      resolve(ok);
+    };
+
+    const timer = window.setTimeout(() => finish(false), timeoutMs);
+
+    ws.onopen = () => {
+      try {
+        ws.send(
+          JSON.stringify({
+            type: "join",
+            payload: {
+              showId: params.showId,
+              role: "host",
+              displayName: params.displayName,
+              participantId: params.participantId,
+              hostSecret: params.hostSecret,
+            },
+          }),
+        );
+      } catch {
+        finish(false);
+      }
+    };
+
+    ws.onmessage = (ev) => {
+      void (async () => {
+        let text: string;
+        if (typeof ev.data === "string") text = ev.data;
+        else if (ev.data instanceof Blob) text = await ev.data.text();
+        else return;
+        try {
+          const msg = JSON.parse(text) as { type?: string };
+          if (msg.type === "snapshot") finish(true);
+          else if (msg.type === "error") finish(false);
+        } catch {
+          /* ignore */
+        }
+      })();
+    };
+
+    ws.onerror = () => finish(false);
+    ws.onclose = () => {
+      if (!settled) finish(false);
+    };
+  });
+}
 
 export function AdminPage() {
   const showId = useMemo(() => {
@@ -25,144 +164,196 @@ export function AdminPage() {
     return q?.trim() || "default";
   }, []);
 
-  const [secretInput, setSecretInput] = useState(() => getHostSecret());
-  const [secretApplied, setSecretApplied] = useState(() => getHostSecret());
-  const [presetIndex, setPresetIndex] = useState(0);
+  const [nick, setNick] = useState(() => getDisplayName());
+  const [input, setInput] = useState("");
+  const [status, setStatus] = useState<"idle" | "verifying" | "ok" | "fail">("idle");
+  const nickRef = useRef<HTMLInputElement>(null);
+  const inputRef = useRef<HTMLInputElement>(null);
+  const navigate = useNavigate();
 
-  const { snapshot, lastError, connected, send } = useSessionWs({
-    showId,
-    role: "host",
-    hostSecret: secretApplied || undefined,
-    enabled: true,
-  });
+  async function handleSubmit(e: React.FormEvent) {
+    e.preventDefault();
+    const nickVal = nick.trim();
+    const passVal = input.trim();
+    if (!nickVal || !passVal || status !== "idle") return;
+
+    setStatus("verifying");
+    const participantId = getOrCreateParticipantId();
+    const ok = await verifyHostLogin({
+      showId,
+      displayName: nickVal,
+      participantId,
+      hostSecret: passVal,
+    });
+
+    if (ok) {
+      setDisplayName(nickVal);
+      setHostSecret(passVal);
+      setStatus("ok");
+      const search = window.location.search;
+      setTimeout(() => {
+        navigate(search ? `/show${search}` : "/show");
+      }, 2600);
+    } else {
+      setStatus("fail");
+      setTimeout(() => {
+        setStatus("idle");
+        setInput("");
+        inputRef.current?.focus();
+      }, 2600);
+    }
+  }
+
+  const formLocked = status !== "idle";
 
   return (
-    <div className="card">
-      <h1 style={{ marginTop: 0 }}>Host /admin</h1>
-      <p style={{ fontSize: "0.9rem", opacity: 0.9 }}>
-        REQ-14.2: Host uses <code>/admin</code> after authentication. Set <code>ADEPT_HOST_SECRET</code> on the
-        session service, then enter the same value here so the WebSocket accepts the Host role.
-      </p>
-      <div className="row" style={{ marginBottom: "0.75rem" }}>
-        <label>
-          Host secret{" "}
-          <input
-            type="password"
-            value={secretInput}
-            onChange={(e) => setSecretInput(e.target.value)}
-            placeholder="matches ADEPT_HOST_SECRET"
-            style={{ minWidth: 220 }}
-          />
-        </label>
+    <div
+      style={{
+        minHeight: "100vh",
+        background: "#1a1a2e",
+        display: "flex",
+        flexDirection: "column",
+        alignItems: "center",
+        justifyContent: "center",
+        fontFamily: "monospace",
+        padding: 24,
+      }}
+    >
+      <motion.div
+        initial={{ opacity: 0, y: -20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.5 }}
+        style={{
+          fontSize: "clamp(18px, 3.5vw, 32px)",
+          fontWeight: 700,
+          color: "#f1c40f",
+          textShadow: "0 0 18px rgba(241,196,15,0.7)",
+          textAlign: "center",
+          marginBottom: 36,
+          letterSpacing: "1px",
+        }}
+      >
+        Ты чё, блядь, самый умный?
+      </motion.div>
+
+      <motion.form
+        onSubmit={(e) => void handleSubmit(e)}
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        transition={{ duration: 0.5, delay: 0.2 }}
+        style={{
+          display: "flex",
+          flexDirection: "column",
+          alignItems: "center",
+          gap: 12,
+          width: "100%",
+          maxWidth: 320,
+        }}
+      >
+        <input
+          ref={nickRef}
+          value={nick}
+          onChange={(e) => setNick(e.target.value)}
+          disabled={formLocked}
+          autoFocus
+          placeholder="Введите свой ник"
+          maxLength={64}
+          style={{
+            width: "100%",
+            padding: "10px 16px",
+            background: "rgba(255,255,255,0.05)",
+            border: "1px solid rgba(241,196,15,0.4)",
+            borderRadius: 6,
+            color: "#fff",
+            fontFamily: "monospace",
+            fontSize: 16,
+            outline: "none",
+            textAlign: "center",
+            letterSpacing: "2px",
+            boxShadow: "0 0 12px rgba(241,196,15,0.1)",
+            transition: "border-color 0.2s",
+          }}
+          onFocus={(e) => {
+            e.target.style.borderColor = "#f1c40f";
+          }}
+          onBlur={(e) => {
+            e.target.style.borderColor = "rgba(241,196,15,0.4)";
+          }}
+        />
+        <input
+          ref={inputRef}
+          value={input}
+          onChange={(e) => setInput(e.target.value)}
+          disabled={formLocked}
+          type="password"
+          placeholder="Введи пароль..."
+          style={{
+            width: "100%",
+            padding: "10px 16px",
+            background: "rgba(255,255,255,0.05)",
+            border: "1px solid rgba(241,196,15,0.4)",
+            borderRadius: 6,
+            color: "#fff",
+            fontFamily: "monospace",
+            fontSize: 16,
+            outline: "none",
+            textAlign: "center",
+            letterSpacing: "2px",
+            boxShadow: "0 0 12px rgba(241,196,15,0.1)",
+            transition: "border-color 0.2s",
+          }}
+          onFocus={(e) => {
+            e.target.style.borderColor = "#f1c40f";
+          }}
+          onBlur={(e) => {
+            e.target.style.borderColor = "rgba(241,196,15,0.4)";
+          }}
+        />
         <button
-          type="button"
-          onClick={() => {
-            setHostSecret(secretInput);
-            setSecretApplied(secretInput.trim());
+          type="submit"
+          disabled={formLocked}
+          style={{
+            padding: "8px 32px",
+            background: "transparent",
+            border: "1px solid #8e44ad",
+            borderRadius: 4,
+            color: "#c39bd3",
+            fontFamily: "monospace",
+            fontSize: 12,
+            letterSpacing: "3px",
+            textTransform: "uppercase",
+            cursor: formLocked ? "not-allowed" : "pointer",
+            opacity: formLocked ? 0.4 : 1,
+            transition: "opacity 0.2s, box-shadow 0.2s",
+          }}
+          onMouseEnter={(e) => {
+            if (formLocked) return;
+            (e.target as HTMLButtonElement).style.boxShadow = "0 0 12px rgba(142,68,173,0.6)";
+          }}
+          onMouseLeave={(e) => {
+            (e.target as HTMLButtonElement).style.boxShadow = "none";
           }}
         >
-          Save and connect
+          Ответить
         </button>
-        <Link to="/">Home</Link> · <Link to="/show">Show</Link>
+      </motion.form>
+
+      <div
+        style={{
+          marginTop: 40,
+          height: 48,
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          overflow: "visible",
+          width: "100%",
+        }}
+      >
+        <AnimatePresence mode="wait">
+          {status === "ok" && <OkAnimation key="ok" />}
+          {status === "fail" && <FailAnimation key="fail" />}
+        </AnimatePresence>
       </div>
-
-      <p>
-        <span className="phase">{connected ? "Connected" : "Connecting…"}</span> —{" "}
-        {snapshot ? (
-          <>
-            phase <code>{JSON.stringify(snapshot.phase)}</code> — v{snapshot.version}
-          </>
-        ) : (
-          "no snapshot yet"
-        )}
-      </p>
-      {lastError ? <p style={{ color: "#f88" }}>{lastError}</p> : null}
-
-      {snapshot ? (
-        <p style={{ fontSize: "0.85rem", opacity: 0.9 }}>
-          <strong>Mini-game counts</strong> (Wheel / Roulette starts from quiz board, R1–R3):{" "}
-          <code>W {snapshot.miniWheelPlaysByRound.join(",")}</code> ·{" "}
-          <code>R {snapshot.miniRoulettePlaysByRound.join(",")}</code>
-        </p>
-      ) : null}
-
-      {snapshot &&
-      (snapshot.phase.kind === "between_final" || snapshot.phase.kind === "final") ? (
-        <p style={{ fontSize: "0.9rem", opacity: 0.95 }}>
-          <strong>Final segment</strong> uses <code>round-4.json</code> — themes:{" "}
-          {snapshot.finalTransitionBoard.themes.join(", ")} ({snapshot.finalTransitionBoard.questions[0]?.length ?? 0}{" "}
-          cells).
-        </p>
-      ) : null}
-
-      <div className="row" style={{ marginTop: "1rem", flexWrap: "wrap" }}>
-        <label>
-          Transition to{" "}
-          <select value={presetIndex} onChange={(e) => setPresetIndex(Number(e.target.value))}>
-            {PHASE_PRESETS.map((p, i) => (
-              <option key={p.label} value={i}>
-                {p.label}
-              </option>
-            ))}
-          </select>
-        </label>
-        <button
-          type="button"
-          onClick={() => {
-            const ph = PHASE_PRESETS[presetIndex]?.phase;
-            if (!ph) return;
-            send({ type: "host_transition", payload: ph });
-          }}
-        >
-          Apply transition
-        </button>
-      </div>
-
-      <h3>Score ±100 (REQ-4)</h3>
-      <div className="row">
-        {[0, 1, 2, 3, 4].map((seat) => (
-          <div key={seat} className="row">
-            <span>Seat {seat + 1}</span>
-            <button type="button" onClick={() => send({ type: "host_score_step", payload: { seatIndex: seat, direction: "up" } })}>
-              +100
-            </button>
-            <button type="button" onClick={() => send({ type: "host_score_step", payload: { seatIndex: seat, direction: "down" } })}>
-              −100
-            </button>
-          </div>
-        ))}
-      </div>
-
-      <h3>Opening the show (REQ-8, in lobby)</h3>
-      <div className="row">
-        <button type="button" onClick={() => send({ type: "opening_show_next_emoji", payload: {} })}>
-          Next emoji
-        </button>
-        <label>
-          Mark correct for key{" "}
-          <input id="spectator-key" placeholder="spectator display name" style={{ minWidth: 160 }} />
-        </label>
-        <button
-          type="button"
-          onClick={() => {
-            const el = document.getElementById("spectator-key") as HTMLInputElement | null;
-            const spectatorKey = el?.value?.trim() ?? "";
-            if (!spectatorKey) return;
-            send({ type: "opening_show_mark_correct", payload: { spectatorKey } });
-          }}
-        >
-          Mark correct
-        </button>
-      </div>
-
-      <h3>Participants</h3>
-      <ul>
-        {(snapshot?.participants ?? []).map((p) => (
-          <li key={p.id}>
-            {p.displayName} — {p.role} — <code>{p.id}</code>
-          </li>
-        ))}
-      </ul>
     </div>
   );
 }

@@ -1,0 +1,24 @@
+---
+alwaysApply: true
+---
+# Global Rules
+
+- Check requirements/*.md each time
+- If in doubt ask user
+
+## Code Style
+
+- Comments in English only
+- Follow DRY, KISS, and YAGNI principles
+- Check if logic already exists before writing new code
+- Avoid untyped variables and generic types
+- Never use default parameter values - make all parameters explicit
+- Create proper type definitions for complex data structures
+- All imports at the top of the file
+- Write simple single-purpose functions — no multi-mode behavior, no flag parameters that switch logic. If the user needs multiple modes, they will ask explicitly
+
+## Code Changes
+
+- Suggest only minimal changes related to current dialog
+- Change as few lines as possible while solving the problem
+- Focus only on what user is asking for - no extra improvements

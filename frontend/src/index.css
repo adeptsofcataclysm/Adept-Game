@@ -522,3 +522,9 @@ code {
   margin: 0;
   padding: 0;
 }
+
+.layout--login {
+  max-width: none;
+  margin: 0;
+  padding: 0;
+}

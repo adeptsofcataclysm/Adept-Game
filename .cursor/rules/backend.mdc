@@ -1,0 +1,35 @@
+---
+description: Backend rules for the Node session service (authoritative state, WebSocket, phase FSM)
+globs: backend/**/*.ts
+alwaysApply: false
+---
+# Backend (Node session service)
+
+Authoritative game state lives here (ADR-1). Clients render projections only (REQ-15.1).
+
+## State and mutations
+
+- Mutate snapshots only via `store.mutate(showId, fn)`. Never write to `map.get(...)` directly — the store deep-clones, runs the mutator on the draft, bumps `version`, and persists.
+- Mutator returns `{ ok: true }` or `{ ok: false; error: string }`. On `ok` the caller broadcasts the snapshot; on `!ok` it sends `{ type: "error" }` to the requesting socket only.
+- Keep `SessionSnapshot` shape stable. Add a field instead of overloading an existing one, and mirror it in `frontend/src/sessionTypes.ts`.
+
+## WebSocket protocol (one channel per show, ADR-2)
+
+- Every inbound message is `{ type, payload }`. Validate `type` and narrow `payload` from `unknown` before touching state.
+- First message must be `join`; for any other type, look up `metaBySocket.get(ws)` and reject with `"Send join first"` when absent.
+- After any successful mutation, broadcast `{ type: "snapshot", payload: <snapshot> }` to the whole room. No partial diffs, no per-socket state.
+
+## Roles and host gate (REQ-14)
+
+- Check `meta.role` before applying any host-only, player-only, or spectator-only intent. Reject with `{ type: "error", payload: { message: "Host only" } }` (or `"Players only"` / `"Spectators only"`).
+- Host auth uses `ADEPT_HOST_SECRET` via `isHostAuthorized`. Never bypass it for `role === "host"`.
+
+## Phase FSM (REQ-1, REQ-15.2)
+
+- All phase changes go through `applyHostTransition` → `canTransition`. Do not branch on `snap.phase` to skip validation; extend `ALLOWED` in `phase.ts` instead.
+- New phase: extend the `Phase` union, `phaseKey`, `parsePhase`, and `ALLOWED`. Keep `round:1|2|3` as anchors — configurable segments sit between anchors, never replace them.
+
+## TypeScript
+
+- Strict mode (`noUnusedLocals`, `noUnusedParameters`) plus NodeNext ESM. Local imports use the `.js` extension (`import ... from "./session.js"`).
+- No implicit `any`, no untyped variables. Narrow `unknown` payloads with explicit type guards before use.
