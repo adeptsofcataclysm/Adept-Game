@@ -2,7 +2,9 @@
  * Authoritative show lifecycle.
  *
  * Main anchor phases:
- *   lobby  →  round:1 → round:2 → round:3  →  final  →  game_over
+ *   lobby  →  round:1 → round:2 → round:3  →  final
+ *
+ * `final` is terminal — there is no separate game-over state.
  *
  * Everything else (spectator_picks, story_video, donations, between_final,
  * mini_wheel, mini_roulette …) lives as a `plugin_segment` registered via
@@ -19,7 +21,6 @@ export type Phase =
   | { kind: "lobby" }
   | { kind: "round"; roundIndex: RoundIndex }
   | { kind: "final" }
-  | { kind: "game_over" }
   /** Opaque segment registered by a plugin (first-party or third-party). */
   | { kind: "plugin_segment"; id: string; pluginId: string };
 
@@ -27,7 +28,6 @@ export function phaseKey(p: Phase): string {
   switch (p.kind) {
     case "lobby":
     case "final":
-    case "game_over":
       return p.kind;
     case "round":
       return `round:${p.roundIndex}`;
@@ -40,14 +40,14 @@ export function phaseKey(p: Phase): string {
  * Immutable core transitions — anchor ↔ anchor only.
  *
  * Plugin registry contributes extra edges (segments, card-kind overlays) on top.
+ * `final` is terminal: no outgoing edges.
  */
 const CORE_ALLOWED: ReadonlyMap<string, ReadonlySet<string>> = new Map([
   ["lobby",   new Set(["round:1"])],
   ["round:1", new Set(["round:2"])],
   ["round:2", new Set(["round:3"])],
   ["round:3", new Set(["final"])],
-  ["final",   new Set(["game_over"])],
-  ["game_over", new Set()],
+  ["final",   new Set()],
 ]);
 
 /**

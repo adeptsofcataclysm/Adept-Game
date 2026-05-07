@@ -30,7 +30,7 @@ function boardForPhase(snapshot: {
       board: snapshot.roundBoard[ri],
     };
   }
-  // plugin_segment or game_over — fall back to round 1 preview
+  // plugin_segment — fall back to round 1 preview
   return {
     title: "Round 1 board (preview)",
     board: snapshot.roundBoard[1],
@@ -47,8 +47,6 @@ function phaseBadgeLabel(phase: Phase | undefined): string {
       return `Квиз-доска ${phase.roundIndex}`;
     case "final":
       return "Финал";
-    case "game_over":
-      return "Игра окончена";
     case "plugin_segment": {
       const labels: Record<string, string> = {
         spectator_picks: "Ставки зрителей",

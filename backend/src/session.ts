@@ -123,7 +123,7 @@ export function createSessionStore(): SessionStore {
           donations: { bySeat: [null, null, null, null, null] },
         };
       }
-      // Legacy in-memory sessions may still have old phase kinds; treat as lobby.
+      // Legacy in-memory sessions may still have old phase kinds; coerce them.
       if (
         typeof draft.phase === "object" &&
         draft.phase !== null &&
@@ -140,6 +140,8 @@ export function createSessionStore(): SessionStore {
           legacyKind === "mini_roulette"
         ) {
           draft.phase = { kind: "lobby" };
+        } else if (legacyKind === "game_over") {
+          draft.phase = { kind: "final" };
         }
       }
       const result = fn(draft);
@@ -157,7 +159,6 @@ export function parsePhase(input: unknown): Phase | null {
   const kind = o["kind"];
   if (kind === "lobby") return { kind: "lobby" };
   if (kind === "final") return { kind: "final" };
-  if (kind === "game_over") return { kind: "game_over" };
   const ri = o["roundIndex"];
   if (kind === "round" && (ri === 1 || ri === 2 || ri === 3)) return { kind: "round", roundIndex: ri };
   if (kind === "plugin_segment") {

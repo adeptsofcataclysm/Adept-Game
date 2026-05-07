@@ -1,9 +1,10 @@
 /**
  * Mirrors backend snapshot for the SPA projection (authoritative copy from server).
  *
- * Main anchor phases: lobby → round:1 → round:2 → round:3 → final → game_over
- * All other segments (spectator_picks, story_video, donations, between_final …)
- * are `plugin_segment` instances registered via PluginRegistry.
+ * Main anchor phases: lobby → round:1 → round:2 → round:3 → final
+ * `final` is terminal. All other segments (spectator_picks, story_video,
+ * donations, between_final …) are `plugin_segment` instances registered via
+ * PluginRegistry.
  */
 
 /** In sync with `backend/src/session.ts` `MAX_CHAT_MESSAGES`. */
@@ -15,7 +16,6 @@ export type Phase =
   | { kind: "lobby" }
   | { kind: "round"; roundIndex: RoundIndex }
   | { kind: "final" }
-  | { kind: "game_over" }
   /** Opaque segment registered by a plugin (first-party or third-party). */
   | { kind: "plugin_segment"; id: string; pluginId: string };
 
