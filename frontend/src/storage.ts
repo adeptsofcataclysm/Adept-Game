@@ -26,3 +26,10 @@ export function getHostSecret(): string {
 export function setHostSecret(secret: string): void {
   localStorage.setItem(HOST_SECRET, secret);
 }
+
+/** Removes display name, participant id, and host secret. */
+export function clearAdeptLocalStorage(): void {
+  localStorage.removeItem(DISPLAY);
+  localStorage.removeItem(PARTICIPANT);
+  localStorage.removeItem(HOST_SECRET);
+}

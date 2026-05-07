@@ -1,4 +1,6 @@
+import { useNavigate } from "react-router-dom";
 import type { Role } from "@/sessionTypes";
+import { clearAdeptLocalStorage } from "@/storage";
 
 export type GamePageHeaderProps = {
   badgeLabel: string;
@@ -19,9 +21,15 @@ function roleDisplayLabel(role: Role): string {
 }
 
 export function GamePageHeader({ badgeLabel, connected, viewerName, viewerRole }: GamePageHeaderProps) {
+  const navigate = useNavigate();
   const onlineColor = connected ? "#2ecc71" : "#e74c3c";
   const onlineLabel = connected ? "Онлайн" : "Подключение…";
   const connectionHint = connected ? "WebSocket connected" : "Connecting";
+
+  function handleLogout() {
+    clearAdeptLocalStorage();
+    navigate("/", { replace: true });
+  }
 
   return (
     <header className="game-header">
@@ -55,6 +63,9 @@ export function GamePageHeader({ badgeLabel, connected, viewerName, viewerRole }
             </div>
           </div>
         </div>
+        <button type="button" className="game-header__logout" onClick={handleLogout}>
+        ➜]
+        </button>
       </div>
     </header>
   );

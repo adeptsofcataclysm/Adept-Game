@@ -517,6 +517,31 @@ code {
   flex-shrink: 0;
 }
 
+.game-header__logout {
+  font-family: Cinzel, "Times New Roman", serif;
+  font-size: 0.75rem;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  color: hsla(45, 93%, 47%, 0.9);
+  background: hsla(260, 35%, 12%, 0.9);
+  border: 1px solid hsla(45, 93%, 47%, 0.4);
+  border-radius: 0.25rem;
+  padding: 0.35rem 0.65rem;
+  cursor: pointer;
+  transition: background 0.15s ease, border-color 0.15s ease, color 0.15s ease;
+}
+
+.game-header__logout:hover {
+  background: hsla(45, 93%, 47%, 0.12);
+  border-color: hsla(45, 93%, 47%, 0.65);
+  color: hsl(45, 93%, 52%);
+}
+
+.game-header__logout:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 2px rgba(46, 204, 113, 0.45);
+}
+
 .layout--show {
   max-width: none;
   margin: 0;

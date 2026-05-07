@@ -1,8 +1,14 @@
+import path from "node:path";
 import http from "node:http";
-import { URL } from "node:url";
+import { URL, fileURLToPath } from "node:url";
+import dotenv from "dotenv";
 import { WebSocketServer, type WebSocket, type RawData } from "ws";
 import type { Role } from "./session.js";
 import { appendChat, applyHostTransition, createSessionStore, parsePhase } from "./session.js";
+
+const backendRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
+dotenv.config({ path: path.join(backendRoot, ".env") });
+dotenv.config({ path: path.join(backendRoot, ".env.local"), override: true });
 
 const PORT = Number(process.env["PORT"] ?? "3847");
 const HOST_SECRET = process.env["ADEPT_HOST_SECRET"]?.trim() ?? "";
