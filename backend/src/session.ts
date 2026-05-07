@@ -116,34 +116,6 @@ export function createSessionStore(): SessionStore {
       if (draft.chat.length > MAX_CHAT_MESSAGES) {
         draft.chat = draft.chat.slice(-MAX_CHAT_MESSAGES);
       }
-      // Back-fill segmentState for sessions persisted before this field existed.
-      if (!draft.segmentState) {
-        draft.segmentState = {
-          spectator_picks: { locked: false, bets: {} },
-          donations: { bySeat: [null, null, null, null, null] },
-        };
-      }
-      // Legacy in-memory sessions may still have old phase kinds; coerce them.
-      if (
-        typeof draft.phase === "object" &&
-        draft.phase !== null &&
-        "kind" in draft.phase
-      ) {
-        const legacyKind = (draft.phase as { kind: string }).kind;
-        if (
-          legacyKind === "opening_show" ||
-          legacyKind === "spectator_picks" ||
-          legacyKind === "story_video" ||
-          legacyKind === "donations" ||
-          legacyKind === "between_final" ||
-          legacyKind === "mini_wheel" ||
-          legacyKind === "mini_roulette"
-        ) {
-          draft.phase = { kind: "lobby" };
-        } else if (legacyKind === "game_over") {
-          draft.phase = { kind: "final" };
-        }
-      }
       const result = fn(draft);
       if (!result.ok) return result;
       draft.version = cur.version + 1;
