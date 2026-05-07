@@ -11,8 +11,9 @@ function boardForPhase(snapshot: {
   phase: Phase;
   roundBoard: Record<1 | 2 | 3, RoundBoardRuntime>;
   finalTransitionBoard: RoundBoardRuntime;
-}): { title: string; board: RoundBoardRuntime } {
+}): { title: string; board: RoundBoardRuntime } | null {
   const { phase } = snapshot;
+  if (phase.kind === "lobby") return null;
   if (phase.kind === "between_final" || phase.kind === "final") {
     return {
       title: "Transition to Final / Final (data/round-4.json)",
@@ -122,6 +123,7 @@ export function ShowPage() {
           {lastError ? <p style={{ color: "#f88" }}>{lastError}</p> : null}
         </div>
 
+        {snapshot?.phase.kind !== "lobby" ? (
         <div className="card adepts-show-board-card">
           {boardPreview ? (
             <>
@@ -137,6 +139,7 @@ export function ShowPage() {
             </>
           )}
         </div>
+        ) : null}
 
         {snapshot?.phase.kind === "spectator_picks" ? (
           <div className="card">

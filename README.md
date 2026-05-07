@@ -30,7 +30,7 @@ npm install
 
 ## Run (two terminals)
 
-### 1. Session service (WebSocket + minimal HTTP health)**
+### 1. Session service (WebSocket + minimal HTTP health)
 
 ```bash
 cd Adept-Game
@@ -39,7 +39,7 @@ npm run dev:backend
 
 Optional: `set ADEPT_HOST_SECRET=your-secret` (Windows) before starting so Host joins must send the same secret.
 
-### 2. SPA (Vite)**
+### 2. SPA (Vite)
 
 ```bash
 cd Adept-Game
