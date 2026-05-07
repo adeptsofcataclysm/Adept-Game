@@ -5,6 +5,7 @@ import dotenv from "dotenv";
 import { WebSocketServer, type WebSocket, type RawData } from "ws";
 import type { Role } from "./session.js";
 import { appendChat, applyHostTransition, createSessionStore, parsePhase } from "./session.js";
+import { pluginRegistry } from "./pluginRegistry.js";
 
 const backendRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 dotenv.config({ path: path.join(backendRoot, ".env") });
@@ -231,6 +232,42 @@ wss.on("connection", (ws, req) => {
         if (snap.phase.kind !== "lobby") return { ok: false, error: "Opening the show runs in lobby" };
         snap.openingShow.emojiLineIndex = snap.openingShow.emojiLineIndex + 1;
         return { ok: true };
+      });
+      if (r.ok) broadcast(meta.showId, { type: "snapshot", payload: r.snapshot });
+      else ws.send(JSON.stringify({ type: "error", payload: { message: r.error } }));
+      return;
+    }
+
+    if (type === "plugin_action") {
+      if (meta.role !== "host") {
+        ws.send(JSON.stringify({ type: "error", payload: { message: "Host only" } }));
+        return;
+      }
+      if (!payload || typeof payload !== "object") return;
+      const p = payload as Record<string, unknown>;
+      const pluginId = String(p["pluginId"] ?? "").trim();
+      const segmentId = String(p["segmentId"] ?? "").trim();
+      const action = String(p["action"] ?? "").trim();
+      const actionPayload = p["payload"] ?? null;
+      if (!pluginId || !segmentId || !action) {
+        ws.send(JSON.stringify({ type: "error", payload: { message: "plugin_action requires pluginId, segmentId, action" } }));
+        return;
+      }
+      const def = pluginRegistry.getSegmentDef(pluginId, segmentId);
+      if (!def?.onAction) {
+        ws.send(JSON.stringify({ type: "error", payload: { message: `No action handler for plugin ${pluginId}:${segmentId}` } }));
+        return;
+      }
+      const handler = def.onAction;
+      const r = store.mutate(meta.showId, (snap) => {
+        const ctx = {
+          snapshot: snap,
+          requestTransition: (to: import("./phase.js").Phase) => applyHostTransition(snap, to),
+          setSegmentState: (key: string, value: unknown) => {
+            snap.segmentState[key] = value;
+          },
+        };
+        return handler(action, actionPayload, ctx);
       });
       if (r.ok) broadcast(meta.showId, { type: "snapshot", payload: r.snapshot });
       else ws.send(JSON.stringify({ type: "error", payload: { message: r.error } }));

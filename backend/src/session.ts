@@ -1,6 +1,7 @@
 import { randomUUID } from "node:crypto";
 import type { Phase, RoundIndex } from "./phase.js";
 import { canTransition } from "./phase.js";
+import { pluginRegistry } from "./pluginRegistry.js";
 import { loadRoundBoard, loadRoundBoardFile } from "./quizData.js";
 import type { RoundBoardRuntime } from "./quizData.js";
 
@@ -36,7 +37,7 @@ export type SessionSnapshot = {
   roundBoard: Record<RoundIndex, RoundBoardRuntime>;
   /**
    * Board for the **transition to Final** and **Final** segment (REQ-13), loaded from `data/round-4.json`
-   * (e.g. “Final round” / super-game cards — not the 5×5 grid itself).
+   * (e.g. "Final round" / super-game cards — not the 5×5 grid itself).
    */
   finalTransitionBoard: RoundBoardRuntime;
   /**
@@ -45,6 +46,11 @@ export type SessionSnapshot = {
    */
   miniWheelPlaysByRound: [number, number, number];
   miniRoulettePlaysByRound: [number, number, number];
+  /**
+   * Generic per-segment state written only by the owning plugin's server handler.
+   * Keyed by segmentId; untouched by the core session service.
+   */
+  segmentState: Record<string, unknown>;
   openingShow: { emojiLineIndex: number; spectatorCorrectCounts: Record<string, number> };
   spectatorPicks: { locked: boolean; bets: Record<string, 1 | 2 | 3 | 4 | 5> };
   donations: { bySeat: [number | null, number | null, number | null, number | null, number | null] };
@@ -70,6 +76,7 @@ export function createInitialSession(showId: string): SessionSnapshot {
     finalTransitionBoard,
     miniWheelPlaysByRound: [0, 0, 0],
     miniRoulettePlaysByRound: [0, 0, 0],
+    segmentState: {},
     openingShow: { emojiLineIndex: 0, spectatorCorrectCounts: {} },
     spectatorPicks: { locked: false, bets: {} },
     donations: { bySeat: [null, null, null, null, null] },
@@ -113,6 +120,10 @@ export function createSessionStore(): SessionStore {
       ) {
         draft.phase = { kind: "lobby" };
       }
+      // Back-fill segmentState for sessions persisted before this field existed.
+      if (!draft.segmentState) {
+        draft.segmentState = {};
+      }
       const result = fn(draft);
       if (!result.ok) return result;
       draft.version = cur.version + 1;
@@ -140,6 +151,13 @@ export function parsePhase(input: unknown): Phase | null {
     return { kind: "mini_wheel", roundIndex: ri };
   if (kind === "mini_roulette" && (ri === 1 || ri === 2 || ri === 3))
     return { kind: "mini_roulette", roundIndex: ri };
+  if (kind === "plugin_segment") {
+    const id = o["id"];
+    const pluginId = o["pluginId"];
+    if (typeof id === "string" && id && typeof pluginId === "string" && pluginId) {
+      return { kind: "plugin_segment", id, pluginId };
+    }
+  }
   return null;
 }
 
@@ -148,7 +166,7 @@ export function applyHostTransition(
   to: Phase,
 ): { ok: true } | { ok: false; error: string } {
   const from = snapshot.phase;
-  if (!canTransition(from, to)) {
+  if (!canTransition(from, to, pluginRegistry.edges)) {
     return { ok: false, error: "Illegal phase transition for current state" };
   }
 

@@ -15,7 +15,9 @@ export type Phase =
   | { kind: "donations" }
   | { kind: "between_final" }
   | { kind: "final" }
-  | { kind: "game_over" };
+  | { kind: "game_over" }
+  /** Opaque segment injected by a plugin between anchor rounds. */
+  | { kind: "plugin_segment"; id: string; pluginId: string };
 
 export type Role = "host" | "player" | "spectator";
 
@@ -40,6 +42,10 @@ export type QuestionCell = {
   questionUrl: string;
   answerText: string;
   answerUrl: string;
+  /** Identifies the card handler; standard quiz cell when absent. */
+  cardKind?: string;
+  /** Handler-specific parameters for non-standard card kinds. */
+  cardParams?: unknown;
   splashUrl?: string;
   splashVariant?: "spiral" | "dedFly";
   splashAudioUrl?: string;
@@ -67,6 +73,11 @@ export type SessionSnapshot = {
   /** Count of Wheel / Roulette mini-games started from the board in rounds 1–3 (index 0 = round 1). */
   miniWheelPlaysByRound: [number, number, number];
   miniRoulettePlaysByRound: [number, number, number];
+  /**
+   * Generic per-segment state written only by the owning plugin's server handler.
+   * Keyed by segmentId. Untouched by the core session service.
+   */
+  segmentState: Record<string, unknown>;
   openingShow: { emojiLineIndex: number; spectatorCorrectCounts: Record<string, number> };
   spectatorPicks: { locked: boolean; bets: Record<string, 1 | 2 | 3 | 4 | 5> };
   donations: { bySeat: [number | null, number | null, number | null, number | null, number | null] };

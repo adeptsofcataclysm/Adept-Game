@@ -6,6 +6,7 @@ import { getDisplayName, getHostSecret } from "@/storage";
 import { GamePageHeader } from "@/components/GamePageHeader";
 import { ChatPanel } from "@/components/ChatPanel";
 import { PlayersPanel } from "@/components/PlayersPanel";
+import { PluginSegmentHost } from "@/plugins/PluginSegmentHost";
 
 function boardForPhase(snapshot: {
   phase: Phase;
@@ -57,6 +58,8 @@ function phaseBadgeLabel(phase: Phase | undefined): string {
       return "Финал";
     case "game_over":
       return "Игра окончена";
+    case "plugin_segment":
+      return `Сегмент: ${phase.id}`;
   }
 }
 
@@ -188,6 +191,23 @@ export function ShowPage() {
               </button>
             </div>
           </div>
+        ) : null}
+
+        {snapshot?.phase.kind === "plugin_segment" ? (
+          <PluginSegmentHost
+            snapshot={snapshot}
+            sendAction={(action, payload) =>
+              send({
+                type: "plugin_action",
+                payload: {
+                  pluginId: (snapshot.phase as { pluginId: string }).pluginId,
+                  segmentId: (snapshot.phase as { id: string }).id,
+                  action,
+                  payload: payload ?? null,
+                },
+              })
+            }
+          />
         ) : null}
           </section>
         </div>
