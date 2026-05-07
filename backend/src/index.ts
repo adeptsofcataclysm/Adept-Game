@@ -191,10 +191,19 @@ wss.on("connection", (ws, req) => {
       const seat = (payload as Record<string, unknown>)["seat"];
       if (seat !== 1 && seat !== 2 && seat !== 3 && seat !== 4 && seat !== 5) return;
       const r = store.mutate(meta.showId, (snap) => {
-        if (snap.phase.kind !== "spectator_picks" || snap.spectatorPicks.locked) {
+        if (
+          snap.phase.kind !== "plugin_segment" ||
+          snap.phase.id !== "spectator_picks"
+        ) {
           return { ok: false, error: "Spectator picks not open" };
         }
-        snap.spectatorPicks.bets[meta.participantId] = seat;
+        const state = (snap.segmentState["spectator_picks"] ?? { locked: false, bets: {} }) as {
+          locked: boolean;
+          bets: Record<string, 1 | 2 | 3 | 4 | 5>;
+        };
+        if (state.locked) return { ok: false, error: "Spectator picks are locked" };
+        state.bets[meta.participantId] = seat;
+        snap.segmentState["spectator_picks"] = state;
         return { ok: true };
       });
       if (r.ok) broadcast(meta.showId, { type: "snapshot", payload: r.snapshot });
@@ -286,10 +295,19 @@ wss.on("connection", (ws, req) => {
       if (typeof amount !== "number" || !Number.isFinite(amount) || amount < 0) return;
       if (typeof seatIndex !== "number" || seatIndex < 0 || seatIndex > 4) return;
       const r = store.mutate(meta.showId, (snap) => {
-        if (snap.phase.kind !== "donations") return { ok: false, error: "Donations not open" };
+        if (
+          snap.phase.kind !== "plugin_segment" ||
+          snap.phase.id !== "donations"
+        ) {
+          return { ok: false, error: "Donations not open" };
+        }
         const score = snap.scores[seatIndex];
         if (amount > score) return { ok: false, error: "Donation exceeds score" };
-        snap.donations.bySeat[seatIndex] = amount;
+        const state = (snap.segmentState["donations"] ?? {
+          bySeat: [null, null, null, null, null],
+        }) as { bySeat: [number | null, number | null, number | null, number | null, number | null] };
+        state.bySeat[seatIndex] = amount;
+        snap.segmentState["donations"] = state;
         return { ok: true };
       });
       if (r.ok) broadcast(meta.showId, { type: "snapshot", payload: r.snapshot });

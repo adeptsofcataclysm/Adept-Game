@@ -1,4 +1,10 @@
-/** Mirrors backend snapshot for the SPA projection (authoritative copy from server). */
+/**
+ * Mirrors backend snapshot for the SPA projection (authoritative copy from server).
+ *
+ * Main anchor phases: lobby → round:1 → round:2 → round:3 → final → game_over
+ * All other segments (spectator_picks, story_video, donations, between_final …)
+ * are `plugin_segment` instances registered via PluginRegistry.
+ */
 
 /** In sync with `backend/src/session.ts` `MAX_CHAT_MESSAGES`. */
 export const MAX_CHAT_MESSAGES = 50;
@@ -7,16 +13,10 @@ export type RoundIndex = 1 | 2 | 3;
 
 export type Phase =
   | { kind: "lobby" }
-  | { kind: "spectator_picks" }
   | { kind: "round"; roundIndex: RoundIndex }
-  | { kind: "mini_wheel"; roundIndex: RoundIndex }
-  | { kind: "mini_roulette"; roundIndex: RoundIndex }
-  | { kind: "story_video" }
-  | { kind: "donations" }
-  | { kind: "between_final" }
   | { kind: "final" }
   | { kind: "game_over" }
-  /** Opaque segment injected by a plugin between anchor rounds. */
+  /** Opaque segment registered by a plugin (first-party or third-party). */
   | { kind: "plugin_segment"; id: string; pluginId: string };
 
 export type Role = "host" | "player" | "spectator";
@@ -61,6 +61,25 @@ export type RoundBoardRuntime = {
   pointValues: number[][];
 };
 
+// ---------------------------------------------------------------------------
+// Well-known segmentState keys
+// ---------------------------------------------------------------------------
+
+/** `segmentState["spectator_picks"]` — written by @adept-plugins/spectator-picks */
+export type SpectatorPicksState = {
+  locked: boolean;
+  bets: Record<string, 1 | 2 | 3 | 4 | 5>;
+};
+
+/** `segmentState["donations"]` — written by builtin:donations segment */
+export type DonationsState = {
+  bySeat: [number | null, number | null, number | null, number | null, number | null];
+};
+
+// ---------------------------------------------------------------------------
+// Session snapshot
+// ---------------------------------------------------------------------------
+
 export type SessionSnapshot = {
   showId: string;
   version: number;
@@ -70,17 +89,13 @@ export type SessionSnapshot = {
   roundBoard: Record<RoundIndex, RoundBoardRuntime>;
   /** `round-4.json` — transition to Final / Final segment (REQ-13). */
   finalTransitionBoard: RoundBoardRuntime;
-  /** Count of Wheel / Roulette mini-games started from the board in rounds 1–3 (index 0 = round 1). */
-  miniWheelPlaysByRound: [number, number, number];
-  miniRoulettePlaysByRound: [number, number, number];
   /**
-   * Generic per-segment state written only by the owning plugin's server handler.
-   * Keyed by segmentId. Untouched by the core session service.
+   * All plugin-managed state. Well-known keys:
+   *   `"spectator_picks"` → SpectatorPicksState
+   *   `"donations"`       → DonationsState
    */
   segmentState: Record<string, unknown>;
   openingShow: { emojiLineIndex: number; spectatorCorrectCounts: Record<string, number> };
-  spectatorPicks: { locked: boolean; bets: Record<string, 1 | 2 | 3 | 4 | 5> };
-  donations: { bySeat: [number | null, number | null, number | null, number | null, number | null] };
   lottery: { candidates: string[]; optOut: Record<string, true>; lastWinnerNick: string | null };
   chat: ChatLine[];
   participants: Participant[];

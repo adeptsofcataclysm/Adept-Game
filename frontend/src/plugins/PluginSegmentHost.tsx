@@ -3,15 +3,17 @@
  * Mounted by ShowPage when `snapshot.phase.kind === "plugin_segment"`.
  */
 
-import type { SessionSnapshot } from "@/sessionTypes";
+import type { SessionSnapshot, Role } from "@/sessionTypes";
 import { clientPluginRegistry } from "./registry";
 
 type Props = {
   snapshot: SessionSnapshot;
-  sendAction(action: string, payload?: unknown): void;
+  role: Role;
+  /** General WS send — forwarded to the plugin view so it can send any message type. */
+  send(type: string, payload: unknown): void;
 };
 
-export function PluginSegmentHost({ snapshot, sendAction }: Props) {
+export function PluginSegmentHost({ snapshot, role, send }: Props) {
   if (snapshot.phase.kind !== "plugin_segment") return null;
 
   const { pluginId, id: segmentId } = snapshot.phase;
@@ -28,5 +30,13 @@ export function PluginSegmentHost({ snapshot, sendAction }: Props) {
     );
   }
 
-  return <View snapshot={snapshot} segmentId={segmentId} pluginId={pluginId} sendAction={sendAction} />;
+  return (
+    <View
+      snapshot={snapshot}
+      segmentId={segmentId}
+      pluginId={pluginId}
+      role={role}
+      send={send}
+    />
+  );
 }

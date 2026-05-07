@@ -7,5 +7,8 @@
     "dev:frontend": "npm run dev --workspace=frontend",
     "build": "npm run build --workspace=backend && npm run build --workspace=frontend"
   },
-  "workspaces": ["backend", "frontend"]
+  "workspaces": ["backend", "frontend"],
+  "dependencies": {
+    "@adept-plugins/spectator-picks": "file:../Adept-Game-Plugins/packages/spectator-picks"
+  }
 }

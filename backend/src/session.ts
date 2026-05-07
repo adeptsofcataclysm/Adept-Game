@@ -26,6 +26,17 @@ export type Participant = {
   role: Role;
 };
 
+/** Well-known key `"spectator_picks"` in `segmentState`. */
+export type SpectatorPicksState = {
+  locked: boolean;
+  bets: Record<string, 1 | 2 | 3 | 4 | 5>;
+};
+
+/** Well-known key `"donations"` in `segmentState`. */
+export type DonationsState = {
+  bySeat: [number | null, number | null, number | null, number | null, number | null];
+};
+
 export type SessionSnapshot = {
   showId: string;
   version: number;
@@ -36,24 +47,17 @@ export type SessionSnapshot = {
   /** Per-round board: themes + question cells from JSON; `revealed` tracks opened cells (REQ-1). */
   roundBoard: Record<RoundIndex, RoundBoardRuntime>;
   /**
-   * Board for the **transition to Final** and **Final** segment (REQ-13), loaded from `data/round-4.json`
-   * (e.g. "Final round" / super-game cards — not the 5×5 grid itself).
+   * Board for the **transition to Final** and **Final** segment (REQ-13), loaded from `data/round-4.json`.
    */
   finalTransitionBoard: RoundBoardRuntime;
   /**
-   * How many times the Host has entered **Wheel of Adepts** / **Roulette** from the quiz board
-   * this show, per main round (each entry = another mini-game instance in that round).
-   */
-  miniWheelPlaysByRound: [number, number, number];
-  miniRoulettePlaysByRound: [number, number, number];
-  /**
-   * Generic per-segment state written only by the owning plugin's server handler.
-   * Keyed by segmentId; untouched by the core session service.
+   * All plugin-managed state lives here, keyed by a stable string the plugin owns.
+   * Well-known keys: `"spectator_picks"` (SpectatorPicksState),
+   *                  `"donations"` (DonationsState).
+   * The core session service never reads or writes this object except to back-fill it.
    */
   segmentState: Record<string, unknown>;
   openingShow: { emojiLineIndex: number; spectatorCorrectCounts: Record<string, number> };
-  spectatorPicks: { locked: boolean; bets: Record<string, 1 | 2 | 3 | 4 | 5> };
-  donations: { bySeat: [number | null, number | null, number | null, number | null, number | null] };
   lottery: { candidates: string[]; optOut: Record<string, true>; lastWinnerNick: string | null };
   chat: ChatLine[];
   participants: Participant[];
@@ -66,6 +70,8 @@ export function createInitialSession(showId: string): SessionSnapshot {
     3: loadRoundBoard(3),
   };
   const finalTransitionBoard = loadRoundBoardFile(4);
+  const spectatorPicksInit: SpectatorPicksState = { locked: false, bets: {} };
+  const donationsInit: DonationsState = { bySeat: [null, null, null, null, null] };
   return {
     showId,
     version: 1,
@@ -74,12 +80,11 @@ export function createInitialSession(showId: string): SessionSnapshot {
     currentTurnSeat: 0,
     roundBoard,
     finalTransitionBoard,
-    miniWheelPlaysByRound: [0, 0, 0],
-    miniRoulettePlaysByRound: [0, 0, 0],
-    segmentState: {},
+    segmentState: {
+      spectator_picks: spectatorPicksInit,
+      donations: donationsInit,
+    },
     openingShow: { emojiLineIndex: 0, spectatorCorrectCounts: {} },
-    spectatorPicks: { locked: false, bets: {} },
-    donations: { bySeat: [null, null, null, null, null] },
     lottery: { candidates: [], optOut: {}, lastWinnerNick: null },
     chat: [],
     participants: [],
@@ -111,18 +116,31 @@ export function createSessionStore(): SessionStore {
       if (draft.chat.length > MAX_CHAT_MESSAGES) {
         draft.chat = draft.chat.slice(-MAX_CHAT_MESSAGES);
       }
-      // Legacy in-memory sessions may still have `opening_show`; treat as lobby.
+      // Back-fill segmentState for sessions persisted before this field existed.
+      if (!draft.segmentState) {
+        draft.segmentState = {
+          spectator_picks: { locked: false, bets: {} },
+          donations: { bySeat: [null, null, null, null, null] },
+        };
+      }
+      // Legacy in-memory sessions may still have old phase kinds; treat as lobby.
       if (
         typeof draft.phase === "object" &&
         draft.phase !== null &&
-        "kind" in draft.phase &&
-        (draft.phase as { kind: string }).kind === "opening_show"
+        "kind" in draft.phase
       ) {
-        draft.phase = { kind: "lobby" };
-      }
-      // Back-fill segmentState for sessions persisted before this field existed.
-      if (!draft.segmentState) {
-        draft.segmentState = {};
+        const legacyKind = (draft.phase as { kind: string }).kind;
+        if (
+          legacyKind === "opening_show" ||
+          legacyKind === "spectator_picks" ||
+          legacyKind === "story_video" ||
+          legacyKind === "donations" ||
+          legacyKind === "between_final" ||
+          legacyKind === "mini_wheel" ||
+          legacyKind === "mini_roulette"
+        ) {
+          draft.phase = { kind: "lobby" };
+        }
       }
       const result = fn(draft);
       if (!result.ok) return result;
@@ -138,19 +156,10 @@ export function parsePhase(input: unknown): Phase | null {
   const o = input as Record<string, unknown>;
   const kind = o["kind"];
   if (kind === "lobby") return { kind: "lobby" };
-  if (kind === "opening_show") return { kind: "lobby" };
-  if (kind === "spectator_picks") return { kind: "spectator_picks" };
-  if (kind === "story_video") return { kind: "story_video" };
-  if (kind === "donations") return { kind: "donations" };
-  if (kind === "between_final") return { kind: "between_final" };
   if (kind === "final") return { kind: "final" };
   if (kind === "game_over") return { kind: "game_over" };
   const ri = o["roundIndex"];
   if (kind === "round" && (ri === 1 || ri === 2 || ri === 3)) return { kind: "round", roundIndex: ri };
-  if (kind === "mini_wheel" && (ri === 1 || ri === 2 || ri === 3))
-    return { kind: "mini_wheel", roundIndex: ri };
-  if (kind === "mini_roulette" && (ri === 1 || ri === 2 || ri === 3))
-    return { kind: "mini_roulette", roundIndex: ri };
   if (kind === "plugin_segment") {
     const id = o["id"];
     const pluginId = o["pluginId"];
@@ -169,16 +178,6 @@ export function applyHostTransition(
   if (!canTransition(from, to, pluginRegistry.edges)) {
     return { ok: false, error: "Illegal phase transition for current state" };
   }
-
-  if (from.kind === "round" && to.kind === "mini_wheel" && to.roundIndex === from.roundIndex) {
-    const i = to.roundIndex - 1;
-    snapshot.miniWheelPlaysByRound[i] = snapshot.miniWheelPlaysByRound[i] + 1;
-  }
-  if (from.kind === "round" && to.kind === "mini_roulette" && to.roundIndex === from.roundIndex) {
-    const i = to.roundIndex - 1;
-    snapshot.miniRoulettePlaysByRound[i] = snapshot.miniRoulettePlaysByRound[i] + 1;
-  }
-
   snapshot.phase = to;
   return { ok: true };
 }

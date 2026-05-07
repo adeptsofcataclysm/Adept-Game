@@ -1,82 +1,61 @@
 /**
- * Authoritative lifecycle + rounds + mini-game overlays (aligned with product flow).
+ * Authoritative show lifecycle.
  *
- * **Several Wheel / Roulette runs per round:** the graph allows `round:n` → `mini_*:n` → `round:n`
- * to repeat any number of times (each Pandora's box / wheel card can start another instance).
+ * Main anchor phases:
+ *   lobby  →  round:1 → round:2 → round:3  →  final  →  game_over
  *
- * **Pluggable segments:** `story_video`, `donations`, and `between_final` are registered as
- * built-in plugins through `PluginRegistry`. The core map only contains anchor ↔ anchor edges
- * (round:1/2/3, final, game_over) and mini-game overlays. This keeps the cell-reveal authority
- * and per-round counters immutable — plugins can never replace a `round:n` node.
+ * Everything else (spectator_picks, story_video, donations, between_final,
+ * mini_wheel, mini_roulette …) lives as a `plugin_segment` registered via
+ * `PluginRegistry`. The core map only contains anchor ↔ anchor edges so the
+ * cell-reveal authority and per-round counters are immutable.
+ *
+ * Direct anchor hops (e.g. round:2 → round:3) exist in the core map so a
+ * show can skip optional segments when none are registered for that slot.
  */
 
 export type RoundIndex = 1 | 2 | 3;
 
 export type Phase =
   | { kind: "lobby" }
-  | { kind: "spectator_picks" }
   | { kind: "round"; roundIndex: RoundIndex }
-  | { kind: "mini_wheel"; roundIndex: RoundIndex }
-  | { kind: "mini_roulette"; roundIndex: RoundIndex }
-  | { kind: "story_video" }
-  | { kind: "donations" }
-  | { kind: "between_final" }
   | { kind: "final" }
   | { kind: "game_over" }
-  /** Opaque segment injected by a plugin between anchor rounds. */
+  /** Opaque segment registered by a plugin (first-party or third-party). */
   | { kind: "plugin_segment"; id: string; pluginId: string };
 
 export function phaseKey(p: Phase): string {
   switch (p.kind) {
     case "lobby":
-    case "spectator_picks":
-    case "story_video":
-    case "donations":
-    case "between_final":
     case "final":
     case "game_over":
       return p.kind;
     case "round":
-    case "mini_wheel":
-    case "mini_roulette":
-      return `${p.kind}:${p.roundIndex}`;
+      return `round:${p.roundIndex}`;
     case "plugin_segment":
       return `plugin_segment:${p.pluginId}:${p.id}`;
   }
 }
 
 /**
- * Immutable core transitions: anchor ↔ anchor hops and mini-game overlays.
+ * Immutable core transitions — anchor ↔ anchor only.
  *
- * Segment transitions (story_video, donations, between_final, plugin_segment)
- * are NOT listed here — they are added by PluginRegistry at boot. This keeps
- * `CORE_ALLOWED` stable regardless of which plugins are installed.
- *
- * A direct round:2 → round:3 and round:3 → final edge exists so a show can
- * skip optional segments when none are registered for that slot.
+ * Plugin registry contributes extra edges (segments, card-kind overlays) on top.
  */
 const CORE_ALLOWED: ReadonlyMap<string, ReadonlySet<string>> = new Map([
-  ["lobby", new Set(["spectator_picks"])],
-  ["spectator_picks", new Set(["round:1"])],
-  ["round:1", new Set(["round:2", "mini_wheel:1", "mini_roulette:1"])],
-  ["round:2", new Set(["round:3", "mini_wheel:2", "mini_roulette:2"])],
-  ["round:3", new Set(["final", "mini_wheel:3", "mini_roulette:3"])],
-  ["mini_wheel:1", new Set(["round:1"])],
-  ["mini_wheel:2", new Set(["round:2"])],
-  ["mini_wheel:3", new Set(["round:3"])],
-  ["mini_roulette:1", new Set(["round:1"])],
-  ["mini_roulette:2", new Set(["round:2"])],
-  ["mini_roulette:3", new Set(["round:3"])],
-  ["final", new Set(["game_over"])],
+  ["lobby",   new Set(["round:1"])],
+  ["round:1", new Set(["round:2"])],
+  ["round:2", new Set(["round:3"])],
+  ["round:3", new Set(["final"])],
+  ["final",   new Set(["game_over"])],
   ["game_over", new Set()],
 ]);
 
 /**
  * Returns true when transitioning `from → to` is legal.
  *
- * @param extraEdges  Additional edges contributed by PluginRegistry (built-in
- *                    segments + third-party plugins). Pass `pluginRegistry.edges`
- *                    from `applyHostTransition` so the FSM stays data-driven.
+ * @param extraEdges  Additional edges contributed by PluginRegistry (segments +
+ *                    card-kind mini-game overlays). Pass `pluginRegistry.edges`
+ *                    from `applyHostTransition`.
  */
 export function canTransition(
   from: Phase,

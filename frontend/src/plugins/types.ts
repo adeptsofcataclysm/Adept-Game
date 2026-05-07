@@ -4,14 +4,15 @@
  * against the local SessionSnapshot so the frontend has no SDK runtime dep.
  */
 
-import type { SessionSnapshot } from "@/sessionTypes";
+import type { SessionSnapshot, Role } from "@/sessionTypes";
 
 export type SegmentViewProps = {
   snapshot: SessionSnapshot;
   segmentId: string;
   pluginId: string;
-  /** Send a `plugin_action` message over the existing show WebSocket. */
-  sendAction(action: string, payload?: unknown): void;
+  role: Role;
+  /** Send any WS message — allows spectator/player-initiated actions from within a segment view. */
+  send(type: string, payload: unknown): void;
 };
 
 export type CardExtensionProps = {
