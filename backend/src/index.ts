@@ -21,9 +21,26 @@ type ClientMeta = {
   role: Role;
 };
 
+type InboundMessage = {
+  type: string;
+  payload: unknown;
+};
+
 const store = createSessionStore();
 const socketsByShow = new Map<string, Set<WebSocket>>();
 const metaBySocket = new Map<WebSocket, ClientMeta>();
+
+function isRecord(v: unknown): v is Record<string, unknown> {
+  return !!v && typeof v === "object";
+}
+
+function send(ws: WebSocket, payload: unknown): void {
+  ws.send(JSON.stringify(payload));
+}
+
+function sendError(ws: WebSocket, message: string): void {
+  send(ws, { type: "error", payload: { message } });
+}
 
 function room(showId: string): Set<WebSocket> {
   let s = socketsByShow.get(showId);
@@ -48,6 +65,14 @@ function parseJson(raw: RawData): unknown {
   } catch {
     return null;
   }
+}
+
+function parseInboundMessage(raw: RawData): InboundMessage | null {
+  const msg = parseJson(raw);
+  if (!isRecord(msg)) return null;
+  const type = msg["type"];
+  if (typeof type !== "string" || !type) return null;
+  return { type, payload: msg["payload"] };
 }
 
 function isHostAuthorized(role: Role, hostSecret: string | undefined): boolean {
@@ -76,33 +101,40 @@ wss.on("connection", (ws, req) => {
   // `metaBySocket` entry, so `chat` would fail with "Send join first" until join is processed.
 
   ws.on("message", (raw) => {
-    const msg = parseJson(raw);
-    if (!msg || typeof msg !== "object") return;
-    const m = msg as Record<string, unknown>;
-    const type = m["type"];
-    const payload = m["payload"];
+    const inbound = parseInboundMessage(raw);
+    if (!inbound) return;
 
-    if (type === "join") {
-      if (!payload || typeof payload !== "object") return;
-      const p = payload as Record<string, unknown>;
-      const role = p["role"];
-      const displayName = String(p["displayName"] ?? "").trim().slice(0, 64);
-      const participantId = String(p["participantId"] ?? "").trim().slice(0, 128);
-      const joinShowId = String(p["showId"] ?? connectShowId).trim().slice(0, 128) || connectShowId;
-      const hostSecret =
-        typeof p["hostSecret"] === "string" ? p["hostSecret"] : undefined;
+    const requireMeta = (): ClientMeta | null => {
+      const meta = metaBySocket.get(ws);
+      if (!meta) {
+        sendError(ws, "Send join first");
+        return null;
+      }
+      return meta;
+    };
+
+    const handleJoin = (payload: unknown): void => {
+      if (!isRecord(payload)) return;
+      const role = payload["role"];
+      const displayName = String(payload["displayName"] ?? "").trim().slice(0, 64);
+      const participantId = String(payload["participantId"] ?? "").trim().slice(0, 128);
+      const joinShowId =
+        String(payload["showId"] ?? connectShowId).trim().slice(0, 128) || connectShowId;
+      const hostSecret = typeof payload["hostSecret"] === "string" ? payload["hostSecret"] : undefined;
+
       if (!displayName || !participantId) {
-        ws.send(JSON.stringify({ type: "error", payload: { message: "displayName and participantId required" } }));
+        sendError(ws, "displayName and participantId required");
         return;
       }
       if (role !== "host" && role !== "player" && role !== "spectator") {
-        ws.send(JSON.stringify({ type: "error", payload: { message: "Invalid role" } }));
+        sendError(ws, "Invalid role");
         return;
       }
       if (!isHostAuthorized(role, hostSecret)) {
-        ws.send(JSON.stringify({ type: "error", payload: { message: "Host authentication failed" } }));
+        sendError(ws, "Host authentication failed");
         return;
       }
+
       metaBySocket.set(ws, { showId: joinShowId, participantId, displayName, role });
       room(joinShowId).add(ws);
 
@@ -119,106 +151,67 @@ wss.on("connection", (ws, req) => {
         }
         return { ok: true };
       });
+
       if (result.ok) {
         // Full snapshot (including chat history) to everyone in the room, including this join.
         broadcast(joinShowId, { type: "snapshot", payload: result.snapshot });
       }
-      return;
-    }
+    };
 
-    const meta = metaBySocket.get(ws);
-    if (!meta) {
-      ws.send(JSON.stringify({ type: "error", payload: { message: "Send join first" } }));
-      return;
-    }
-
-    if (type === "chat") {
-      if (!payload || typeof payload !== "object") {
-        ws.send(JSON.stringify({ type: "error", payload: { message: "Chat payload must be an object" } }));
+    const handleChat = (meta: ClientMeta, payload: unknown): void => {
+      if (!isRecord(payload)) {
+        sendError(ws, "Chat payload must be an object");
         return;
       }
-      const text = String((payload as Record<string, unknown>)["text"] ?? "");
-      const r = store.mutate(meta.showId, (snap) =>
-        appendChat(snap, meta.displayName, meta.role, text),
-      );
+      const text = String(payload["text"] ?? "");
+      const r = store.mutate(meta.showId, (snap) => appendChat(snap, meta.displayName, meta.role, text));
       if (r.ok) broadcast(meta.showId, { type: "snapshot", payload: r.snapshot });
-      else ws.send(JSON.stringify({ type: "error", payload: { message: r.error } }));
-      return;
-    }
+      else sendError(ws, r.error);
+    };
 
-    if (type === "host_transition") {
+    const handleHostTransition = (meta: ClientMeta, payload: unknown): void => {
       if (meta.role !== "host") {
-        ws.send(JSON.stringify({ type: "error", payload: { message: "Host only" } }));
+        sendError(ws, "Host only");
         return;
       }
       const to = parsePhase(payload);
       if (!to) {
-        ws.send(JSON.stringify({ type: "error", payload: { message: "Invalid phase payload" } }));
+        sendError(ws, "Invalid phase payload");
         return;
       }
       const r = store.mutate(meta.showId, (snap) => applyHostTransition(snap, to));
       if (r.ok) broadcast(meta.showId, { type: "snapshot", payload: r.snapshot });
-      else ws.send(JSON.stringify({ type: "error", payload: { message: r.error } }));
-      return;
-    }
+      else sendError(ws, r.error);
+    };
 
-    if (type === "host_score_step") {
+    const handleHostScoreStep = (meta: ClientMeta, payload: unknown): void => {
       if (meta.role !== "host") {
-        ws.send(JSON.stringify({ type: "error", payload: { message: "Host only" } }));
+        sendError(ws, "Host only");
         return;
       }
-      if (!payload || typeof payload !== "object") return;
-      const p = payload as Record<string, unknown>;
-      const seat = p["seatIndex"];
-      const dir = p["direction"];
-      if (typeof seat !== "number" || seat < 0 || seat > 4) return;
-      if (dir !== "up" && dir !== "down") return;
-      const delta = dir === "up" ? 100 : -100;
+      if (!isRecord(payload)) return;
+      const seatIndex = payload["seatIndex"];
+      const direction = payload["direction"];
+      if (typeof seatIndex !== "number" || seatIndex < 0 || seatIndex > 4) return;
+      if (direction !== "up" && direction !== "down") return;
+
+      const delta = direction === "up" ? 100 : -100;
       const r = store.mutate(meta.showId, (snap) => {
-        snap.scores[seat] = snap.scores[seat] + delta;
+        snap.scores[seatIndex] = snap.scores[seatIndex] + delta;
         return { ok: true };
       });
       if (r.ok) broadcast(meta.showId, { type: "snapshot", payload: r.snapshot });
-      return;
-    }
+    };
 
-    if (type === "spectator_pick_bet") {
-      if (meta.role !== "spectator") {
-        ws.send(JSON.stringify({ type: "error", payload: { message: "Spectators only" } }));
-        return;
-      }
-      if (!payload || typeof payload !== "object") return;
-      const seat = (payload as Record<string, unknown>)["seat"];
-      if (seat !== 1 && seat !== 2 && seat !== 3 && seat !== 4 && seat !== 5) return;
-      const r = store.mutate(meta.showId, (snap) => {
-        if (
-          snap.phase.kind !== "plugin_segment" ||
-          snap.phase.id !== "spectator_picks"
-        ) {
-          return { ok: false, error: "Spectator picks not open" };
-        }
-        const state = (snap.segmentState["spectator_picks"] ?? { locked: false, bets: {} }) as {
-          locked: boolean;
-          bets: Record<string, 1 | 2 | 3 | 4 | 5>;
-        };
-        if (state.locked) return { ok: false, error: "Spectator picks are locked" };
-        state.bets[meta.participantId] = seat;
-        snap.segmentState["spectator_picks"] = state;
-        return { ok: true };
-      });
-      if (r.ok) broadcast(meta.showId, { type: "snapshot", payload: r.snapshot });
-      else ws.send(JSON.stringify({ type: "error", payload: { message: r.error } }));
-      return;
-    }
-
-    if (type === "opening_show_mark_correct") {
+    const handleOpeningShowMarkCorrect = (meta: ClientMeta, payload: unknown): void => {
       if (meta.role !== "host") {
-        ws.send(JSON.stringify({ type: "error", payload: { message: "Host only" } }));
+        sendError(ws, "Host only");
         return;
       }
-      if (!payload || typeof payload !== "object") return;
-      const nick = String((payload as Record<string, unknown>)["spectatorKey"] ?? "").trim().slice(0, 64);
+      if (!isRecord(payload)) return;
+      const nick = String(payload["spectatorKey"] ?? "").trim().slice(0, 64);
       if (!nick) return;
+
       const r = store.mutate(meta.showId, (snap) => {
         if (snap.phase.kind !== "lobby") {
           return { ok: false, error: "Opening the show runs in lobby" };
@@ -228,13 +221,12 @@ wss.on("connection", (ws, req) => {
         return { ok: true };
       });
       if (r.ok) broadcast(meta.showId, { type: "snapshot", payload: r.snapshot });
-      else ws.send(JSON.stringify({ type: "error", payload: { message: r.error } }));
-      return;
-    }
+      else sendError(ws, r.error);
+    };
 
-    if (type === "opening_show_next_emoji") {
+    const handleOpeningShowNextEmoji = (meta: ClientMeta): void => {
       if (meta.role !== "host") {
-        ws.send(JSON.stringify({ type: "error", payload: { message: "Host only" } }));
+        sendError(ws, "Host only");
         return;
       }
       const r = store.mutate(meta.showId, (snap) => {
@@ -243,32 +235,34 @@ wss.on("connection", (ws, req) => {
         return { ok: true };
       });
       if (r.ok) broadcast(meta.showId, { type: "snapshot", payload: r.snapshot });
-      else ws.send(JSON.stringify({ type: "error", payload: { message: r.error } }));
-      return;
-    }
+      else sendError(ws, r.error);
+    };
 
-    if (type === "plugin_action") {
-      if (meta.role !== "host") {
-        ws.send(JSON.stringify({ type: "error", payload: { message: "Host only" } }));
+    const handlePluginEvent = (meta: ClientMeta, payload: unknown): void => {
+      if (!isRecord(payload)) return;
+      const pluginId = String(payload["pluginId"] ?? "").trim();
+      const segmentId = String(payload["segmentId"] ?? "").trim();
+      const event = String(payload["event"] ?? "").trim();
+      const eventPayload = payload["payload"] ?? null;
+
+      if (!pluginId || !segmentId || !event) {
+        sendError(ws, "plugin_event requires pluginId, segmentId, event");
         return;
       }
-      if (!payload || typeof payload !== "object") return;
-      const p = payload as Record<string, unknown>;
-      const pluginId = String(p["pluginId"] ?? "").trim();
-      const segmentId = String(p["segmentId"] ?? "").trim();
-      const action = String(p["action"] ?? "").trim();
-      const actionPayload = p["payload"] ?? null;
-      if (!pluginId || !segmentId || !action) {
-        ws.send(JSON.stringify({ type: "error", payload: { message: "plugin_action requires pluginId, segmentId, action" } }));
-        return;
-      }
+
       const def = pluginRegistry.getSegmentDef(pluginId, segmentId);
-      if (!def?.onAction) {
-        ws.send(JSON.stringify({ type: "error", payload: { message: `No action handler for plugin ${pluginId}:${segmentId}` } }));
+      if (!def?.onEvent) {
+        sendError(ws, `No event handler for plugin ${pluginId}:${segmentId}`);
         return;
       }
-      const handler = def.onAction;
-      const r = store.mutate(meta.showId, (snap) => {
+
+      const handler = def.onEvent;
+      const result = store.mutate(meta.showId, (snap) => {
+        const actor = {
+          participantId: meta.participantId,
+          displayName: meta.displayName,
+          role: meta.role,
+        } as const;
         const ctx = {
           snapshot: snap,
           requestTransition: (to: import("./phase.js").Phase) => applyHostTransition(snap, to),
@@ -276,44 +270,56 @@ wss.on("connection", (ws, req) => {
             snap.segmentState[key] = value;
           },
         };
-        return handler(action, actionPayload, ctx);
+        return handler(event, eventPayload, actor, ctx);
       });
-      if (r.ok) broadcast(meta.showId, { type: "snapshot", payload: r.snapshot });
-      else ws.send(JSON.stringify({ type: "error", payload: { message: r.error } }));
-      return;
-    }
 
-    if (type === "player_donation") {
-      if (meta.role !== "player") {
-        ws.send(JSON.stringify({ type: "error", payload: { message: "Players only" } }));
+      if (result.ok) broadcast(meta.showId, { type: "snapshot", payload: result.snapshot });
+      else sendError(ws, result.error);
+    };
+
+    switch (inbound.type) {
+      case "join": {
+        handleJoin(inbound.payload);
         return;
       }
-      if (!payload || typeof payload !== "object") return;
-      const p = payload as Record<string, unknown>;
-      const amount = p["amount"];
-      const seatIndex = p["seatIndex"];
-      if (typeof amount !== "number" || !Number.isFinite(amount) || amount < 0) return;
-      if (typeof seatIndex !== "number" || seatIndex < 0 || seatIndex > 4) return;
-      const r = store.mutate(meta.showId, (snap) => {
-        if (
-          snap.phase.kind !== "plugin_segment" ||
-          snap.phase.pluginId !== "funeral" ||
-          snap.phase.id !== "donations"
-        ) {
-          return { ok: false, error: "Donations not open" };
-        }
-        const score = snap.scores[seatIndex];
-        if (amount > score) return { ok: false, error: "Donation exceeds score" };
-        const state = (snap.segmentState["donations"] ?? {
-          bySeat: [null, null, null, null, null],
-        }) as { bySeat: [number | null, number | null, number | null, number | null, number | null] };
-        state.bySeat[seatIndex] = amount;
-        snap.segmentState["donations"] = state;
-        return { ok: true };
-      });
-      if (r.ok) broadcast(meta.showId, { type: "snapshot", payload: r.snapshot });
-      else ws.send(JSON.stringify({ type: "error", payload: { message: r.error } }));
-      return;
+      case "chat": {
+        const meta = requireMeta();
+        if (!meta) return;
+        handleChat(meta, inbound.payload);
+        return;
+      }
+      case "host_transition": {
+        const meta = requireMeta();
+        if (!meta) return;
+        handleHostTransition(meta, inbound.payload);
+        return;
+      }
+      case "host_score_step": {
+        const meta = requireMeta();
+        if (!meta) return;
+        handleHostScoreStep(meta, inbound.payload);
+        return;
+      }
+      case "opening_show_mark_correct": {
+        const meta = requireMeta();
+        if (!meta) return;
+        handleOpeningShowMarkCorrect(meta, inbound.payload);
+        return;
+      }
+      case "opening_show_next_emoji": {
+        const meta = requireMeta();
+        if (!meta) return;
+        handleOpeningShowNextEmoji(meta);
+        return;
+      }
+      case "plugin_event": {
+        const meta = requireMeta();
+        if (!meta) return;
+        handlePluginEvent(meta, inbound.payload);
+        return;
+      }
+      default:
+        return;
     }
   });
 

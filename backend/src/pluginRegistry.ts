@@ -25,6 +25,12 @@ import { registerServer as registerFinalRoundSelection } from "@adept-plugins/fi
 import type { Phase } from "./phase.js";
 import type { SessionSnapshot } from "./session.js";
 
+export type Actor = {
+  participantId: string;
+  displayName: string;
+  role: "host" | "player" | "spectator";
+};
+
 export type MutatorResult = { ok: true } | { ok: false; error: string };
 
 export type Ctx = {
@@ -39,6 +45,13 @@ export type SegmentActionHandler = (
   ctx: Ctx,
 ) => MutatorResult;
 
+export type SegmentEventHandler = (
+  event: string,
+  payload: unknown,
+  actor: Actor,
+  ctx: Ctx,
+) => MutatorResult;
+
 export type SegmentDefinition = {
   pluginId: string;
   id: string;
@@ -47,6 +60,7 @@ export type SegmentDefinition = {
   /** Phase key of the following phase, e.g. `"round:3"`. */
   toPhaseKey: string;
   onAction?: SegmentActionHandler;
+  onEvent?: SegmentEventHandler;
 };
 
 export type CardHandlerDef = {
@@ -107,7 +121,7 @@ class PluginRegistryImpl {
 
 export const pluginRegistry = new PluginRegistryImpl();
 
-// Register round transitionplugins
+// Register round transition plugins
 
 registerSpectatorBet(pluginRegistry);
 

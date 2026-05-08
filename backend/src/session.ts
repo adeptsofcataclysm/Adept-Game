@@ -26,17 +26,6 @@ export type Participant = {
   role: Role;
 };
 
-/** Well-known key `"spectator_picks"` in `segmentState`. */
-export type SpectatorPicksState = {
-  locked: boolean;
-  bets: Record<string, 1 | 2 | 3 | 4 | 5>;
-};
-
-/** Well-known key `"donations"` in `segmentState`. */
-export type DonationsState = {
-  bySeat: [number | null, number | null, number | null, number | null, number | null];
-};
-
 export type SessionSnapshot = {
   showId: string;
   version: number;
@@ -54,9 +43,7 @@ export type SessionSnapshot = {
   finalTransitionBoard: RoundBoardRuntime;
   /**
    * All plugin-managed state lives here, keyed by a stable string the plugin owns.
-   * Well-known keys: `"spectator_bet"` (SpectatorBetState),
-   *                  `"donations"` (DonationsState).
-   * The core session service never reads or writes this object except to back-fill it.
+   * The core session service never reads or writes this object.
    */
   segmentState: Record<string, unknown>;
   openingShow: { emojiLineIndex: number; spectatorCorrectCounts: Record<string, number> };
@@ -72,8 +59,6 @@ export function createInitialSession(showId: string): SessionSnapshot {
     3: loadRoundBoard(3),
   };
   const finalTransitionBoard = loadRoundBoardFile(4);
-  const spectatorPicksInit: SpectatorPicksState = { locked: false, bets: {} };
-  const donationsInit: DonationsState = { bySeat: [null, null, null, null, null] };
   return {
     showId,
     version: 1,
@@ -83,10 +68,7 @@ export function createInitialSession(showId: string): SessionSnapshot {
     currentTurnSeat: 0,
     roundBoard,
     finalTransitionBoard,
-    segmentState: {
-      spectator_picks: spectatorPicksInit,
-      donations: donationsInit,
-    },
+    segmentState: {},
     openingShow: { emojiLineIndex: 0, spectatorCorrectCounts: {} },
     lottery: { candidates: [], optOut: {}, lastWinnerNick: null },
     chat: [],
