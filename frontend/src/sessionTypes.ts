@@ -2,9 +2,9 @@
  * Mirrors backend snapshot for the SPA projection (authoritative copy from server).
  *
  * Main anchor phases: lobby → round:1 → round:2 → round:3 → final
- * `final` is terminal. All other segments (spectator_picks, story_video,
- * donations, between_final …) are `plugin_segment` instances registered via
- * PluginRegistry.
+ * `final` is terminal. All other segments (spectator_picks,
+ * funeral:story_video, funeral:donations, between_final …) are
+ * `plugin_segment` instances registered via PluginRegistry.
  */
 
 /** In sync with `backend/src/session.ts` `MAX_CHAT_MESSAGES`. */
@@ -71,7 +71,7 @@ export type SpectatorPicksState = {
   bets: Record<string, 1 | 2 | 3 | 4 | 5>;
 };
 
-/** `segmentState["donations"]` — written by builtin:donations segment */
+/** `segmentState["donations"]` — written by @adept-plugins/funeral donations segment */
 export type DonationsState = {
   bySeat: [number | null, number | null, number | null, number | null, number | null];
 };

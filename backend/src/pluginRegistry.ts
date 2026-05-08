@@ -5,13 +5,14 @@
  * and the card-kind action handlers. `applyHostTransition` passes
  * `pluginRegistry.edges` to `canTransition` so the FSM stays data-driven.
  *
- * Built-in segments registered here (pluginId "builtin"):
- *   story_video   : round:2  → story_video  → donations
- *   donations     : story_video → donations → round:3
- *   between_final : round:3  → between_final → final
- *
- * @adept-plugins/spectator-picks registers itself (pluginId "spectator-picks"):
- *   spectator_picks: lobby → spectator_picks → round:1
+ * Plugin registrations:
+ *   @adept-plugins/spectator-picks (pluginId "spectator-picks"):
+ *     spectator_picks: lobby → spectator_picks → round:1
+ *   @adept-plugins/funeral (pluginId "funeral"):
+ *     story_video : round:2 → story_video → donations
+ *     donations   : story_video → donations → round:3
+ *   @adept-plugins/final-round-selection (pluginId "final-round-selection"):
+ *     between_final: round:3 → between_final → final
  *
  * Card kinds registered here (pluginId "builtin"):
  *   wheel    — Wheel of Adepts card
@@ -19,6 +20,8 @@
  */
 
 import { registerServer as registerSpectatorPicks } from "@adept-plugins/spectator-picks";
+import { registerServer as registerFuneral } from "@adept-plugins/funeral";
+import { registerServer as registerFinalRoundSelection } from "@adept-plugins/final-round-selection";
 import type { Phase } from "./phase.js";
 import type { SessionSnapshot } from "./session.js";
 
@@ -99,32 +102,16 @@ export const pluginRegistry = new PluginRegistryImpl();
 registerSpectatorPicks(pluginRegistry);
 
 // ---------------------------------------------------------------------------
-// Built-in segment registrations (pluginId "builtin")
+// @adept-plugins/funeral (round:2 → story_video → donations → round:3)
 // ---------------------------------------------------------------------------
 
-// story_video: round:2 → story_video → donations
-pluginRegistry.registerSegment({
-  pluginId: "builtin",
-  id: "story_video",
-  fromPhaseKey: "round:2",
-  toPhaseKey: "plugin_segment:builtin:donations",
-});
+registerFuneral(pluginRegistry);
 
-// donations: story_video → donations → round:3
-pluginRegistry.registerSegment({
-  pluginId: "builtin",
-  id: "donations",
-  fromPhaseKey: "plugin_segment:builtin:story_video",
-  toPhaseKey: "round:3",
-});
+// ---------------------------------------------------------------------------
+// @adept-plugins/final-round-selection (round:3 → between_final → final)
+// ---------------------------------------------------------------------------
 
-// between_final: round:3 → between_final → final
-pluginRegistry.registerSegment({
-  pluginId: "builtin",
-  id: "between_final",
-  fromPhaseKey: "round:3",
-  toPhaseKey: "final",
-});
+registerFinalRoundSelection(pluginRegistry);
 
 // ---------------------------------------------------------------------------
 // Built-in card kind registrations (pluginId "builtin")

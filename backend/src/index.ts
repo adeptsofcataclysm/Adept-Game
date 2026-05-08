@@ -297,6 +297,7 @@ wss.on("connection", (ws, req) => {
       const r = store.mutate(meta.showId, (snap) => {
         if (
           snap.phase.kind !== "plugin_segment" ||
+          snap.phase.pluginId !== "funeral" ||
           snap.phase.id !== "donations"
         ) {
           return { ok: false, error: "Donations not open" };

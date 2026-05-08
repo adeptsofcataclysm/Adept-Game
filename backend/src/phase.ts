@@ -1,18 +1,17 @@
 /**
- * Authoritative show lifecycle.
+ * Authoritative game lifecycle.
  *
  * Main anchor phases:
  *   lobby  →  round:1 → round:2 → round:3  →  final
  *
- * `final` is terminal — there is no separate game-over state.
  *
- * Everything else (spectator_picks, story_video, donations, between_final,
- * mini_wheel, mini_roulette …) lives as a `plugin_segment` registered via
- * `PluginRegistry`. The core map only contains anchor ↔ anchor edges so the
- * cell-reveal authority and per-round counters are immutable.
+ * Everything else (spectator_picks, funeral:story_video, funeral:donations,
+ * between_final, mini_wheel, mini_roulette …) lives as a `plugin_segment`
+ * registered via `PluginRegistry`. The core map only contains anchor ↔ anchor
+ * edges so the cell-reveal authority and per-round counters are immutable.
  *
  * Direct anchor hops (e.g. round:2 → round:3) exist in the core map so a
- * show can skip optional segments when none are registered for that slot.
+ * game can skip optional segments when none are registered for that slot.
  */
 
 export type RoundIndex = 1 | 2 | 3;

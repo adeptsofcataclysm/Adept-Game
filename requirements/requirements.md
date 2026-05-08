@@ -1,8 +1,8 @@
 # Requirements
 
-**Normative source:** [`vision.md`](./vision.md). This document restates that vision as testable **requirements** (the word **shall** indicates a mandatory behavior). No implementation, stack, or repository layout is assumed.
+**Normative source:** `[vision.md](./vision.md)`. This document restates that vision as testable **requirements** (the word **shall** indicates a mandatory behavior). No implementation, stack, or repository layout is assumed.
 
-**Terms:** Capitalized role and feature names match the glossary in [`vision.md`](./vision.md).
+**Terms:** Capitalized role and feature names match the glossary in `[vision.md](./vision.md)`.
 
 ---
 
@@ -65,10 +65,10 @@ During a **round**, the interface shall include:
 1. Opening this card shall send the **Player** into the **Wheel of Adepts** mini-game (REQ-11).
 2. After **each** spin, points shall be added or removed according to the sector landed on.
 3. **Special sectors** shall behave as follows:
-   - **Swap:** the **Player** chooses another **Player** and **exchanges** scores with them.
-   - **Catch the thief:** the **Player** takes **500** points from another **Player**.
-   - **Wipe:** **all** **Players**’ scores become zero.
-   - **Recite a poem:** the **Player** may recite a poem for points set by the **Host**, or skip.
+  - **Swap:** the **Player** chooses another **Player** and **exchanges** scores with them.
+  - **Catch the thief:** the **Player** takes **500** points from another **Player**.
+  - **Wipe:** **all** **Players**’ scores become zero.
+  - **Recite a poem:** the **Player** may recite a poem for points set by the **Host**, or skip.
 
 ### REQ-5.3 — Question card plus one wheel spin
 
@@ -114,9 +114,9 @@ During a **round**, the interface shall include:
 
 ---
 
-## REQ-9 — Spectator picks
+## REQ-9 — Spectator bets
 
-1. **Spectator picks** shall run after all **Round 1** **Players** are known and **before Round 1** begins.
+1. The system shall support a **Spectator bets / Spectator picks** segment before **Round 1** starts (it may be implemented as a plugin segment).
 2. **Spectators** shall **bet on a Player number** (seat).
 3. Winners shall be those who picked the **Player number** that, after **three rounds**, has the **highest** total score.
 
@@ -140,14 +140,14 @@ During a **round**, the interface shall include:
 
 ---
 
-## REQ-12 — Between-rounds transition (after Round 2)
+## REQ-12 — Story video
 
-1. This transition shall run **only after Round 2** ends.
+1. This transition shall be supported as a **between-round segment** (it may be implemented as a plugin segment).
 2. **Host**, **Players**, and **Spectators** shall all watch a **story video**.
 3. Then each **Player** shall enter a **donation** of points to “good causes”, or **0**.
 4. Donations shall be **≥ 0**, shall not exceed the **Player**’s current score, and shall not be negative.
 5. A small **table** on the board (three columns on the right) shall **store** these amounts until the end of the game.
-6. Stored amounts shall act as **stakes**: when a **specific card** opens in **Round 3**, they **activate**—multiplied by **×2** and **redistributed** among other **Players** per that **card**’s rules.
+6. Stored amounts shall act as **stakes**: when a **specific card** opens in **Round 3**, they **activate**—multiplied by **×2** and **redistributed** among other **Players** per that card’s rules.
 
 ---
 
@@ -162,7 +162,7 @@ During a **round**, the interface shall include:
 ## REQ-14 — Roles and permissions (product)
 
 1. **Host** shall run the session: pacing, reveals, scoring, and structural moves.
-2. In this product, **Host** shall correspond to use of the **`/admin`** route after successful **authentication**.
+2. In this product, **Host** shall correspond to use of the `**/admin`** route after successful **authentication**.
 3. **Host** shall control **rounds** and the **question board**, manage **Players**, open **Roulette** and **Wheel of Adepts** (including **repeated** opens **within** a round), and start the **Lottery** after each **Roulette** that requires it.
 4. **Player** shall see the **quiz board**, use **Wheel of Adepts** when allowed, and participate in **Russian roulette** when **Roulette** runs.
 5. **Spectator** shall see everything during **rounds** but not take **Player**-level actions.
@@ -181,5 +181,6 @@ During a **round**, the interface shall include:
 
 ## Document control
 
-- **Authoritative product text** remains [`vision.md`](./vision.md).
+- **Authoritative product text** remains `[vision.md](./vision.md)`.
 - When the vision changes, update this requirements list to stay aligned.
+

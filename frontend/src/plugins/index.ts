@@ -8,18 +8,16 @@
 
 import { clientPluginRegistry } from "./registry";
 import { registerClient as registerSpectatorPicksClient } from "@adept-plugins/spectator-picks/client";
-import {
-  StoryVideoSegmentView,
-  DonationsSegmentView,
-  BetweenFinalSegmentView,
-} from "./builtins";
+import { registerClient as registerFuneralClient } from "@adept-plugins/funeral/client";
+import { registerClient as registerFinalRoundSelectionClient } from "@adept-plugins/final-round-selection/client";
 
 // @adept-plugins/spectator-picks
 registerSpectatorPicksClient(clientPluginRegistry);
 
-// Built-in segments
-clientPluginRegistry.registerSegmentView("builtin", "story_video", StoryVideoSegmentView);
-clientPluginRegistry.registerSegmentView("builtin", "donations", DonationsSegmentView);
-clientPluginRegistry.registerSegmentView("builtin", "between_final", BetweenFinalSegmentView);
+// @adept-plugins/funeral (story_video + donations)
+registerFuneralClient(clientPluginRegistry);
+
+// @adept-plugins/final-round-selection
+registerFinalRoundSelectionClient(clientPluginRegistry);
 
 export { clientPluginRegistry };
