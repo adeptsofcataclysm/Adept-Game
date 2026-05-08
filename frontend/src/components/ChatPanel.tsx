@@ -143,7 +143,7 @@ export function ChatPanel({ messages, connected = true, value, onChange, onSendM
           <p className="chat-panel__empty">
             {!connected
               ? "Нет соединения с сервером — сообщения появятся после подключения."
-              : "Пока нет сообщений. Напишите ниже и нажмите «>» или Enter."}
+              : "Пока нет сообщений. Пеши исчо!!."}
           </p>
         ) : (
           messages.map((msg) => (

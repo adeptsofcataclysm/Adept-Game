@@ -1,4 +1,11 @@
-/** Mirrors backend snapshot for the SPA projection (authoritative copy from server). */
+/**
+ * Mirrors backend snapshot for the SPA projection (authoritative copy from server).
+ *
+ * Main anchor phases: lobby → round:1 → round:2 → round:3 → final
+ * `final` is terminal. All other segments (spectator_bet,
+ * funeral:story_video, funeral:donations, between_final …) are
+ * `plugin_segment` instances registered via PluginRegistry.
+ */
 
 /** In sync with `backend/src/session.ts` `MAX_CHAT_MESSAGES`. */
 export const MAX_CHAT_MESSAGES = 50;
@@ -7,15 +14,10 @@ export type RoundIndex = 1 | 2 | 3;
 
 export type Phase =
   | { kind: "lobby" }
-  | { kind: "spectator_picks" }
   | { kind: "round"; roundIndex: RoundIndex }
-  | { kind: "mini_wheel"; roundIndex: RoundIndex }
-  | { kind: "mini_roulette"; roundIndex: RoundIndex }
-  | { kind: "story_video" }
-  | { kind: "donations" }
-  | { kind: "between_final" }
   | { kind: "final" }
-  | { kind: "game_over" };
+  /** Opaque segment registered by a plugin (first-party or third-party). */
+  | { kind: "plugin_segment"; id: string; pluginId: string };
 
 export type Role = "host" | "player" | "spectator";
 
@@ -40,6 +42,10 @@ export type QuestionCell = {
   questionUrl: string;
   answerText: string;
   answerUrl: string;
+  /** Identifies the card handler; standard quiz cell when absent. */
+  cardKind?: string;
+  /** Handler-specific parameters for non-standard card kinds. */
+  cardParams?: unknown;
   splashUrl?: string;
   splashVariant?: "spiral" | "dedFly";
   splashAudioUrl?: string;
@@ -50,26 +56,30 @@ export type QuestionCell = {
 
 export type RoundBoardRuntime = {
   themes: string[];
+  /** Optional icon URL per theme row (same length as `themes`). When absent or null → client falls back to theme-name mapping. */
+  themeIcons?: (string | null)[];
   questions: QuestionCell[][];
   revealed: boolean[][];
   pointValues: number[][];
 };
 
+// ---------------------------------------------------------------------------
+// Session snapshot
+// ---------------------------------------------------------------------------
+
 export type SessionSnapshot = {
   showId: string;
   version: number;
   phase: Phase;
+  /** Canonical phase timeline for host navigation UI (from backend). */
+  phaseNav: Phase[];
   scores: Scores;
   currentTurnSeat: number;
   roundBoard: Record<RoundIndex, RoundBoardRuntime>;
   /** `round-4.json` — transition to Final / Final segment (REQ-13). */
   finalTransitionBoard: RoundBoardRuntime;
-  /** Count of Wheel / Roulette mini-games started from the board in rounds 1–3 (index 0 = round 1). */
-  miniWheelPlaysByRound: [number, number, number];
-  miniRoulettePlaysByRound: [number, number, number];
+  segmentState: Record<string, unknown>;
   openingShow: { emojiLineIndex: number; spectatorCorrectCounts: Record<string, number> };
-  spectatorPicks: { locked: boolean; bets: Record<string, 1 | 2 | 3 | 4 | 5> };
-  donations: { bySeat: [number | null, number | null, number | null, number | null, number | null] };
   lottery: { candidates: string[]; optOut: Record<string, true>; lastWinnerNick: string | null };
   chat: ChatLine[];
   participants: Participant[];

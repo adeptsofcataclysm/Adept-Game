@@ -1,8 +1,20 @@
 :root {
-  font-family: system-ui, sans-serif;
+  font-family: system-ui, "Noto Color Emoji", "Apple Color Emoji", "Segoe UI Emoji", sans-serif;
   line-height: 1.45;
   color: #e8eaef;
   background: #12141a;
+}
+
+@font-face {
+  font-family: "Noto Color Emoji";
+  src: url("/fonts/NotoColorEmoji.ttf") format("truetype");
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "WarCraft";
+  src: url("/fonts/WarCraft.ttf") format("truetype");
+  font-display: swap;
 }
 
 * {
@@ -55,18 +67,6 @@ code {
   margin-bottom: 1rem;
 }
 
-.row {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.5rem;
-  align-items: center;
-}
-
-.phase {
-  font-weight: 600;
-  color: #f5d76e;
-}
-
 .adepts-show-shell {
   font-family: "Space Grotesk", system-ui, sans-serif;
   color: hsl(210, 40%, 98%);
@@ -104,7 +104,7 @@ code {
   flex: 1;
   min-height: 0;
   display: grid;
-  grid-template-columns: minmax(220px, 280px) minmax(0, 1fr);
+  grid-template-columns: minmax(220px, 280px) minmax(0, 1fr) minmax(220px, 280px);
   /* One row fills the flex area; min height keeps the chat list visible even when 1fr collapses. */
   grid-template-rows: minmax(12rem, 1fr);
   gap: 1rem;
@@ -112,7 +112,6 @@ code {
   overflow: hidden;
 }
 
-/* Node-Script Scoreboard.tsx root — panel chrome only (no slot cards yet). */
 .adepts-players-panel {
   width: 100%;
   min-width: 0;
@@ -150,6 +149,13 @@ code {
   flex-direction: column;
 }
 
+.adepts-show-rail-col {
+  min-width: 0;
+  min-height: 0;
+  max-height: 100%;
+  align-self: stretch;
+}
+
 .adepts-show-main-col {
   min-width: 0;
   min-height: 0;
@@ -177,12 +183,528 @@ code {
   min-height: 0;
   display: flex;
   flex-direction: column;
+  border: none;
 }
 
 .adepts-show-board-card .adepts-show-board-scroll {
   flex: 1;
   min-height: 0;
   overflow: auto;
+}
+
+.adepts-quiz-theme {
+  font-family: "Space Grotesk", system-ui, sans-serif;
+  color: hsl(210, 40%, 98%);
+  background: transparent;
+  box-shadow: 0 0 18px hsla(300, 90%, 55%, 0.18);
+}
+
+/* Board scroll: hide visible scrollbar (prevents flicker on board swaps). */
+.adepts-quiz-theme .adepts-quiz-board-scroll {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+.adepts-quiz-theme .adepts-quiz-board-scroll::-webkit-scrollbar {
+  width: 0;
+  height: 0;
+  display: none;
+}
+
+.adepts-quiz-theme .glow-text {
+  text-shadow:
+    0 0 10px hsla(45, 93%, 47%, 0.5),
+    0 0 20px hsla(45, 93%, 47%, 0.3);
+}
+
+.adepts-quiz-theme .adepts-quiz-board-preview {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  height: 100%;
+  min-height: 0;
+  width: 100%;
+}
+
+.adepts-quiz-theme .adepts-quiz-board-preview__row {
+  display: flex;
+  gap: 0.75rem;
+  align-items: stretch;
+  flex: 1;
+  min-height: 0;
+}
+
+.adepts-quiz-theme .adepts-quiz-board-preview__theme {
+  flex: 0 0 21%;
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 0.75rem;
+  overflow: hidden;
+  position: relative;
+  background: linear-gradient(105deg, hsla(270, 40%, 12%, 0.95) 0%, hsla(270, 30%, 9%, 0.7) 100%);
+  border: 1px solid hsla(280, 40%, 35%, 0.4);
+  border-left: 3px solid hsla(280, 65%, 58%, 0.85);
+  box-shadow: inset 0 0 30px hsla(280, 60%, 15%, 0.4);
+  padding: 0.75rem 3.25rem 0.75rem 0.9rem;
+}
+
+.adepts-quiz-theme .adepts-quiz-board-preview__theme-edit {
+  position: absolute;
+  left: 0.45rem;
+  top: 0.45rem;
+  width: 28px;
+  height: 28px;
+  border-radius: 8px;
+  border: 1px solid hsla(45, 93%, 47%, 0.35);
+  background: hsla(260, 40%, 7%, 0.55);
+  color: hsla(45, 93%, 47%, 0.9);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  line-height: 0;
+  opacity: 0;
+  transform: translateY(-2px);
+  transition: opacity 0.12s ease, transform 0.12s ease, background 0.12s ease, border-color 0.12s ease;
+}
+
+.adepts-quiz-theme .adepts-quiz-board-preview__theme:hover .adepts-quiz-board-preview__theme-edit {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.adepts-quiz-theme .adepts-quiz-board-preview__theme-edit:hover {
+  background: hsla(45, 93%, 47%, 0.12);
+  border-color: hsla(45, 93%, 47%, 0.6);
+}
+
+.adepts-quiz-theme .adepts-quiz-board-preview__theme-edit:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 2px rgba(46, 204, 113, 0.45);
+}
+
+.adepts-modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.65);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1rem;
+  z-index: 1000;
+}
+
+.adepts-modal {
+  width: min(720px, 96vw);
+  max-height: min(80vh, 720px);
+  overflow: auto;
+  border-radius: 12px;
+  border: 1px solid #2a3142;
+  background: #12161f;
+  box-shadow: 0 12px 42px rgba(0, 0, 0, 0.55);
+}
+
+.adepts-modal__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  padding: 0.85rem 1rem;
+  border-bottom: 1px solid rgba(192, 38, 211, 0.2);
+}
+
+.adepts-modal__title {
+  font-family: Cinzel, "Times New Roman", serif;
+  letter-spacing: 0.08em;
+  font-weight: 700;
+  color: hsla(45, 93%, 47%, 0.92);
+}
+
+.adepts-modal__x {
+  width: 32px;
+  height: 32px;
+  border-radius: 10px;
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  background: rgba(255, 255, 255, 0.05);
+  color: rgba(255, 255, 255, 0.8);
+}
+
+.adepts-modal__x:hover {
+  background: rgba(255, 255, 255, 0.09);
+}
+
+.adepts-modal__body {
+  padding: 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.9rem;
+}
+
+.adepts-modal__foot {
+  padding: 0.85rem 1rem;
+  border-top: 1px solid rgba(192, 38, 211, 0.2);
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.5rem;
+}
+
+.adepts-field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
+.adepts-field__label {
+  font-size: 0.75rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.6);
+}
+
+.adepts-field__input {
+  border-radius: 10px;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  background: rgba(255, 255, 255, 0.04);
+  color: rgba(255, 255, 255, 0.92);
+  padding: 0.55rem 0.7rem;
+  outline: none;
+}
+
+.adepts-field__input:focus {
+  border-color: hsla(45, 93%, 47%, 0.55);
+}
+
+.adepts-btn {
+  border-radius: 10px;
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  background: rgba(255, 255, 255, 0.06);
+  color: rgba(255, 255, 255, 0.86);
+  padding: 0.5rem 0.75rem;
+  transition: background 0.12s ease, border-color 0.12s ease;
+}
+
+.adepts-btn:hover {
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.adepts-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.adepts-btn--primary {
+  border-color: hsla(45, 93%, 47%, 0.45);
+  background: hsla(45, 93%, 47%, 0.14);
+  color: hsla(45, 93%, 47%, 0.95);
+}
+
+.adepts-btn--primary:hover {
+  background: hsla(45, 93%, 47%, 0.22);
+}
+
+.adepts-btn--file {
+  position: relative;
+  overflow: hidden;
+}
+
+.adepts-btn--file input[type="file"] {
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  cursor: pointer;
+}
+
+.adepts-theme-icon-editor {
+  display: grid;
+  grid-template-columns: 84px 1fr;
+  gap: 0.85rem;
+  align-items: start;
+}
+
+.adepts-theme-icon-editor__preview {
+  width: 84px;
+  height: 84px;
+  border-radius: 16px;
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  background: rgba(255, 255, 255, 0.04);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+}
+
+.adepts-theme-icon-editor__preview img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
+.adepts-theme-icon-editor__preview span {
+  font-family: Cinzel, "Times New Roman", serif;
+  font-weight: 800;
+  font-size: 1.6rem;
+  color: hsla(45, 93%, 47%, 0.85);
+}
+
+.adepts-theme-icon-editor__controls {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.adepts-theme-icon-editor__row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.adepts-quiz-theme .adepts-quiz-board-preview__theme-text {
+  font-family: "WarCraft", Cinzel, "Times New Roman", serif;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  font-size: clamp(0.85rem, 1.35vw, 1.2rem);
+  text-align: center;
+  text-shadow: 0 0 20px hsla(280, 65%, 70%, 0.18);
+  word-break: break-word;
+}
+
+.adepts-quiz-theme .adepts-quiz-board-preview__theme-icon {
+  position: absolute;
+  right: 0.6rem;
+  top: 50%;
+  transform: translateY(-50%);
+  height: 3.1rem;
+  width: auto;
+  object-fit: contain;
+  pointer-events: none;
+  user-select: none;
+  filter:
+    drop-shadow(0 0 5px hsla(45, 100%, 60%, 0.35))
+    drop-shadow(0 0 12px hsla(45, 100%, 55%, 0.18));
+  opacity: 0.95;
+}
+
+.adepts-quiz-theme .adepts-quiz-board-preview__theme-icon-fallback {
+  position: absolute;
+  right: 0.75rem;
+  top: 50%;
+  transform: translateY(-50%);
+  height: 2.35rem;
+  width: 2.35rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 999px;
+  border: 1px solid hsla(45, 93%, 47%, 0.3);
+  background: hsla(45, 93%, 47%, 0.08);
+  color: hsla(45, 93%, 47%, 0.85);
+  font-family: Cinzel, "Times New Roman", serif;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  pointer-events: none;
+  user-select: none;
+}
+
+.adepts-quiz-theme .adepts-quiz-board-preview__cells {
+  flex: 1;
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 0.75rem;
+  min-width: 0;
+  min-height: 0;
+  align-items: stretch;
+}
+
+.adepts-quiz-theme .adepts-quiz-board-preview__cell {
+  border-radius: 0.75rem;
+  overflow: hidden;
+  border: 1px solid hsla(45, 93%, 47%, 0.22);
+  background: hsla(270, 50%, 15%, 0.22);
+  box-shadow: 0 0 0 rgba(0, 0, 0, 0);
+  transition:
+    transform 0.12s ease-out,
+    border-color 0.12s ease-out,
+    background 0.12s ease-out,
+    box-shadow 0.12s ease-out,
+    opacity 0.12s ease-out;
+  min-height: 0;
+  display: flex;
+}
+
+.adepts-quiz-theme .adepts-quiz-board-preview__cell--closed:hover {
+  transform: translateY(-2px) scale(1.02);
+  border-color: hsla(45, 93%, 47%, 0.45);
+  box-shadow: 0 0 22px hsla(280, 65%, 50%, 0.18);
+}
+
+.adepts-quiz-theme .adepts-quiz-board-preview__cell--opened {
+  opacity: 0.68;
+  border-color: hsla(275, 55%, 42%, 0.22);
+  background: hsla(260, 40%, 5%, 0.25);
+}
+
+.adepts-quiz-theme .adepts-quiz-board-preview__closed {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.35rem;
+}
+
+.adepts-quiz-theme .adepts-quiz-board-preview__points {
+  font-family: "WarCraft", Cinzel, "Times New Roman", serif;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  font-size: clamp(1.25rem, 2.6vw, 2rem);
+  color: hsl(45, 93%, 47%);
+  opacity: 0.92;
+}
+
+.adepts-quiz-theme .adepts-quiz-board-preview__opened {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  padding: 0.35rem 0.5rem;
+}
+
+.adepts-quiz-theme .adepts-quiz-board-preview__opened-text {
+  font-size: 0.82rem;
+  line-height: 1.25;
+  color: rgba(255, 255, 255, 0.82);
+}
+
+.adepts-quiz-theme .adepts-quiz-board-preview__opened-sub {
+  margin-top: 0.25rem;
+  font-size: 0.7rem;
+  opacity: 0.55;
+  font-family: ui-monospace, monospace;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+/* Host\Player login page. */
+
+.adepts-login {
+  min-height: 100vh;
+  background: #1a1a2e;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New",
+    monospace;
+  padding: 24px;
+}
+
+.adepts-login__title {
+  font-size: clamp(18px, 3.5vw, 32px);
+  font-weight: 700;
+  color: #f1c40f;
+  text-shadow: 0 0 18px rgba(241, 196, 15, 0.7);
+  text-align: center;
+  margin-bottom: 36px;
+  letter-spacing: 1px;
+}
+
+.adepts-login__form{
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  max-width: 320px;
+}
+
+.adepts-login__input{
+  width: 100%;
+  padding: 10px 16px;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(241, 196, 15, 0.4);
+  border-radius: 6px;
+  color: #fff;
+  font-size: 16px;
+  outline: none;
+  text-align: center;
+  letter-spacing: 2px;
+  box-shadow: 0 0 12px rgba(241, 196, 15, 0.1);
+  transition: border-color 0.2s;
+}
+
+.adepts-login__input:focus{
+  border-color: #f1c40f;
+}
+
+.adepts-login__input:disabled{
+  opacity: 0.6;
+}
+
+.adepts-login__submit {
+  padding: 8px 32px;
+  background: transparent;
+  border: 1px solid #8e44ad;
+  border-radius: 4px;
+  color: #c39bd3;
+  font-size: 12px;
+  letter-spacing: 3px;
+  text-transform: uppercase;
+  cursor: pointer;
+  opacity: 1;
+  transition:
+    opacity 0.2s,
+    box-shadow 0.2s;
+}
+
+.adepts-login__submit:disabled {
+  cursor: not-allowed;
+  opacity: 0.4;
+}
+
+.adepts-login__submit:not(:disabled):hover {
+  box-shadow: 0 0 12px rgba(142, 68, 173, 0.6);
+}
+
+.adepts-login__status {
+  margin-top: 40px;
+  height: 48px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: visible;
+  width: 100%;
+}
+
+.adepts-login__ok-wrap,
+.adepts-login__fail-wrap{
+  display: flex;
+  justify-content: center;
+  gap: 0;
+  overflow: visible;
+}
+
+.adepts-login__ok-char,
+.adepts-login__fail-char {
+  display: inline-block;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New",
+    monospace;
+  font-weight: 700;
+  font-size: clamp(18px, 3vw, 26px);
+  white-space: pre;
+}
+
+.adepts-login__ok-char {
+  color: #2ecc71;
+  text-shadow: 0 0 16px #2ecc71, 0 0 32px rgba(46, 204, 113, 0.6);
+}
+
+.adepts-login__fail-char {
+  text-shadow: 0 0 16px #e74c3c, 0 0 32px rgba(231, 76, 60, 0.7);
+}
+
+.adepts-login--player .adepts-login__ok-char {
+  font-size: clamp(16px, 2.5vw, 24px);
 }
 
 /* Show chat panel. */
@@ -255,6 +777,7 @@ code {
 
 .chat-panel__line-text {
   color: rgba(255, 255, 255, 0.88);
+  font-family: "Arial", "Noto Color Emoji", "Apple Color Emoji", "Segoe UI Emoji", system-ui, sans-serif;
 }
 
 .chat-panel__emoji-sheet {
@@ -278,6 +801,7 @@ code {
   border-radius: 0.25rem;
   padding: 0.25rem;
   line-height: 1;
+  font-family: "Noto Color Emoji", "Apple Color Emoji", "Segoe UI Emoji", system-ui, sans-serif;
   background: transparent;
   color: inherit;
   transition:
@@ -310,6 +834,7 @@ code {
   background: hsla(260, 40%, 5%, 0.5);
   padding: 0.35rem 0.5rem;
   font-size: 0.875rem;
+  font-family: "Arial", "Noto Color Emoji", "Apple Color Emoji", "Segoe UI Emoji", system-ui, sans-serif;
   color: hsl(210, 40%, 98%);
 }
 
@@ -442,6 +967,54 @@ code {
   flex-wrap: wrap;
   align-items: center;
   gap: 0.5rem 0.75rem;
+}
+
+.game-header__phase-nav {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+}
+
+.game-header__phase-nav-btn {
+  width: 28px;
+  height: 28px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 999px;
+  border: 1px solid transparent;
+  background: transparent;
+  color: rgba(255, 255, 255, 0.7);
+  transition: background 0.15s ease, color 0.15s ease, border-color 0.15s ease;
+  padding: 0;
+  line-height: 0;
+}
+
+.game-header__phase-nav-btn:hover {
+  background: rgba(255, 255, 255, 0.1);
+  color: hsl(45, 93%, 52%);
+}
+
+.game-header__phase-nav-btn:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 2px rgba(46, 204, 113, 0.45);
+}
+
+.game-header__phase-nav-btn--disabled {
+  color: rgba(255, 255, 255, 0.2);
+}
+
+.game-header__phase-nav-btn--disabled:hover {
+  background: transparent;
+  color: rgba(255, 255, 255, 0.2);
+}
+
+.game-header__phase-nav-count {
+  padding: 0 0.25rem;
+  font-family: ui-monospace, monospace;
+  font-size: 10px;
+  color: rgba(255, 255, 255, 0.5);
+  font-variant-numeric: tabular-nums;
 }
 
 .game-header__online {

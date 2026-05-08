@@ -24,6 +24,14 @@ export function getWsBaseUrl(): string {
   return DEFAULT;
 }
 
+/** HTTP base URL for the session service (same host/port as WS). */
+export function getHttpBaseUrl(): string {
+  const wsBase = getWsBaseUrl();
+  if (wsBase.startsWith("wss://")) return `https://${wsBase.slice("wss://".length)}`;
+  if (wsBase.startsWith("ws://")) return `http://${wsBase.slice("ws://".length)}`;
+  return wsBase;
+}
+
 export function buildWsUrl(showId: string): string {
   const base = getWsBaseUrl();
   const u = new URL(base);

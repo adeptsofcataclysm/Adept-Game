@@ -9,6 +9,16 @@
     "Фракции",
     "События в WoW"
   ],
+  "themeIcons": [
+    "/theme_icons/lor-adeptov-icon.png",
+    "/theme_icons/cosplay.png",
+    "/theme_icons/mounts-icon.png",
+    "/theme_icons/pashalki.png",
+    "/theme_icons/look-icon.png",
+    "/theme_icons/bossy.png",
+    "/theme_icons/factions-icon.png",
+    "/theme_icons/events-icon.png"
+  ],
   "questions": [
     [
       {

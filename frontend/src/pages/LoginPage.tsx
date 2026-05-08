@@ -7,9 +7,7 @@ const OK_TEXT = "★  Добро пожаловать!";
 
 function OkAnimation() {
   return (
-    <motion.div
-      style={{ display: "flex", justifyContent: "center", gap: 0, overflow: "visible" }}
-    >
+    <motion.div className="adepts-login__ok-wrap">
       {OK_TEXT.split("").map((ch, i) => (
         <motion.span
           key={i}
@@ -21,15 +19,7 @@ function OkAnimation() {
             stiffness: 280,
             damping: 14,
           }}
-          style={{
-            display: "inline-block",
-            color: "#2ecc71",
-            fontFamily: "monospace",
-            fontWeight: 700,
-            fontSize: "clamp(16px, 2.5vw, 24px)",
-            textShadow: "0 0 16px #2ecc71, 0 0 32px rgba(46,204,113,0.6)",
-            whiteSpace: "pre",
-          }}
+          className="adepts-login__ok-char"
         >
           {ch}
         </motion.span>
@@ -58,31 +48,12 @@ export function LoginPage() {
   }
 
   return (
-    <div
-      style={{
-        minHeight: "100vh",
-        background: "#1a1a2e",
-        display: "flex",
-        flexDirection: "column",
-        alignItems: "center",
-        justifyContent: "center",
-        fontFamily: "monospace",
-        padding: 24,
-      }}
-    >
+    <div className="adepts-login adepts-login--player">
       <motion.div
         initial={{ opacity: 0, y: -20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.5 }}
-        style={{
-          fontSize: "clamp(18px, 3.5vw, 32px)",
-          fontWeight: 700,
-          color: "#f1c40f",
-          textShadow: "0 0 18px rgba(241,196,15,0.7)",
-          textAlign: "center",
-          marginBottom: 36,
-          letterSpacing: "1px",
-        }}
+        className="adepts-login__title"
       >
         Самый Душный 3.0
       </motion.div>
@@ -92,14 +63,7 @@ export function LoginPage() {
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         transition={{ duration: 0.5, delay: 0.2 }}
-        style={{
-          display: "flex",
-          flexDirection: "column",
-          alignItems: "center",
-          gap: 12,
-          width: "100%",
-          maxWidth: 320,
-        }}
+        className="adepts-login__form"
       >
         <input
           ref={inputRef}
@@ -109,67 +73,18 @@ export function LoginPage() {
           autoFocus
           placeholder="Введите свой ник"
           maxLength={64}
-          style={{
-            width: "100%",
-            padding: "10px 16px",
-            background: "rgba(255,255,255,0.05)",
-            border: "1px solid rgba(241,196,15,0.4)",
-            borderRadius: 6,
-            color: "#fff",
-            fontFamily: "monospace",
-            fontSize: 16,
-            outline: "none",
-            textAlign: "center",
-            letterSpacing: "2px",
-            boxShadow: "0 0 12px rgba(241,196,15,0.1)",
-            transition: "border-color 0.2s",
-          }}
-          onFocus={(e) => {
-            e.target.style.borderColor = "#f1c40f";
-          }}
-          onBlur={(e) => {
-            e.target.style.borderColor = "rgba(241,196,15,0.4)";
-          }}
+          className="adepts-login__input"
         />
         <button
           type="submit"
           disabled={status !== "idle"}
-          style={{
-            padding: "8px 32px",
-            background: "transparent",
-            border: "1px solid #8e44ad",
-            borderRadius: 4,
-            color: "#c39bd3",
-            fontFamily: "monospace",
-            fontSize: 12,
-            letterSpacing: "3px",
-            textTransform: "uppercase",
-            cursor: status !== "idle" ? "not-allowed" : "pointer",
-            opacity: status !== "idle" ? 0.4 : 1,
-            transition: "opacity 0.2s, box-shadow 0.2s",
-          }}
-          onMouseEnter={(e) => {
-            (e.target as HTMLButtonElement).style.boxShadow = "0 0 12px rgba(142,68,173,0.6)";
-          }}
-          onMouseLeave={(e) => {
-            (e.target as HTMLButtonElement).style.boxShadow = "none";
-          }}
+          className="adepts-login__submit"
         >
           Войти
         </button>
       </motion.form>
 
-      <div
-        style={{
-          marginTop: 40,
-          height: 48,
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
-          overflow: "visible",
-          width: "100%",
-        }}
-      >
+      <div className="adepts-login__status">
         <AnimatePresence mode="wait">
           {status === "ok" && <OkAnimation key="ok" />}
         </AnimatePresence>

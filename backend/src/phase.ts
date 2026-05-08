@@ -1,63 +1,71 @@
 /**
- * Authoritative lifecycle + rounds + mini-game overlays (aligned with product flow).
+ * Authoritative game lifecycle.
  *
- * **Several Wheel / Roulette runs per round:** the graph allows `round:n` → `mini_*:n` → `round:n`
- * to repeat any number of times (each Pandora’s box / wheel card can start another instance).
+ * Main anchor phases:
+ *   lobby  →  round:1 → round:2 → round:3  →  final
+ *
+ *
+ * Everything else (spectator_picks, funeral:story_video, funeral:donations,
+ * between_final, mini_wheel, mini_roulette …) lives as a `plugin_segment`
+ * registered via `PluginRegistry`. The core map only contains anchor ↔ anchor
+ * edges so the cell-reveal authority and per-round counters are immutable.
+ *
+ * Direct anchor hops (e.g. round:2 → round:3) exist in the core map so a
+ * game can skip optional segments when none are registered for that slot.
  */
 
 export type RoundIndex = 1 | 2 | 3;
 
 export type Phase =
   | { kind: "lobby" }
-  | { kind: "spectator_picks" }
   | { kind: "round"; roundIndex: RoundIndex }
-  | { kind: "mini_wheel"; roundIndex: RoundIndex }
-  | { kind: "mini_roulette"; roundIndex: RoundIndex }
-  | { kind: "story_video" }
-  | { kind: "donations" }
-  | { kind: "between_final" }
   | { kind: "final" }
-  | { kind: "game_over" };
+  /** Opaque segment registered by a plugin (first-party or third-party). */
+  | { kind: "plugin_segment"; id: string; pluginId: string };
 
 export function phaseKey(p: Phase): string {
   switch (p.kind) {
     case "lobby":
-    case "spectator_picks":
-    case "story_video":
-    case "donations":
-    case "between_final":
     case "final":
-    case "game_over":
       return p.kind;
     case "round":
-    case "mini_wheel":
-    case "mini_roulette":
-      return `${p.kind}:${p.roundIndex}`;
+      return `round:${p.roundIndex}`;
+    case "plugin_segment":
+      return `plugin_segment:${p.pluginId}:${p.id}`;
   }
 }
 
-/** Host-driven edges for the show spine + enter/exit mini-games over a round. */
-const ALLOWED: ReadonlyMap<string, ReadonlySet<string>> = new Map([
-  /** Lobby includes “opening the show” (REQ-8); same phase, no separate `opening_show` kind. */
-  ["lobby", new Set(["spectator_picks"])],
-  ["spectator_picks", new Set(["round:1"])],
-  ["round:1", new Set(["round:2", "mini_wheel:1", "mini_roulette:1"])],
-  ["round:2", new Set(["story_video", "mini_wheel:2", "mini_roulette:2"])],
-  ["round:3", new Set(["between_final", "mini_wheel:3", "mini_roulette:3"])],
-  ["mini_wheel:1", new Set(["round:1"])],
-  ["mini_wheel:2", new Set(["round:2"])],
-  ["mini_wheel:3", new Set(["round:3"])],
-  ["mini_roulette:1", new Set(["round:1"])],
-  ["mini_roulette:2", new Set(["round:2"])],
-  ["mini_roulette:3", new Set(["round:3"])],
-  ["story_video", new Set(["donations"])],
-  ["donations", new Set(["round:3"])],
-  ["between_final", new Set(["final"])],
-  ["final", new Set(["game_over"])],
-  ["game_over", new Set()],
+/**
+ * Immutable core transitions — anchor ↔ anchor only.
+ *
+ * Plugin registry contributes extra edges (segments, card-kind overlays) on top.
+ * `final` is terminal: no outgoing edges.
+ */
+const CORE_ALLOWED: ReadonlyMap<string, ReadonlySet<string>> = new Map([
+  ["lobby",   new Set(["round:1"])],
+  // Allow host to move back/forward between rounds (REQ: header arrows).
+  ["round:1", new Set(["lobby", "round:2"])],
+  ["round:2", new Set(["round:1", "round:3"])],
+  ["round:3", new Set(["round:2", "final"])],
+  // `final` is terminal for gameplay, but the host can navigate back.
+  ["final",   new Set(["round:3"])],
 ]);
 
-export function canTransition(from: Phase, to: Phase): boolean {
-  const next = ALLOWED.get(phaseKey(from));
-  return next?.has(phaseKey(to)) ?? false;
+/**
+ * Returns true when transitioning `from → to` is legal.
+ *
+ * @param extraEdges  Additional edges contributed by PluginRegistry (segments +
+ *                    card-kind mini-game overlays). Pass `pluginRegistry.edges`
+ *                    from `applyHostTransition`.
+ */
+export function canTransition(
+  from: Phase,
+  to: Phase,
+  extraEdges?: ReadonlyMap<string, ReadonlySet<string>>,
+): boolean {
+  const fromKey = phaseKey(from);
+  const toKey = phaseKey(to);
+  if (CORE_ALLOWED.get(fromKey)?.has(toKey)) return true;
+  if (extraEdges?.get(fromKey)?.has(toKey)) return true;
+  return false;
 }

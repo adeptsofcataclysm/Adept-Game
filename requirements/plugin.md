@@ -1,200 +1,151 @@
-## Where the flow is hardcoded today
+## Plugins — current contract (segments + client views)
 
-The "spine" is a static graph in three places:
+This document describes the **current** plugin model implemented by the Adept-Game repositories. It is intentionally higher-level than code, but it is **repo-specific** (unlike `architecture.md`, which is product architecture).
 
-```39:58:c:\Users\Ilya_Nazarov\wow\game\Adept-Game\backend\src\phase.ts
-/** Host-driven edges for the show spine + enter/exit mini-games over a round. */
-const ALLOWED: ReadonlyMap<string, ReadonlySet<string>> = new Map([
-  /** Lobby includes "opening the show" (REQ-8); same phase, no separate `opening_show` kind. */
-  ["lobby", new Set(["spectator_picks"])],
-  ["spectator_picks", new Set(["round:1"])],
-  ["round:1", new Set(["round:2", "mini_wheel:1", "mini_roulette:1"])],
-  ["round:2", new Set(["story_video", "mini_wheel:2", "mini_roulette:2"])],
-  ["round:3", new Set(["between_final", "mini_wheel:3", "mini_roulette:3"])],
-  ["mini_wheel:1", new Set(["round:1"])],
-  ["mini_wheel:2", new Set(["round:2"])],
-  ["mini_wheel:3", new Set(["round:3"])],
-  ["mini_roulette:1", new Set(["round:1"])],
-  ["mini_roulette:2", new Set(["round:2"])],
-  ["mini_roulette:3", new Set(["round:3"])],
-  ["story_video", new Set(["donations"])],
-  ["donations", new Set(["round:3"])],
-  ["between_final", new Set(["final"])],
-  ["final", new Set(["game_over"])],
-  ["game_over", new Set()],
-]);
-```
+### What is a plugin?
 
-The `Phase` union itself is closed (`backend/src/phase.ts:10–20`), `parsePhase`/`applyHostTransition` only know fixed kinds (`backend/src/session.ts:125–166`), and `SessionSnapshot` carries segment-specific fields like `donations.bySeat`, `openingShow`, `miniWheelPlaysByRound`, `spectatorPicks` (`backend/src/session.ts:28–54`).
+A plugin is an npm package that can contribute:
 
-On the client, `ShowPage.tsx` `switch`es on `phase.kind` for both labels and segment UI (e.g. donations form lives inline at `frontend/src/pages/ShowPage.tsx:160–188`), and `QuestionCell` is a single shape with no `cardKind` (`backend/src/quizData.ts:7–18`).
+- **Segments**: extra steps in the show flow that sit **between anchor phases** (lobby, round:1|2|3, final).
+- **Client views**: React components that render a segment.
+- **(Optional) actions**: a server-side handler invoked through the existing WebSocket to mutate `segmentState` and/or request a transition.
 
-So "configurable transitions + configurable special cards" is really three changes layered together, plus a delivery story for the plugin itself.
-
-**Decision (selected):** plugins ship as **signed first-party npm packages sourced from GitHub repositories**. No iframe, no untrusted upload UI, no server-side JS sandbox. See section 3.
+The authoritative server remains the sole owner of session truth (REQ-15.1): plugin UI never mutates state directly.
 
 ---
 
-## 1. Make the FSM data-driven (keep `round:1|2|3` as anchors)
+## 1) Phase and FSM model
 
-Rule per `.cursor/rules/backend.mdc`: "Keep `round:1|2|3` as anchors — configurable segments sit between anchors, never replace them." So the design is **not** "throw away `ALLOWED`". It is "extend it, leave round nodes immutable":
+**Anchor phases** are fixed:
 
-- Add a phase variant for opaque segments, e.g.
+- `lobby`
+- `round:1`, `round:2`, `round:3`
+- `final`
 
-```ts
-| { kind: "plugin_segment"; id: string; pluginId: string }
-```
+Everything else is modeled as:
 
-  with state stored in a new generic field on the snapshot:
+- `plugin_segment:<pluginId>:<segmentId>` (wire key)
+- `Phase = { kind: "plugin_segment"; pluginId: string; id: string }` (typed snapshot)
 
-```ts
-segmentState: Record<string, unknown>; // keyed by segment id; written only by the plugin's server-side handler
-```
+The FSM is composed from:
 
-- Replace the static `ALLOWED` map with a **composition**:
-  - a fixed core map for round and final edges (so legality of cell reveal cannot be broken by a plugin), plus
-  - a per-show "flow config" loaded at session creation that adds edges only between anchors (`round:n -> plugin_segment:* -> round:n+1` style). Allowed edges are validated against a manifest that lists which slots a plugin may occupy (e.g. `after_r2`).
-- `parsePhase` and `applyHostTransition` take the same plugin id route: validate kind/id against the registry, record segment counters generically (a `Record<string, number>` instead of `miniWheelPlaysByRound: [number, number, number]`).
-- Backwards compatibility: today's hardcoded `story_video`, `donations`, `between_final` become **first-party "built-in" plugins** registered by the same registry, so there is exactly one transition path through the code.
+- a **core** immutable edge map that only contains anchor → anchor edges (so the show spine always works), plus
+- **extra edges** contributed at startup by the plugin registry.
 
-Concrete files touched (Adept-Game): `backend/src/phase.ts`, `backend/src/session.ts`, `frontend/src/sessionTypes.ts` (must mirror — see the frontend rules file `.cursor/rules/frontend.mdc:14`).
-
-Cross-repo concern: Node-Script has its own `AdeptsPhase`/`adepts-session-fsm.ts`. One source of truth is mandatory or you end up maintaining two FSMs and two `Phase` unions.
+This is what allows “optional” between-round transitions: if no segment exists for a slot, the core anchor hop remains legal.
 
 ---
 
-## 2. Make special question cards a registry, not a switch
+## 2) Session snapshot: `segmentState`
 
-Today `QuestionCell` has no kind; behavior for wheel/roulette/etc. is implied elsewhere. Two pieces:
+All plugin-owned state lives under:
 
-- **Data**: add `cardKind: "standard" | string` (or `extension: { handlerId: string; params: unknown }`) to `QuestionCell`. JSON packs then *select* a handler without code changes per card, provided the handler is installed.
-- **Server dispatch**: when the host opens/reveals/judges a cell, the WS handler in `backend/src/index.ts` looks up `handlers[cardKind]` instead of branching. The handler receives a narrow `Ctx` (read snapshot, request a phase transition through `applyHostTransition`, mutate scores via the same `host_score_step` semantics) and returns a mutator. Authority stays on the server (matches the rule "Mutate snapshots only via `store.mutate`").
-- **Client UI**: split `QuestionModal` into a core shell (timer, reveal, host controls) + a slot for `<CardExtension cardKind={...} ctx={...} />`. The slot resolver is a registry keyed by `cardKind`. The default registry contains the built-in renderers (standard cell, wheel, roulette).
+- `segmentState: Record<string, unknown>`
 
-This is the part that buys you the most: every "we want a new card type next show" becomes "publish a plugin", not "patch the modal".
+Convention:
+
+- The key is usually the **segment id** (e.g. `"donations"`), and the value is a plugin-defined JSON-like object.
+- A segment’s client view reads from `snapshot.segmentState[key]`.
+- The server is responsible for validating writes (type guards / bounds checks).
 
 ---
 
-## 3. Plugin distribution — Option B with GitHub as the package source
+## 3) Plugin package shape (Adept-Game-Plugins)
 
-Plugins are **vetted npm packages installed from GitHub repos**. They are linked into the build at install time, not loaded from arbitrary URLs at runtime. The operator (you) decides which repos are trusted; "upload" reduces to "merge a PR / pin a new tag".
+Plugins live in the `Adept-Game-Plugins` repo under `packages/*`.
 
-### 3.1 Package shape
+Each plugin package exports **two entry points**:
 
-Each plugin is a normal npm package whose `package.json` has a custom field:
+- `.` (server): `registerServer(registry)`
+- `./client` (client): `registerClient(registry)`
+
+Example (conceptual):
 
 ```json
 {
-  "name": "@adept-plugins/after-r2-charity",
-  "version": "1.0.0",
+  "name": "@adept-plugins/funeral",
+  "type": "module",
   "main": "./dist/server.js",
   "exports": {
-    ".":        "./dist/server.js",
+    ".": "./dist/server.js",
     "./client": "./dist/client.js"
   },
   "peerDependencies": {
-    "@adept/plugin-sdk": "^1.0.0"
+    "@adept/plugin-sdk": "^1.0.0",
+    "react": "^18.0.0"
   },
   "adept": {
-    "pluginId": "after-r2-charity",
+    "pluginId": "funeral",
     "apiVersion": 1,
     "capabilities": {
-      "segments": [{ "id": "after_r2_charity", "slot": "after:round:2", "next": "round:3" }],
-      "cardKinds": ["donation_pulse"]
+      "segments": [{ "id": "story_video" }, { "id": "donations" }],
+      "cardKinds": []
     }
   }
 }
 ```
 
-Two entry points, both code:
-
-- `./dist/server.js` — exports `registerServer(registry)` which calls `registry.registerSegment(...)` and `registry.registerCardHandler(...)`. Runs **inside** the Node session service; can mutate snapshots only through the `Ctx` the registry hands it (same authority model as built-ins).
-- `./dist/client.js` — exports `registerClient(registry)` which registers React components for the segment view and card extension slots. Runs **inside** the Vite/React bundle.
-
-`@adept/plugin-sdk` is a tiny package living in this repo (`packages/plugin-sdk` or similar) that exports the `PluginRegistry`, `Ctx`, `SessionSnapshot`, and `Phase` types. Plugins import from it; the host app provides the implementations. Versioning is via `apiVersion` in the manifest plus the SDK's semver.
-
-### 3.2 GitHub as the source
-
-Install lines look like one of:
-
-```jsonc
-// pinned to an annotated tag — preferred for human-readable lockfile entries
-"@adept-plugins/after-r2-charity": "github:adept-tv/plugin-after-r2-charity#v1.0.0",
-
-// pinned to a commit SHA — strongest immutability
-"@adept-plugins/after-r2-charity": "github:adept-tv/plugin-after-r2-charity#7c1a9e3c4d…",
-
-// private repo via SSH (CI uses a deploy key)
-"@adept-plugins/after-r2-charity": "git+ssh://git@github.com/adept-tv/plugin-after-r2-charity.git#v1.0.0"
-```
-
-`package-lock.json` then carries the resolved commit SHA, so reproducible builds are inherent. No registry credentials are needed for public repos; private plugins need a deploy key or PAT in CI.
-
-### 3.3 Trust model
-
-This is what makes Option B safe to load into the main bundle:
-
-- **Allowlist of GitHub orgs/repos** lives in this repo, e.g. `requirements/plugin-allowlist.json`. The validator CLI (section 5, step 5) refuses to build if `package.json` resolves a `@adept-plugins/`* to a git URL outside the allowlist.
-- **Pin by tag + commit SHA**, never by branch. Lockfile is committed.
-- **Optional**: require GPG-signed annotated tags and verify them in CI (`git tag -v`). This is cheap to add later.
-- **Code review**: every plugin update is a normal PR against this repo bumping the dependency line. Two-person review is the security perimeter, same as any other dependency.
-- **Capability check**: even though plugin code is trusted, the `PluginRegistry` still rejects segment slots and card kinds the manifest did not declare. This catches typos and accidental scope creep, not malice.
-
-### 3.4 Loading
-
-- **Build time**: `npm install` resolves git deps, builds them as part of the workspace. The host app discovers plugins by globbing `node_modules/@adept-plugins/*/package.json` and reading the `adept` field at startup (server) and at bundle time (client). No dynamic `import()` from URLs.
-- **Runtime registration**: on session-service boot, iterate plugins, call `registerServer(registry)`. On Vite build, a small barrel file (`frontend/src/plugins/index.ts`, generated by a prebuild script) imports each plugin's `./client` entry and calls `registerClient(registry)`.
-- **No iframe, no `postMessage` bridge.** Plugin React components mount directly inside `<PluginSegmentHost />` and `<CardExtensionHost />` slots. They receive props typed by the SDK and call `ctx.send({ type, payload })` which forwards to the existing WebSocket from `useSessionWs`.
-
-### 3.5 What "upload" looks like operationally
-
-1. Plugin author opens a PR on the plugin repo, tags `v1.2.3`.
-2. Operator opens a PR on Adept-Game bumping `package.json` + lockfile to that tag (or commit SHA).
-3. CI builds, runs the validator CLI (graph reachability + capability check), runs tests.
-4. Merge → deploy. The new segment/card kind is now selectable in show JSON packs.
-
-There is no "upload UI". That is the explicit cost of choosing Option B; the explicit benefit is no untrusted JS in the host bundle and no runtime fetch.
+The `adept` manifest is the metadata used for future validation/discovery; the current host wiring is explicit (see §4–§5).
 
 ---
 
-## 4. WS protocol additions (small, narrow)
+## 4) How plugins are wired into Adept-Game (today)
 
-Add two new server-validated message types in `backend/src/index.ts`:
+**Install**: Adept-Game depends on plugin packages via file dependencies:
 
-- `plugin_action` → `{ pluginId, segmentId, action, payload }`. Server looks up the plugin's registered handler, runs it inside `store.mutate`, broadcasts snapshot. Mirrors how `host_transition` works today (`backend/src/index.ts:142–156`).
-- `request_transition` → existing `host_transition` already does this; the only change is that `parsePhase` now also accepts `plugin_segment`.
+- `@adept-plugins/*`: `"file:../Adept-Game-Plugins/packages/<name>"`
 
-No new socket per plugin — keep ADR-2 ("one channel per show").
+**Server registration**: the Node session service imports each plugin’s server entry and calls `registerServer(...)` during boot.
 
----
+**Client registration**: the SPA imports each plugin’s `./client` entry in a single “barrel” and calls `registerClient(...)` at bundle time.
 
-## 5. Order of work, scoped to be the smallest useful slice
-
-1. **Contract + types**: add `plugin_segment` to `Phase`, add `segmentState` to `SessionSnapshot`, mirror in `frontend/src/sessionTypes.ts`. *No behavior change yet.*
-2. **Core registry**: a `PluginRegistry` (in `backend/src/`) and a parallel client registry that own segment definitions and card-kind handlers. Re-implement `donations`/`story_video`/`between_final` as registered built-ins so legacy `Phase` kinds and the new `plugin_segment` go through one path.
-3. **Plugin SDK package**: extract the `Phase`, `SessionSnapshot`, `Ctx`, `PluginRegistry` types (and the WS message contract) into `packages/plugin-sdk` published from this monorepo. Plugins depend on this exact version.
-4. **Discovery + registration**: server boot iterates `node_modules/@adept-plugins/`* and calls `registerServer`; a Vite prebuild script generates a client barrel that imports each plugin's `./client` entry. Manifest's `capabilities` is enforced by the registry on registration.
-5. **Validator + allowlist CLI**: a script that (a) loads each plugin's manifest, (b) checks the resolved git URL is on the allowlist, (c) asserts the resulting transition graph is reachable end-to-end (no dead ends, no skipped rounds), (d) optionally verifies signed tags. Runs in CI on every PR.
-6. **Unify with Node-Script**: extract the FSM/registry into `packages/plugin-sdk` (or a sibling) so both Adept-Game and Node-Script consume one source of truth. Otherwise step 2 introduces a second drift point.
-
-Steps 1–3 are doable without any plugin existing and immediately make the system pluggable in-tree (built-ins go through the registry). 4–5 buy the GitHub-sourced extension story. 6 is non-negotiable if both repos remain in production.
+This keeps the runtime simple and deterministic (no runtime downloads; no iframe integration).
 
 ---
 
-## 6. Things I would explicitly *not* do
+## 5) Current first-party plugins (examples)
 
-- Do not make `round:n` itself pluggable. Cell-reveal authority and per-round counters are the kind of state you do not want a plugin touching.
-- Do not let plugin UI mutate `scores`/`revealed` directly. Always go through a server action; the rule already forbids client write paths (`.cursor/rules/backend.mdc` — "All phase changes go through `applyHostTransition` → `canTransition`").
-- Do not load plugins by URL at runtime. Option B's whole point is that the dependency tree is pinned in the lockfile.
-- Do not allow git refs that are branches (e.g. `#main`). Only annotated tags or commit SHAs. The validator CLI rejects floating refs.
-- Do not skip the manifest capability check just because the code is trusted. It is the cheapest defense against a plugin accidentally registering a segment slot it never declared.
-- Do not introduce per-plugin sockets. Keep ADR-2.
+These plugins are first-party packages living in `Adept-Game-Plugins` and registered by the host:
+
+- `@adept-plugins/spectator-bet` (pluginId `"spectator-bet"`)
+  - segment: `spectator_bet` (runs before Round 1)
+- `@adept-plugins/funeral` (pluginId `"funeral"`)
+  - segments: `story_video` → `donations` (REQ-12) between `round:2` and `round:3`
+- `@adept-plugins/final-round-selection` (pluginId `"final-round-selection"`)
+  - segment: `between_final` (REQ-13 transition) between `round:3` and `final`
 
 ---
 
-Open questions to lock down before step 1 lands:
+## 6) WebSocket interaction model for plugins
 
-1. **SDK location** — does `@adept/plugin-sdk` live in Adept-Game (and Node-Script consumes it via git dep), in Node-Script (reverse), or in a new shared repo? This decides who owns the canonical `Phase` and `SessionSnapshot`.
-2. **Public vs private plugin repos** — if any plugin is private, CI needs a deploy key or fine-grained PAT; that decision affects the dev setup doc, not the code.
-3. **Signed tags** — turn this on from day one or defer until you have an external contributor? Cheaper to wire in now.
+Plugins do not get new sockets. All interaction stays on the existing show WebSocket (ADR-2).
+
+The host may send a `plugin_action` message that targets a specific segment:
+
+- `{ pluginId, segmentId, action, payload }`
+
+On the server:
+
+- the registry resolves the segment’s `onAction` handler (if any),
+- the handler runs inside the normal session mutation boundary,
+- the server broadcasts the updated snapshot.
+
+---
+
+## 7) How to add a new plugin (checklist)
+
+1. Create a new package under `Adept-Game-Plugins/packages/<your-plugin>/`.
+2. Implement `src/server.ts` with `registerServer(registry)` and register one or more segments.
+3. Implement `src/client.tsx` with `registerClient(registry)` and register segment views.
+4. Add the dependency to `Adept-Game/package.json`.
+5. Register the plugin on:
+   - server: `backend/src/pluginRegistry.ts`
+   - client: `frontend/src/plugins/index.ts`
+
+---
+
+## 8) Planned improvements (not required for correctness)
+
+- **Generated client plugin barrel**: generate `frontend/src/plugins/index.ts` by discovering installed `@adept-plugins/*` packages.
+- **Plugin validator**: check plugin manifests (edges are reachable; no illegal anchor replacements; no floating git refs when using git dependencies).
 

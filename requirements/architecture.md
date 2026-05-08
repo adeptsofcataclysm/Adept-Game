@@ -74,6 +74,21 @@ When vision and this architecture document disagree, **update this document** to
 
 ---
 
+### ADR-4 — Extensibility: plugins as first-party npm packages (server + client)
+
+**Decision:** Implement mini-games, between-round transitions, and non-standard question card behaviors as **plugins** packaged as **npm modules** with **two entry points**:
+
+- **server entry**: registers server-side FSM edges (“segments”) and optional action handlers
+- **client entry**: registers React views for those segments (and optionally card UI extensions)
+
+**Context:** Requirements call out multiple distinct segments (Spectator picks, story video + donations, Final transition, Wheel, Roulette) but we want those segments to be **composable** without growing the core `Phase` union for every new segment.
+
+**Consequences:**
+
+- The authoritative `Phase` includes an opaque `plugin_segment` variant: `{ kind: "plugin_segment"; pluginId; id }`. The core app keeps **anchor phases** (`lobby`, `round:1|2|3`, `final`) immutable, while plugins contribute edges that sit **between anchors**.
+- The server remains authoritative: plugins run **in-process** inside the Node session service and may mutate only through the same mutation boundary as built-ins.
+- The client remains a single SPA: plugin views are React components mounted inside the main app shell; no iframes and no extra sockets (ADR-2).
+
 ## 3. Logical view (no implementation detail)
 
 ```mermaid
@@ -88,6 +103,7 @@ flowchart LR
     AUTH[Authentication and Host gate]
     ROOM[Show room orchestrator]
     STATE[Authoritative session state]
+    PLUG[Plugin registry]
   end
 
   H <-->|single WebSocket| ROOM
@@ -96,6 +112,7 @@ flowchart LR
   H --> AUTH
   AUTH --> ROOM
   ROOM --> STATE
+  ROOM --> PLUG
 ```
 
 **Rules:**
@@ -116,18 +133,18 @@ High-level order from vision and REQ-1.
 flowchart TD
   start([Start]) --> lobby[Lobby]
   lobby --> opening[Opening the show]
-  opening --> picks[Spectator picks]
+  opening --> picks[Spectator picks (plugin segment)]
   picks --> r1[Round 1 quiz]
   r1 --> r1done{All Round 1 cells revealed?}
   r1done -->|no| r1
   r1done -->|yes| r2[Round 2 quiz]
   r2 --> r2done{All Round 2 cells revealed?}
   r2done -->|no| r2
-  r2done -->|yes| br[Between-rounds transition]
+  r2done -->|yes| br[Between-rounds transition (plugin segments)]
   br --> r3[Round 3 quiz]
   r3 --> r3done{All Round 3 cells revealed?}
   r3done -->|no| r3
-  r3done -->|yes| fintrans[Between-round transition to Final]
+  r3done -->|yes| fintrans[Between-round transition to Final (plugin segment)]
   fintrans --> final[Final round 5x5 Tic-Tac-Toe]
   final --> end([Winner known])
 ```
@@ -235,6 +252,8 @@ flowchart TD
   store --> r3start[Begin Round 3]
   r3card[Specific Round 3 card opens] --> activate[Stakes activate times 2 and redistribute per card rules]
 ```
+
+**Architecture note:** The story video and donations are modeled as one or more **plugin segments** chained between `round:2` and `round:3` (ADR-4). The normative behavior remains REQ-12.
 
 ---
 

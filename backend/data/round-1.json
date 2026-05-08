@@ -9,6 +9,16 @@
     "Локации",
     "Профессии"
   ],
+  "themeIcons": [
+    "/theme_icons/bossy.png",
+    "/theme_icons/pashalki.png",
+    "/theme_icons/quotes.png",
+    "/theme_icons/lor-wow.png",
+    "/theme_icons/cosplay.png",
+    "/theme_icons/freebie.png",
+    "/theme_icons/locations.png",
+    "/theme_icons/professions.png"
+  ],
   "questions": [
     [
       {

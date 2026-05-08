@@ -1,6 +1,7 @@
 import { randomUUID } from "node:crypto";
 import type { Phase, RoundIndex } from "./phase.js";
 import { canTransition } from "./phase.js";
+import { pluginRegistry } from "./pluginRegistry.js";
 import { loadRoundBoard, loadRoundBoardFile } from "./quizData.js";
 import type { RoundBoardRuntime } from "./quizData.js";
 
@@ -29,25 +30,23 @@ export type SessionSnapshot = {
   showId: string;
   version: number;
   phase: Phase;
+  /** Canonical phase timeline for host navigation UI. */
+  phaseNav: Phase[];
   scores: Scores;
   /** Seat 0–4 = Player numbers 1–5 (REQ-2). */
   currentTurnSeat: number;
   /** Per-round board: themes + question cells from JSON; `revealed` tracks opened cells (REQ-1). */
   roundBoard: Record<RoundIndex, RoundBoardRuntime>;
   /**
-   * Board for the **transition to Final** and **Final** segment (REQ-13), loaded from `data/round-4.json`
-   * (e.g. “Final round” / super-game cards — not the 5×5 grid itself).
+   * Board for the **transition to Final** and **Final** segment (REQ-13), loaded from `data/round-4.json`.
    */
   finalTransitionBoard: RoundBoardRuntime;
   /**
-   * How many times the Host has entered **Wheel of Adepts** / **Roulette** from the quiz board
-   * this show, per main round (each entry = another mini-game instance in that round).
+   * All plugin-managed state lives here, keyed by a stable string the plugin owns.
+   * The core session service never reads or writes this object.
    */
-  miniWheelPlaysByRound: [number, number, number];
-  miniRoulettePlaysByRound: [number, number, number];
+  segmentState: Record<string, unknown>;
   openingShow: { emojiLineIndex: number; spectatorCorrectCounts: Record<string, number> };
-  spectatorPicks: { locked: boolean; bets: Record<string, 1 | 2 | 3 | 4 | 5> };
-  donations: { bySeat: [number | null, number | null, number | null, number | null, number | null] };
   lottery: { candidates: string[]; optOut: Record<string, true>; lastWinnerNick: string | null };
   chat: ChatLine[];
   participants: Participant[];
@@ -64,15 +63,13 @@ export function createInitialSession(showId: string): SessionSnapshot {
     showId,
     version: 1,
     phase: { kind: "lobby" },
+    phaseNav: buildPhaseNav(),
     scores: [0, 0, 0, 0, 0],
     currentTurnSeat: 0,
     roundBoard,
     finalTransitionBoard,
-    miniWheelPlaysByRound: [0, 0, 0],
-    miniRoulettePlaysByRound: [0, 0, 0],
+    segmentState: {},
     openingShow: { emojiLineIndex: 0, spectatorCorrectCounts: {} },
-    spectatorPicks: { locked: false, bets: {} },
-    donations: { bySeat: [null, null, null, null, null] },
     lottery: { candidates: [], optOut: {}, lastWinnerNick: null },
     chat: [],
     participants: [],
@@ -104,17 +101,9 @@ export function createSessionStore(): SessionStore {
       if (draft.chat.length > MAX_CHAT_MESSAGES) {
         draft.chat = draft.chat.slice(-MAX_CHAT_MESSAGES);
       }
-      // Legacy in-memory sessions may still have `opening_show`; treat as lobby.
-      if (
-        typeof draft.phase === "object" &&
-        draft.phase !== null &&
-        "kind" in draft.phase &&
-        (draft.phase as { kind: string }).kind === "opening_show"
-      ) {
-        draft.phase = { kind: "lobby" };
-      }
       const result = fn(draft);
       if (!result.ok) return result;
+      draft.phaseNav = buildPhaseNav();
       draft.version = cur.version + 1;
       map.set(showId, draft);
       return { ok: true, snapshot: draft };
@@ -122,24 +111,101 @@ export function createSessionStore(): SessionStore {
   };
 }
 
+function phaseFromKey(key: string): Phase | null {
+  if (key === "lobby") return { kind: "lobby" };
+  if (key === "final") return { kind: "final" };
+  if (key.startsWith("round:")) {
+    const n = Number(key.slice("round:".length));
+    if (n === 1 || n === 2 || n === 3) return { kind: "round", roundIndex: n };
+    return null;
+  }
+  if (key.startsWith("plugin_segment:")) {
+    const rest = key.slice("plugin_segment:".length);
+    const firstColon = rest.indexOf(":");
+    if (firstColon < 0) return null;
+    const pluginId = rest.slice(0, firstColon);
+    const id = rest.slice(firstColon + 1);
+    if (!pluginId || !id) return null;
+    return { kind: "plugin_segment", pluginId, id };
+  }
+  return null;
+}
+
+/**
+ * Builds a canonical **forward** timeline from lobby → … → final.
+ *
+ * IMPORTANT:
+ * - This must be built from forward-only segment definitions, not the bidirectional edge map.
+ *   Otherwise nav can loop back (e.g. round:1 → spectator_picks → round:1) and "skip" to final.
+ */
+function buildPhaseNav(): Phase[] {
+  const anchorNext: Record<string, string | undefined> = {
+    lobby: "round:1",
+    "round:1": "round:2",
+    "round:2": "round:3",
+    "round:3": "final",
+    final: undefined,
+  };
+
+  const segByKey = new Map<string, { segKey: string; toPhaseKey: string }>();
+  for (const seg of pluginRegistry.segments) {
+    const segKey = `plugin_segment:${seg.pluginId}:${seg.id}`;
+    segByKey.set(segKey, { segKey, toPhaseKey: seg.toPhaseKey });
+  }
+
+  const firstSegFrom = (fromPhaseKey: string): string | null => {
+    const seg = pluginRegistry.segments.find((s) => s.fromPhaseKey === fromPhaseKey);
+    if (!seg) return null;
+    return `plugin_segment:${seg.pluginId}:${seg.id}`;
+  };
+
+  const phases: Phase[] = [];
+  const seen = new Set<string>();
+
+  let curKey = "lobby";
+  for (let guard = 0; guard < 64; guard++) {
+    if (seen.has(curKey)) break;
+    seen.add(curKey);
+
+    const curPhase = phaseFromKey(curKey);
+    if (!curPhase) break;
+    phases.push(curPhase);
+    if (curKey === "final") break;
+
+    let nextKey: string | null = null;
+
+    if (curKey.startsWith("plugin_segment:")) {
+      nextKey = segByKey.get(curKey)?.toPhaseKey ?? null;
+    } else {
+      nextKey = firstSegFrom(curKey) ?? anchorNext[curKey] ?? null;
+    }
+
+    if (!nextKey) break;
+    curKey = nextKey;
+  }
+
+  if (!phases.some((p) => p.kind === "final")) {
+    phases.push({ kind: "final" });
+  }
+
+  return phases;
+}
+
 export function parsePhase(input: unknown): Phase | null {
   if (!input || typeof input !== "object") return null;
   const o = input as Record<string, unknown>;
   const kind = o["kind"];
   if (kind === "lobby") return { kind: "lobby" };
-  if (kind === "opening_show") return { kind: "lobby" };
-  if (kind === "spectator_picks") return { kind: "spectator_picks" };
-  if (kind === "story_video") return { kind: "story_video" };
-  if (kind === "donations") return { kind: "donations" };
-  if (kind === "between_final") return { kind: "between_final" };
   if (kind === "final") return { kind: "final" };
-  if (kind === "game_over") return { kind: "game_over" };
   const ri = o["roundIndex"];
   if (kind === "round" && (ri === 1 || ri === 2 || ri === 3)) return { kind: "round", roundIndex: ri };
-  if (kind === "mini_wheel" && (ri === 1 || ri === 2 || ri === 3))
-    return { kind: "mini_wheel", roundIndex: ri };
-  if (kind === "mini_roulette" && (ri === 1 || ri === 2 || ri === 3))
-    return { kind: "mini_roulette", roundIndex: ri };
+  if (kind === "plugin_segment") {
+    const id = o["id"];
+    const pluginId = o["pluginId"];
+    if (typeof id === "string" && id && typeof pluginId === "string" && pluginId) {
+      return { kind: "plugin_segment", id, pluginId };
+    }
+  }
   return null;
 }
 
@@ -148,19 +214,9 @@ export function applyHostTransition(
   to: Phase,
 ): { ok: true } | { ok: false; error: string } {
   const from = snapshot.phase;
-  if (!canTransition(from, to)) {
-    return { ok: false, error: "Illegal phase transition for current state" };
+  if (!canTransition(from, to, pluginRegistry.edges)) {
+    return { ok: false, error: `Illegal phase transition from ${from} to ${to}` };
   }
-
-  if (from.kind === "round" && to.kind === "mini_wheel" && to.roundIndex === from.roundIndex) {
-    const i = to.roundIndex - 1;
-    snapshot.miniWheelPlaysByRound[i] = snapshot.miniWheelPlaysByRound[i] + 1;
-  }
-  if (from.kind === "round" && to.kind === "mini_roulette" && to.roundIndex === from.roundIndex) {
-    const i = to.roundIndex - 1;
-    snapshot.miniRoulettePlaysByRound[i] = snapshot.miniRoulettePlaysByRound[i] + 1;
-  }
-
   snapshot.phase = to;
   return { ok: true };
 }

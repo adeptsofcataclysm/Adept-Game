@@ -9,6 +9,16 @@
     "НаЯборот",
     "Абилки"
   ],
+  "themeIcons": [
+    "/theme_icons/ded-icon.png",
+    "/theme_icons/tactics-icon.png",
+    "/theme_icons/pets-icon.png",
+    "/theme_icons/trash-icon.png",
+    "/theme_icons/quotes.png",
+    "/theme_icons/feats-icon.png",
+    "/theme_icons/nayaborot-icon.png",
+    "/theme_icons/abilities-icon.png"
+  ],
   "questions": [
     [
       {
