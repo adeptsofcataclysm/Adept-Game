@@ -7,6 +7,7 @@ import { GamePageHeader } from "@/components/GamePageHeader";
 import { ChatPanel } from "@/components/ChatPanel";
 import { PlayersPanel } from "@/components/PlayersPanel";
 import { PluginSegmentHost } from "@/plugins/PluginSegmentHost";
+import { getQuizThemeIconUrl } from "@/lib/quizThemeIcons";
 // Ensure plugin client registrations run before any render
 import "@/plugins/index";
 
@@ -14,30 +15,24 @@ function boardForPhase(snapshot: {
   phase: Phase;
   roundBoard: Record<1 | 2 | 3, RoundBoardRuntime>;
   finalTransitionBoard: RoundBoardRuntime;
-}): { title: string; board: RoundBoardRuntime } | null {
+}): { board: RoundBoardRuntime } | null {
   const { phase } = snapshot;
   if (phase.kind === "lobby") return null;
   if (phase.kind === "final") {
     return {
-      title: "Transition to Final / Final (data/round-4.json)",
       board: snapshot.finalTransitionBoard,
     };
   }
   if (phase.kind === "round") {
     const ri = phase.roundIndex;
     return {
-      title: `Round ${ri} board`,
       board: snapshot.roundBoard[ri],
     };
   }
-  // plugin_segment — fall back to round 1 preview
-  return {
-    title: "Round 1 board (preview)",
-    board: snapshot.roundBoard[1],
-  };
+  return null;
 }
 
-/** Russian phase strip for the header badge (same role as Node-Script `BADGE_LABEL`). */
+/** Phase name for the header badge. */
 function phaseBadgeLabel(phase: Phase | undefined): string {
   if (!phase) return "…";
   switch (phase.kind) {
@@ -123,17 +118,15 @@ export function ShowPage() {
             
 
             {snapshot?.phase.kind !== "lobby" && snapshot?.phase.kind !== "plugin_segment" ? (
-              <div className="card adepts-show-board-card">
+              <div className="card adepts-show-board-card adepts-quiz-theme">
                 {boardPreview ? (
                   <>
-                    <h2 style={{ marginTop: 0, flexShrink: 0 }}>{boardPreview.title}</h2>
-                    <div className="adepts-show-board-scroll">
+                    <div className="adepts-show-board-scroll adepts-quiz-board-scroll">
                       <BoardPreview board={boardPreview.board} />
                     </div>
                   </>
                 ) : (
                   <>
-                    <h2 style={{ marginTop: 0, flexShrink: 0 }}>Quiz board</h2>
                     <p style={{ flexShrink: 0 }}>Waiting for snapshot…</p>
                   </>
                 )}
@@ -148,6 +141,8 @@ export function ShowPage() {
               />
             ) : null}
           </section>
+
+          <aside className="adepts-show-rail-col" aria-hidden="true" />
         </div>
 
         <PlayersPanel />
@@ -157,45 +152,67 @@ export function ShowPage() {
 }
 
 function BoardPreview({ board }: { board: RoundBoardRuntime }) {
-  const cols = board.questions[0]?.length ?? 0;
   return (
-    <div style={{ overflowX: "auto" }}>
-      <table style={{ borderCollapse: "collapse", width: "100%", fontSize: "0.85rem" }}>
-        <thead>
-          <tr>
-            <th style={{ textAlign: "left", padding: 4 }}>Theme</th>
-            {Array.from({ length: cols }, (_, i) => (
-              <th key={i} style={{ padding: 4 }}>
-                {board.pointValues[0]?.[i] ?? i + 1}
-              </th>
-            ))}
-          </tr>
-        </thead>
-        <tbody>
-          {board.themes.map((theme, ri) => (
-            <tr key={theme}>
-              <td style={{ padding: 4, fontWeight: 600, maxWidth: 140 }}>{theme}</td>
-              {board.questions[ri]?.map((cell, ci) => (
-                <td
+    <div className="adepts-quiz-board-preview">
+      {board.themes.map((theme, ri) => (
+        <div key={`${theme}-${ri}`} className="adepts-quiz-board-preview__row">
+          <div className="adepts-quiz-board-preview__theme">
+            {(() => {
+              const iconUrl = theme ? getQuizThemeIconUrl(theme) : undefined;
+              return (
+                <>
+                  <span className="adepts-quiz-board-preview__theme-text">
+                    {theme || `Тема ${ri + 1}`}
+                  </span>
+                  {iconUrl ? (
+                    <img
+                      className="adepts-quiz-board-preview__theme-icon"
+                      src={iconUrl}
+                      alt=""
+                      draggable={false}
+                    />
+                  ) : (
+                    <span className="adepts-quiz-board-preview__theme-icon-fallback" aria-hidden="true">
+                      {String(theme || "Т").trim().slice(0, 1).toUpperCase()}
+                    </span>
+                  )}
+                </>
+              );
+            })()}
+          </div>
+
+          <div className="adepts-quiz-board-preview__cells">
+            {board.questions[ri]?.map((cell, ci) => {
+              const opened = Boolean(board.revealed?.[ri]?.[ci]);
+              const points = board.pointValues?.[ri]?.[ci] ?? (ci + 1) * 100;
+              return (
+                <div
                   key={ci}
-                  style={{
-                    padding: 4,
-                    border: "1px solid #2a3142",
-                    verticalAlign: "top",
-                    background: board.revealed[ri][ci] ? "#2a3548" : "#141820",
-                  }}
+                  className={[
+                    "adepts-quiz-board-preview__cell",
+                    opened ? "adepts-quiz-board-preview__cell--opened" : "adepts-quiz-board-preview__cell--closed",
+                  ].join(" ")}
+                  title={opened ? (cell.text || "") : `${points}`}
                 >
-                  <div style={{ opacity: 0.85 }}>
-                    {cell.questionUrl ? <span title={cell.questionUrl}>media · </span> : null}
-                    {cell.text ? `${cell.text.slice(0, 80)}${cell.text.length > 80 ? "…" : ""}` : "—"}
-                  </div>
-                  {board.revealed[ri][ci] ? <div style={{ fontSize: "0.75rem", marginTop: 4 }}>opened</div> : null}
-                </td>
-              ))}
-            </tr>
-          ))}
-        </tbody>
-      </table>
+                  {opened ? (
+                    <div className="adepts-quiz-board-preview__opened">
+                      <div className="adepts-quiz-board-preview__opened-text">
+                        {cell.questionUrl ? <span>media · </span> : null}
+                        {cell.text ? `${cell.text.slice(0, 80)}${cell.text.length > 80 ? "…" : ""}` : "—"}
+                      </div>
+                      <div className="adepts-quiz-board-preview__opened-sub">opened</div>
+                    </div>
+                  ) : (
+                    <div className="adepts-quiz-board-preview__closed">
+                      <div className="glow-text adepts-quiz-board-preview__points">{points}</div>
+                    </div>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      ))}
     </div>
   );
 }
