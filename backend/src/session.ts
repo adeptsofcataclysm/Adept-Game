@@ -46,7 +46,6 @@ export type SessionSnapshot = {
    * The core session service never reads or writes this object.
    */
   segmentState: Record<string, unknown>;
-  openingShow: { emojiLineIndex: number; spectatorCorrectCounts: Record<string, number> };
   lottery: { candidates: string[]; optOut: Record<string, true>; lastWinnerNick: string | null };
   chat: ChatLine[];
   participants: Participant[];
@@ -69,7 +68,6 @@ export function createInitialSession(showId: string): SessionSnapshot {
     roundBoard,
     finalTransitionBoard,
     segmentState: {},
-    openingShow: { emojiLineIndex: 0, spectatorCorrectCounts: {} },
     lottery: { candidates: [], optOut: {}, lastWinnerNick: null },
     chat: [],
     participants: [],

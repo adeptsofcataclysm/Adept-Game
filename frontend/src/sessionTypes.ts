@@ -79,7 +79,6 @@ export type SessionSnapshot = {
   /** `round-4.json` — transition to Final / Final segment (REQ-13). */
   finalTransitionBoard: RoundBoardRuntime;
   segmentState: Record<string, unknown>;
-  openingShow: { emojiLineIndex: number; spectatorCorrectCounts: Record<string, number> };
   lottery: { candidates: string[]; optOut: Record<string, true>; lastWinnerNick: string | null };
   chat: ChatLine[];
   participants: Participant[];

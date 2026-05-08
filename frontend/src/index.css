@@ -531,6 +531,7 @@ code {
     opacity 0.12s ease-out;
   min-height: 0;
   display: flex;
+  font-family: Cinzel, "Times New Roman", serif;
 }
 
 .adepts-quiz-theme .adepts-quiz-board-preview__cell--closed:hover {
@@ -554,7 +555,7 @@ code {
 }
 
 .adepts-quiz-theme .adepts-quiz-board-preview__points {
-  font-family: "WarCraft", Cinzel, "Times New Roman", serif;
+  font-family: Cinzel, "Times New Roman", serif;
   font-weight: 800;
   letter-spacing: 0.08em;
   font-size: clamp(1.25rem, 2.6vw, 2rem);

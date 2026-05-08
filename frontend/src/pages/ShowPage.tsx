@@ -8,6 +8,7 @@ import { ChatPanel } from "@/components/ChatPanel";
 import { PlayersPanel } from "@/components/PlayersPanel";
 import { PluginSegmentHost } from "@/plugins/PluginSegmentHost";
 import { getHttpBaseUrl } from "@/wsUrl";
+import { OpeningShowHostAside } from "@adept-plugins/opening-show/client";
 // Ensure plugin client registrations run before any render
 import "@/plugins/index";
 
@@ -63,6 +64,7 @@ function phaseBadgeLabel(phase: Phase | undefined): string {
         story_video:     "Сюжет",
         donations:       "Донаты",
         between_final:   "Переход к финалу",
+        opening_show:    "Отборочный тур",
       };
       return labels[phase.id] ?? `Сегмент: ${phase.id}`;
     }
@@ -107,6 +109,13 @@ export function ShowPage() {
 
   const boardPreview = useMemo(() => (snapshot ? boardForPhase(snapshot) : null), [snapshot]);
   const boardSel = useMemo(() => boardSelectorForPhase(snapshot?.phase), [snapshot?.phase]);
+  const openingShowPhase =
+    role === "host" &&
+    snapshot?.phase.kind === "plugin_segment" &&
+    snapshot.phase.pluginId === "opening-show" &&
+    snapshot.phase.id === "opening_show"
+      ? snapshot.phase
+      : null;
 
   if (!name) {
     return (
@@ -194,7 +203,16 @@ export function ShowPage() {
             ) : null}
           </section>
 
-          <aside className="adepts-show-rail-col" aria-hidden="true" />
+          <aside className="adepts-show-rail-col" aria-hidden={!openingShowPhase}>
+            {openingShowPhase ? (
+              <OpeningShowHostAside
+                snapshot={snapshot!}
+                pluginId={openingShowPhase.pluginId}
+                segmentId={openingShowPhase.id}
+                send={(type, payload) => send({ type, payload })}
+              />
+            ) : null}
+          </aside>
         </div>
 
         <PlayersPanel />

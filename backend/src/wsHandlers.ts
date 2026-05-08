@@ -270,46 +270,6 @@ function handleHostScoreStep(ctx: HandlerCtx, ws: WebSocket, meta: ClientMeta, p
   if (r.ok) ctx.broadcast(meta.showId, { type: "snapshot", payload: r.snapshot });
 }
 
-function handleOpeningShowMarkCorrect(
-  ctx: HandlerCtx,
-  ws: WebSocket,
-  meta: ClientMeta,
-  payload: unknown,
-): void {
-  if (meta.role !== "host") {
-    ctx.sendError(ws, "Host only");
-    return;
-  }
-  if (!isRecord(payload)) return;
-  const nick = String(payload["spectatorKey"] ?? "").trim().slice(0, 64);
-  if (!nick) return;
-
-  const r = ctx.store.mutate(meta.showId, (snap) => {
-    if (snap.phase.kind !== "lobby") {
-      return { ok: false, error: "Opening the show runs in lobby" };
-    }
-    const cur = snap.openingShow.spectatorCorrectCounts[nick] ?? 0;
-    snap.openingShow.spectatorCorrectCounts[nick] = cur + 1;
-    return { ok: true };
-  });
-  if (r.ok) ctx.broadcast(meta.showId, { type: "snapshot", payload: r.snapshot });
-  else ctx.sendError(ws, r.error);
-}
-
-function handleOpeningShowNextEmoji(ctx: HandlerCtx, ws: WebSocket, meta: ClientMeta): void {
-  if (meta.role !== "host") {
-    ctx.sendError(ws, "Host only");
-    return;
-  }
-  const r = ctx.store.mutate(meta.showId, (snap) => {
-    if (snap.phase.kind !== "lobby") return { ok: false, error: "Opening the show runs in lobby" };
-    snap.openingShow.emojiLineIndex = snap.openingShow.emojiLineIndex + 1;
-    return { ok: true };
-  });
-  if (r.ok) ctx.broadcast(meta.showId, { type: "snapshot", payload: r.snapshot });
-  else ctx.sendError(ws, r.error);
-}
-
 function handlePluginEvent(ctx: HandlerCtx, ws: WebSocket, meta: ClientMeta, payload: unknown): void {
   if (!isRecord(payload)) return;
   const pluginId = String(payload["pluginId"] ?? "").trim();
@@ -391,18 +351,6 @@ export function routeInbound(
       const meta = requireMeta();
       if (!meta) return;
       handleHostScoreStep(ctx, ws, meta, inbound.payload);
-      return;
-    }
-    case "opening_show_mark_correct": {
-      const meta = requireMeta();
-      if (!meta) return;
-      handleOpeningShowMarkCorrect(ctx, ws, meta, inbound.payload);
-      return;
-    }
-    case "opening_show_next_emoji": {
-      const meta = requireMeta();
-      if (!meta) return;
-      handleOpeningShowNextEmoji(ctx, ws, meta);
       return;
     }
     case "plugin_event": {

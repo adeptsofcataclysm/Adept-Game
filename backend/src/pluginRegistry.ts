@@ -20,6 +20,7 @@
  */
 
 import { registerServer as registerSpectatorBet } from "@adept-plugins/spectator-bet";
+import { registerServer as registerOpeningShow } from "@adept-plugins/opening-show";
 import { registerServer as registerFuneral } from "@adept-plugins/funeral";
 import { registerServer as registerFinalRoundSelection } from "@adept-plugins/final-round-selection";
 import type { Phase } from "./phase.js";
@@ -122,6 +123,8 @@ class PluginRegistryImpl {
 export const pluginRegistry = new PluginRegistryImpl();
 
 // Register round transition plugins
+
+registerOpeningShow(pluginRegistry);
 
 registerSpectatorBet(pluginRegistry);
 
