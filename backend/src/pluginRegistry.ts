@@ -6,8 +6,8 @@
  * `pluginRegistry.edges` to `canTransition` so the FSM stays data-driven.
  *
  * Plugin registrations:
- *   @adept-plugins/spectator-picks (pluginId "spectator-picks"):
- *     spectator_picks: lobby → spectator_picks → round:1
+ *   @adept-plugins/spectator-bet (pluginId "spectator-bet"):
+ *     spectator_bet: lobby → spectator_bet → round:1
  *   @adept-plugins/funeral (pluginId "funeral"):
  *     story_video : round:2 → story_video → donations
  *     donations   : story_video → donations → round:3
@@ -19,7 +19,7 @@
  *   roulette — Roulette card
  */
 
-import { registerServer as registerSpectatorPicks } from "@adept-plugins/spectator-picks";
+import { registerServer as registerSpectatorBet } from "@adept-plugins/spectator-bet";
 import { registerServer as registerFuneral } from "@adept-plugins/funeral";
 import { registerServer as registerFinalRoundSelection } from "@adept-plugins/final-round-selection";
 import type { Phase } from "./phase.js";
@@ -107,21 +107,11 @@ class PluginRegistryImpl {
 
 export const pluginRegistry = new PluginRegistryImpl();
 
-// ---------------------------------------------------------------------------
-// @adept-plugins/spectator-picks  (lobby → spectator_picks → round:1)
-// ---------------------------------------------------------------------------
+// Register round transitionplugins
 
-registerSpectatorPicks(pluginRegistry);
-
-// ---------------------------------------------------------------------------
-// @adept-plugins/funeral (round:2 → story_video → donations → round:3)
-// ---------------------------------------------------------------------------
+registerSpectatorBet(pluginRegistry);
 
 registerFuneral(pluginRegistry);
-
-// ---------------------------------------------------------------------------
-// @adept-plugins/final-round-selection (round:3 → between_final → final)
-// ---------------------------------------------------------------------------
 
 registerFinalRoundSelection(pluginRegistry);
 

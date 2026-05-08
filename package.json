@@ -9,7 +9,7 @@
   },
   "workspaces": ["backend", "frontend"],
   "dependencies": {
-    "@adept-plugins/spectator-picks": "file:../Adept-Game-Plugins/packages/spectator-picks",
+    "@adept-plugins/spectator-bet": "file:../Adept-Game-Plugins/packages/spectator-bet",
     "@adept-plugins/funeral": "file:../Adept-Game-Plugins/packages/funeral",
     "@adept-plugins/final-round-selection": "file:../Adept-Game-Plugins/packages/final-round-selection"
   }

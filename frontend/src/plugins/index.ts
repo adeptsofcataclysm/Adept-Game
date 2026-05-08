@@ -7,12 +7,12 @@
  */
 
 import { clientPluginRegistry } from "./registry";
-import { registerClient as registerSpectatorPicksClient } from "@adept-plugins/spectator-picks/client";
+import { registerClient as registerSpectatorBetClient } from "@adept-plugins/spectator-bet/client";
 import { registerClient as registerFuneralClient } from "@adept-plugins/funeral/client";
 import { registerClient as registerFinalRoundSelectionClient } from "@adept-plugins/final-round-selection/client";
 
-// @adept-plugins/spectator-picks
-registerSpectatorPicksClient(clientPluginRegistry);
+// @adept-plugins/spectator-bet
+registerSpectatorBetClient(clientPluginRegistry);
 
 // @adept-plugins/funeral (story_video + donations)
 registerFuneralClient(clientPluginRegistry);

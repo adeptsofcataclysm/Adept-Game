@@ -107,8 +107,8 @@ This keeps the runtime simple and deterministic (no runtime downloads; no iframe
 
 These plugins are first-party packages living in `Adept-Game-Plugins` and registered by the host:
 
-- `@adept-plugins/spectator-picks` (pluginId `"spectator-picks"`)
-  - segment: `spectator_picks` (runs before Round 1)
+- `@adept-plugins/spectator-bet` (pluginId `"spectator-bet"`)
+  - segment: `spectator_bet` (runs before Round 1)
 - `@adept-plugins/funeral` (pluginId `"funeral"`)
   - segments: `story_video` → `donations` (REQ-12) between `round:2` and `round:3`
 - `@adept-plugins/final-round-selection` (pluginId `"final-round-selection"`)

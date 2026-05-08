@@ -2,7 +2,7 @@
  * Mirrors backend snapshot for the SPA projection (authoritative copy from server).
  *
  * Main anchor phases: lobby → round:1 → round:2 → round:3 → final
- * `final` is terminal. All other segments (spectator_picks,
+ * `final` is terminal. All other segments (spectator_bet,
  * funeral:story_video, funeral:donations, between_final …) are
  * `plugin_segment` instances registered via PluginRegistry.
  */
@@ -65,8 +65,8 @@ export type RoundBoardRuntime = {
 // Well-known segmentState keys
 // ---------------------------------------------------------------------------
 
-/** `segmentState["spectator_picks"]` — written by @adept-plugins/spectator-picks */
-export type SpectatorPicksState = {
+/** `segmentState["spectator_bet"]` — written by @adept-plugins/spectator-bet */
+export type SpectatorBetState = {
   locked: boolean;
   bets: Record<string, 1 | 2 | 3 | 4 | 5>;
 };
@@ -91,11 +91,6 @@ export type SessionSnapshot = {
   roundBoard: Record<RoundIndex, RoundBoardRuntime>;
   /** `round-4.json` — transition to Final / Final segment (REQ-13). */
   finalTransitionBoard: RoundBoardRuntime;
-  /**
-   * All plugin-managed state. Well-known keys:
-   *   `"spectator_picks"` → SpectatorPicksState
-   *   `"donations"`       → DonationsState
-   */
   segmentState: Record<string, unknown>;
   openingShow: { emojiLineIndex: number; spectatorCorrectCounts: Record<string, number> };
   lottery: { candidates: string[]; optOut: Record<string, true>; lastWinnerNick: string | null };

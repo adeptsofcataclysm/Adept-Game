@@ -54,7 +54,7 @@ export type SessionSnapshot = {
   finalTransitionBoard: RoundBoardRuntime;
   /**
    * All plugin-managed state lives here, keyed by a stable string the plugin owns.
-   * Well-known keys: `"spectator_picks"` (SpectatorPicksState),
+   * Well-known keys: `"spectator_bet"` (SpectatorBetState),
    *                  `"donations"` (DonationsState).
    * The core session service never reads or writes this object except to back-fill it.
    */
@@ -233,7 +233,7 @@ export function applyHostTransition(
 ): { ok: true } | { ok: false; error: string } {
   const from = snapshot.phase;
   if (!canTransition(from, to, pluginRegistry.edges)) {
-    return { ok: false, error: "Illegal phase transition for current state" };
+    return { ok: false, error: `Illegal phase transition from ${from} to ${to}` };
   }
   snapshot.phase = to;
   return { ok: true };
