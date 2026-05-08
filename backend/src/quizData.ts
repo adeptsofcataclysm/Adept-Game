@@ -19,14 +19,16 @@ export type QuestionCell = {
 
 export type RoundPackJson = {
   themes: string[];
+  /** Optional icon URL per theme row (same length as `themes`). */
+  themeIcons?: (string | null)[];
   questions: QuestionCell[][];
 };
 
 export type RoundBoardRuntime = {
   themes: string[];
+  themeIcons?: (string | null)[];
   questions: QuestionCell[][];
   revealed: boolean[][];
-  /** Same shape as `questions`: point value per cell (column 100–500 when width is 5). */
   pointValues: number[][];
 };
 
@@ -37,6 +39,11 @@ const STANDARD_FIVE = [100, 200, 300, 400, 500];
 function validatePack(pack: RoundPackJson, fileLabel: string): void {
   if (!Array.isArray(pack.themes) || pack.themes.length === 0) {
     throw new Error(`${fileLabel}: themes[] required`);
+  }
+  if (typeof pack.themeIcons !== "undefined") {
+    if (!Array.isArray(pack.themeIcons) || pack.themeIcons.length !== pack.themes.length) {
+      throw new Error(`${fileLabel}: themeIcons[] must match themes length`);
+    }
   }
   if (!Array.isArray(pack.questions) || pack.questions.length !== pack.themes.length) {
     throw new Error(`${fileLabel}: questions[][] must match themes length`);
@@ -82,6 +89,7 @@ export function loadRoundBoardFile(roundFile: 1 | 2 | 3 | 4): RoundBoardRuntime 
 
   return {
     themes: pack.themes,
+    themeIcons: pack.themeIcons,
     questions: pack.questions,
     revealed,
     pointValues,

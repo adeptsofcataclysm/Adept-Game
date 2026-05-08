@@ -56,6 +56,8 @@ export type QuestionCell = {
 
 export type RoundBoardRuntime = {
   themes: string[];
+  /** Optional icon URL per theme row (same length as `themes`). When absent or null → client falls back to theme-name mapping. */
+  themeIcons?: (string | null)[];
   questions: QuestionCell[][];
   revealed: boolean[][];
   pointValues: number[][];

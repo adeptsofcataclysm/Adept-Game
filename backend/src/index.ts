@@ -1,5 +1,6 @@
 import path from "node:path";
 import http from "node:http";
+import fs from "node:fs";
 import { URL, fileURLToPath } from "node:url";
 import dotenv from "dotenv";
 import { WebSocketServer, type WebSocket, type RawData } from "ws";
@@ -81,10 +82,195 @@ function isHostAuthorized(role: Role, hostSecret: string | undefined): boolean {
   return hostSecret === HOST_SECRET;
 }
 
+const THEME_ICON_DIR = path.join(backendRoot, "theme_icons");
+fs.mkdirSync(THEME_ICON_DIR, { recursive: true });
+const DATA_DIR = path.join(backendRoot, "data");
+
+function contentTypeForExt(ext: string): string {
+  switch (ext) {
+    case ".png":
+      return "image/png";
+    case ".jpg":
+    case ".jpeg":
+      return "image/jpeg";
+    case ".webp":
+      return "image/webp";
+    case ".gif":
+      return "image/gif";
+    default:
+      return "application/octet-stream";
+  }
+}
+
+async function readJsonBody(req: http.IncomingMessage, maxBytes: number): Promise<unknown> {
+  return await new Promise((resolve) => {
+    const chunks: Buffer[] = [];
+    let total = 0;
+    req.on("data", (c: Buffer) => {
+      total += c.length;
+      if (total > maxBytes) {
+        resolve({ __tooLarge: true });
+        req.destroy();
+        return;
+      }
+      chunks.push(c);
+    });
+    req.on("end", () => {
+      try {
+        const text = Buffer.concat(chunks).toString("utf8");
+        resolve(JSON.parse(text) as unknown);
+      } catch {
+        resolve(null);
+      }
+    });
+  });
+}
+
+function parseImageDataUrl(
+  dataUrl: string,
+): { mime: string; bytes: Buffer; ext: string } | { error: string } {
+  const m = /^data:(image\/[a-zA-Z0-9.+-]+);base64,(.+)$/.exec(dataUrl.trim());
+  if (!m) return { error: "Invalid data URL" };
+  const mime = m[1]!;
+  const b64 = m[2]!;
+  let ext = "";
+  if (mime === "image/png") ext = ".png";
+  else if (mime === "image/jpeg") ext = ".jpg";
+  else if (mime === "image/webp") ext = ".webp";
+  else if (mime === "image/gif") ext = ".gif";
+  else return { error: `Unsupported mime: ${mime}` };
+  try {
+    const bytes = Buffer.from(b64, "base64");
+    return { mime, bytes, ext };
+  } catch {
+    return { error: "Invalid base64 data" };
+  }
+}
+
+function tryPersistRoundPackEdit(args: {
+  roundFile: 1 | 2 | 3 | 4;
+  rowIndex: number;
+  themeText: string;
+  iconUrl: string | null;
+}): { ok: true } | { ok: false; error: string } {
+  const fileName = `round-${args.roundFile}.json`;
+  const filePath = path.join(DATA_DIR, fileName);
+  if (!fs.existsSync(filePath)) return { ok: false, error: `${fileName} not found` };
+
+  let parsed: unknown;
+  try {
+    parsed = JSON.parse(fs.readFileSync(filePath, "utf8")) as unknown;
+  } catch {
+    return { ok: false, error: `${fileName}: invalid JSON` };
+  }
+  if (!parsed || typeof parsed !== "object") return { ok: false, error: `${fileName}: invalid object` };
+  const o = parsed as Record<string, unknown>;
+  if (!Array.isArray(o["themes"]) || !Array.isArray(o["questions"])) {
+    return { ok: false, error: `${fileName}: missing themes/questions` };
+  }
+
+  const themes = o["themes"] as unknown[];
+  if (args.rowIndex < 0 || args.rowIndex >= themes.length) return { ok: false, error: "rowIndex out of range" };
+
+  (themes as unknown[])[args.rowIndex] = args.themeText;
+  o["themes"] = themes;
+
+  let icons: (string | null)[] | null = null;
+  if (Array.isArray(o["themeIcons"])) {
+    icons = (o["themeIcons"] as unknown[]).map((v) => (typeof v === "string" ? v : null));
+  }
+  if (!icons || icons.length !== themes.length) {
+    icons = Array.from({ length: themes.length }, (_, i) => (Array.isArray(o["themeIcons"]) ? (icons?.[i] ?? null) : null));
+  }
+  icons[args.rowIndex] = args.iconUrl;
+  o["themeIcons"] = icons;
+
+  try {
+    fs.writeFileSync(filePath, `${JSON.stringify(o, null, 2)}\n`, "utf8");
+    return { ok: true };
+  } catch {
+    return { ok: false, error: `${fileName}: write failed` };
+  }
+}
+
 const server = http.createServer((req, res) => {
+  // Dev-friendly CORS so the Vite app (different origin) can call the session service.
+  res.setHeader("Access-Control-Allow-Origin", "*");
+  res.setHeader("Access-Control-Allow-Methods", "GET,POST,OPTIONS");
+  res.setHeader("Access-Control-Allow-Headers", "Content-Type");
+
   if (req.url === "/health") {
     res.writeHead(200, { "Content-Type": "text/plain" });
     res.end("ok");
+    return;
+  }
+
+  if (req.method === "OPTIONS") {
+    res.writeHead(204);
+    res.end();
+    return;
+  }
+
+  if (req.url?.startsWith("/theme_icons/") && req.method === "GET") {
+    const rel = req.url.slice("/theme_icons/".length);
+    const safe = path.basename(rel);
+    const filePath = path.join(THEME_ICON_DIR, safe);
+    if (!fs.existsSync(filePath)) {
+      res.writeHead(404);
+      res.end();
+      return;
+    }
+    const ext = path.extname(filePath).toLowerCase();
+    res.writeHead(200, {
+      "Content-Type": contentTypeForExt(ext),
+      "Cache-Control": "public, max-age=31536000, immutable",
+    });
+    fs.createReadStream(filePath).pipe(res);
+    return;
+  }
+
+  if (req.url === "/api/upload-theme-icon" && req.method === "POST") {
+    void (async () => {
+      const body = await readJsonBody(req, 350_000);
+      if (!body || typeof body !== "object") {
+        res.writeHead(400, { "Content-Type": "application/json" });
+        res.end(JSON.stringify({ ok: false, error: "Invalid JSON body" }));
+        return;
+      }
+      const o = body as Record<string, unknown>;
+      if (o["__tooLarge"]) {
+        res.writeHead(413, { "Content-Type": "application/json" });
+        res.end(JSON.stringify({ ok: false, error: "Payload too large" }));
+        return;
+      }
+
+      const hostSecret = typeof o["hostSecret"] === "string" ? o["hostSecret"] : undefined;
+      if (!isHostAuthorized("host", hostSecret)) {
+        res.writeHead(401, { "Content-Type": "application/json" });
+        res.end(JSON.stringify({ ok: false, error: "Host authentication failed" }));
+        return;
+      }
+
+      const dataUrl = String(o["dataUrl"] ?? "");
+      const parsed = parseImageDataUrl(dataUrl);
+      if ("error" in parsed) {
+        res.writeHead(400, { "Content-Type": "application/json" });
+        res.end(JSON.stringify({ ok: false, error: parsed.error }));
+        return;
+      }
+      if (parsed.bytes.length > 250_000) {
+        res.writeHead(413, { "Content-Type": "application/json" });
+        res.end(JSON.stringify({ ok: false, error: "Image too large" }));
+        return;
+      }
+
+      const fileName = `theme-${Date.now()}-${Math.random().toString(16).slice(2)}${parsed.ext}`;
+      const outPath = path.join(THEME_ICON_DIR, fileName);
+      fs.writeFileSync(outPath, parsed.bytes);
+
+      res.writeHead(200, { "Content-Type": "application/json" });
+      res.end(JSON.stringify({ ok: true, url: `/theme_icons/${fileName}` }));
+    })();
     return;
   }
   res.writeHead(404);
@@ -181,6 +367,77 @@ wss.on("connection", (ws, req) => {
       }
       const r = store.mutate(meta.showId, (snap) => applyHostTransition(snap, to));
       if (r.ok) broadcast(meta.showId, { type: "snapshot", payload: r.snapshot });
+      else sendError(ws, r.error);
+    };
+
+    const handleHostEditQuizTheme = (meta: ClientMeta, payload: unknown): void => {
+      if (meta.role !== "host") {
+        sendError(ws, "Host only");
+        return;
+      }
+      if (!isRecord(payload)) return;
+
+      const boardKind = String(payload["boardKind"] ?? "").trim();
+      const roundIndex = payload["roundIndex"];
+      const rowIndex = payload["rowIndex"];
+      const themeTextRaw = payload["themeText"];
+      const iconUrlRaw = payload["iconUrl"];
+
+      if (typeof rowIndex !== "number" || !Number.isFinite(rowIndex) || rowIndex < 0) return;
+      const themeText = String(themeTextRaw ?? "").trim().slice(0, 64);
+      if (!themeText) {
+        sendError(ws, "Theme text required");
+        return;
+      }
+
+      let iconUrl: string | null = null;
+      if (typeof iconUrlRaw === "string") {
+        const trimmed = iconUrlRaw.trim();
+        if (trimmed.length > 200_000) {
+          sendError(ws, "Icon payload too large");
+          return;
+        }
+        iconUrl = trimmed || null;
+      } else if (iconUrlRaw === null || typeof iconUrlRaw === "undefined") {
+        iconUrl = null;
+      } else {
+        return;
+      }
+
+      const r = store.mutate(meta.showId, (snap) => {
+        const board =
+          boardKind === "finalTransition"
+            ? snap.finalTransitionBoard
+            : boardKind === "round" && (roundIndex === 1 || roundIndex === 2 || roundIndex === 3)
+              ? snap.roundBoard[roundIndex]
+              : null;
+        if (!board) return { ok: false, error: "Invalid board selector" };
+        if (rowIndex >= board.themes.length) return { ok: false, error: "Theme row out of range" };
+
+        board.themes[rowIndex] = themeText;
+        if (!board.themeIcons || board.themeIcons.length !== board.themes.length) {
+          board.themeIcons = board.themes.map((_, i) => board.themeIcons?.[i] ?? null);
+        }
+        board.themeIcons[rowIndex] = iconUrl;
+        return { ok: true };
+      });
+
+      if (r.ok) {
+        const roundFile: 1 | 2 | 3 | 4 | null =
+          boardKind === "finalTransition"
+            ? 4
+            : boardKind === "round" && (roundIndex === 1 || roundIndex === 2 || roundIndex === 3)
+              ? roundIndex
+              : null;
+        if (roundFile) {
+          const persist = tryPersistRoundPackEdit({ roundFile, rowIndex, themeText, iconUrl });
+          if (!persist.ok) {
+            // Do not block gameplay; just surface a warning to the host.
+            sendError(ws, `Persist failed: ${persist.error}`);
+          }
+        }
+        broadcast(meta.showId, { type: "snapshot", payload: r.snapshot });
+      }
       else sendError(ws, r.error);
     };
 
@@ -292,6 +549,12 @@ wss.on("connection", (ws, req) => {
         const meta = requireMeta();
         if (!meta) return;
         handleHostTransition(meta, inbound.payload);
+        return;
+      }
+      case "host_edit_quiz_theme": {
+        const meta = requireMeta();
+        if (!meta) return;
+        handleHostEditQuizTheme(meta, inbound.payload);
         return;
       }
       case "host_score_step": {
