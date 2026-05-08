@@ -49,7 +49,7 @@ function phaseBadgeLabel(phase: Phase | undefined): string {
       return "Финал";
     case "plugin_segment": {
       const labels: Record<string, string> = {
-        spectator_picks: "Ставки зрителей",
+        spectator_bet: "Ставки зрителей",
         story_video:     "Сюжет",
         donations:       "Донаты",
         between_final:   "Переход к финалу",

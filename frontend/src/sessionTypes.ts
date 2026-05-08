@@ -62,21 +62,6 @@ export type RoundBoardRuntime = {
 };
 
 // ---------------------------------------------------------------------------
-// Well-known segmentState keys
-// ---------------------------------------------------------------------------
-
-/** `segmentState["spectator_bet"]` — written by @adept-plugins/spectator-bet */
-export type SpectatorBetState = {
-  locked: boolean;
-  bets: Record<string, 1 | 2 | 3 | 4 | 5>;
-};
-
-/** `segmentState["donations"]` — written by @adept-plugins/funeral donations segment */
-export type DonationsState = {
-  bySeat: [number | null, number | null, number | null, number | null, number | null];
-};
-
-// ---------------------------------------------------------------------------
 // Session snapshot
 // ---------------------------------------------------------------------------
 
