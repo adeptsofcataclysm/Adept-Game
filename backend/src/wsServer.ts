@@ -40,6 +40,15 @@ export function attachWebsocket(
     }
   }
 
+  function collectOnlineParticipantIds(showId: string): string[] {
+    const ids = new Set<string>();
+    for (const ws of room(showId)) {
+      const m = metaBySocket.get(ws);
+      if (m) ids.add(m.participantId);
+    }
+    return [...ids];
+  }
+
   const ctx: HandlerCtx = {
     store: opts.store,
     dataDir: opts.dataDir,
@@ -49,6 +58,7 @@ export function attachWebsocket(
     setMeta: (ws, meta) => metaBySocket.set(ws, meta),
     getMeta: (ws) => metaBySocket.get(ws),
     isHostAuthorized: opts.isHostAuthorized,
+    getOnlineParticipantIds: collectOnlineParticipantIds,
   };
 
   wss.on("connection", (ws, req) => {
@@ -63,8 +73,14 @@ export function attachWebsocket(
 
     ws.on("close", () => {
       const m = metaBySocket.get(ws);
-      if (m) room(m.showId).delete(ws);
+      if (!m) return;
+      room(m.showId).delete(ws);
       metaBySocket.delete(ws);
+      const r = opts.store.mutate(m.showId, (snap) => {
+        snap.onlineParticipantIds = collectOnlineParticipantIds(m.showId);
+        return { ok: true };
+      });
+      if (r.ok) broadcast(m.showId, { type: "snapshot", payload: r.snapshot });
     });
   });
 

@@ -122,6 +122,7 @@ export function useSessionWs(opts: WsOpts): {
             setSnapshot({
               ...p,
               chat: normalizeChat(p.chat),
+              onlineParticipantIds: Array.isArray(p.onlineParticipantIds) ? p.onlineParticipantIds : [],
             });
             queueMicrotask(flushPendingOutbound);
           }

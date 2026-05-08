@@ -28,6 +28,7 @@ export type HandlerCtx = {
   setMeta: (ws: WebSocket, meta: ClientMeta) => void;
   getMeta: (ws: WebSocket) => ClientMeta | undefined;
   isHostAuthorized: (role: Role, hostSecret: string | undefined) => boolean;
+  getOnlineParticipantIds: (showId: string) => string[];
 };
 
 function isRecord(v: unknown): v is Record<string, unknown> {
@@ -143,6 +144,7 @@ function handleJoin(
         pr.role = role;
       }
     }
+    snap.onlineParticipantIds = ctx.getOnlineParticipantIds(joinShowId);
     return { ok: true };
   });
 

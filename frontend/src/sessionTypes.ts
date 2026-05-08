@@ -82,4 +82,6 @@ export type SessionSnapshot = {
   lottery: { candidates: string[]; optOut: Record<string, true>; lastWinnerNick: string | null };
   chat: ChatLine[];
   participants: Participant[];
+  /** Participant ids with at least one open WebSocket (presence). */
+  onlineParticipantIds: string[];
 };

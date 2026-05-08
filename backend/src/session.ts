@@ -49,6 +49,8 @@ export type SessionSnapshot = {
   lottery: { candidates: string[]; optOut: Record<string, true>; lastWinnerNick: string | null };
   chat: ChatLine[];
   participants: Participant[];
+  /** Participant ids with at least one open WebSocket in this show (presence). */
+  onlineParticipantIds: string[];
 };
 
 export function createInitialSession(showId: string): SessionSnapshot {
@@ -71,6 +73,7 @@ export function createInitialSession(showId: string): SessionSnapshot {
     lottery: { candidates: [], optOut: {}, lastWinnerNick: null },
     chat: [],
     participants: [],
+    onlineParticipantIds: [],
   };
 }
 
@@ -96,6 +99,7 @@ export function createSessionStore(): SessionStore {
         map.set(showId, cur);
       }
       const draft: SessionSnapshot = structuredClone(cur);
+      if (!Array.isArray(draft.onlineParticipantIds)) draft.onlineParticipantIds = [];
       if (draft.chat.length > MAX_CHAT_MESSAGES) {
         draft.chat = draft.chat.slice(-MAX_CHAT_MESSAGES);
       }
