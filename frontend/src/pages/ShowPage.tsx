@@ -115,9 +115,13 @@ export function ShowPage() {
           </aside>
 
           <section className="adepts-show-main-col">
-            <div className="card">
-              {lastError ? <p style={{ color: "#f88" }}>{lastError}</p> : null}
+            
+            {lastError  ? ((
+              <div className="card">
+              <p style={{ color: "#f88" }}>{lastError}</p>
             </div>
+            )) : null}
+            
 
             {snapshot?.phase.kind !== "lobby" && snapshot?.phase.kind !== "plugin_segment" ? (
               <div className="card adepts-show-board-card">

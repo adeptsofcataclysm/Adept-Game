@@ -1,8 +1,14 @@
 :root {
-  font-family: system-ui, sans-serif;
+  font-family: system-ui, "Noto Color Emoji", "Apple Color Emoji", "Segoe UI Emoji", sans-serif;
   line-height: 1.45;
   color: #e8eaef;
   background: #12141a;
+}
+
+@font-face {
+  font-family: "Noto Color Emoji";
+  src: url("/fonts/NotoColorEmoji.ttf") format("truetype");
+  font-display: swap;
 }
 
 * {
@@ -255,6 +261,7 @@ code {
 
 .chat-panel__line-text {
   color: rgba(255, 255, 255, 0.88);
+  font-family: "Arial", "Noto Color Emoji", "Apple Color Emoji", "Segoe UI Emoji", system-ui, sans-serif;
 }
 
 .chat-panel__emoji-sheet {
@@ -278,6 +285,7 @@ code {
   border-radius: 0.25rem;
   padding: 0.25rem;
   line-height: 1;
+  font-family: "Noto Color Emoji", "Apple Color Emoji", "Segoe UI Emoji", system-ui, sans-serif;
   background: transparent;
   color: inherit;
   transition:
@@ -310,6 +318,7 @@ code {
   background: hsla(260, 40%, 5%, 0.5);
   padding: 0.35rem 0.5rem;
   font-size: 0.875rem;
+  font-family: "Arial", "Noto Color Emoji", "Apple Color Emoji", "Segoe UI Emoji", system-ui, sans-serif;
   color: hsl(210, 40%, 98%);
 }
 
