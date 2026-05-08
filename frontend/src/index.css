@@ -191,6 +191,128 @@ code {
   overflow: auto;
 }
 
+/* Host\Player login page. */
+
+.adepts-login {
+  min-height: 100vh;
+  background: #1a1a2e;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New",
+    monospace;
+  padding: 24px;
+}
+
+.adepts-login__title {
+  font-size: clamp(18px, 3.5vw, 32px);
+  font-weight: 700;
+  color: #f1c40f;
+  text-shadow: 0 0 18px rgba(241, 196, 15, 0.7);
+  text-align: center;
+  margin-bottom: 36px;
+  letter-spacing: 1px;
+}
+
+.adepts-login__form{
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  max-width: 320px;
+}
+
+.adepts-login__input{
+  width: 100%;
+  padding: 10px 16px;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(241, 196, 15, 0.4);
+  border-radius: 6px;
+  color: #fff;
+  font-size: 16px;
+  outline: none;
+  text-align: center;
+  letter-spacing: 2px;
+  box-shadow: 0 0 12px rgba(241, 196, 15, 0.1);
+  transition: border-color 0.2s;
+}
+
+.adepts-login__input:focus{
+  border-color: #f1c40f;
+}
+
+.adepts-login__input:disabled{
+  opacity: 0.6;
+}
+
+.adepts-login__submit {
+  padding: 8px 32px;
+  background: transparent;
+  border: 1px solid #8e44ad;
+  border-radius: 4px;
+  color: #c39bd3;
+  font-size: 12px;
+  letter-spacing: 3px;
+  text-transform: uppercase;
+  cursor: pointer;
+  opacity: 1;
+  transition:
+    opacity 0.2s,
+    box-shadow 0.2s;
+}
+
+.adepts-login__submit:disabled {
+  cursor: not-allowed;
+  opacity: 0.4;
+}
+
+.adepts-login__submit:not(:disabled):hover {
+  box-shadow: 0 0 12px rgba(142, 68, 173, 0.6);
+}
+
+.adepts-login__status {
+  margin-top: 40px;
+  height: 48px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: visible;
+  width: 100%;
+}
+
+.adepts-login__ok-wrap,
+.adepts-login__fail-wrap{
+  display: flex;
+  justify-content: center;
+  gap: 0;
+  overflow: visible;
+}
+
+.adepts-login__ok-char,
+.adepts-login__fail-char {
+  display: inline-block;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New",
+    monospace;
+  font-weight: 700;
+  font-size: clamp(18px, 3vw, 26px);
+  white-space: pre;
+}
+
+.adepts-login__ok-char {
+  color: #2ecc71;
+  text-shadow: 0 0 16px #2ecc71, 0 0 32px rgba(46, 204, 113, 0.6);
+}
+
+.adepts-login__fail-char {
+  text-shadow: 0 0 16px #e74c3c, 0 0 32px rgba(231, 76, 60, 0.7);
+}
+
+.adepts-login--player .adepts-login__ok-char {
+  font-size: clamp(16px, 2.5vw, 24px);
+}
+
 /* Show chat panel. */
 .chat-panel {
   display: flex;
