@@ -59,10 +59,6 @@ function phaseBadgeLabel(phase: Phase | undefined): string {
   }
 }
 
-function isPlayerRole(r: Role): boolean {
-  return r === "player";
-}
-
 export function ShowPage() {
   const showId = useMemo(() => {
     const q = new URLSearchParams(window.location.search).get("showId");
@@ -100,6 +96,9 @@ export function ShowPage() {
         connected={connected}
         viewerName={name}
         viewerRole={role}
+        phase={snapshot?.phase}
+        phaseNav={snapshot?.phaseNav}
+        onHostTransition={(to) => send({ type: "host_transition", payload: to })}
       />
 
       <div className="adepts-show-body adepts-show-body--column">

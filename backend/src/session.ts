@@ -41,6 +41,8 @@ export type SessionSnapshot = {
   showId: string;
   version: number;
   phase: Phase;
+  /** Canonical phase timeline for host navigation UI. */
+  phaseNav: Phase[];
   scores: Scores;
   /** Seat 0–4 = Player numbers 1–5 (REQ-2). */
   currentTurnSeat: number;
@@ -76,6 +78,7 @@ export function createInitialSession(showId: string): SessionSnapshot {
     showId,
     version: 1,
     phase: { kind: "lobby" },
+    phaseNav: buildPhaseNav(),
     scores: [0, 0, 0, 0, 0],
     currentTurnSeat: 0,
     roundBoard,
@@ -118,11 +121,92 @@ export function createSessionStore(): SessionStore {
       }
       const result = fn(draft);
       if (!result.ok) return result;
+      draft.phaseNav = buildPhaseNav();
       draft.version = cur.version + 1;
       map.set(showId, draft);
       return { ok: true, snapshot: draft };
     },
   };
+}
+
+function phaseFromKey(key: string): Phase | null {
+  if (key === "lobby") return { kind: "lobby" };
+  if (key === "final") return { kind: "final" };
+  if (key.startsWith("round:")) {
+    const n = Number(key.slice("round:".length));
+    if (n === 1 || n === 2 || n === 3) return { kind: "round", roundIndex: n };
+    return null;
+  }
+  if (key.startsWith("plugin_segment:")) {
+    const rest = key.slice("plugin_segment:".length);
+    const firstColon = rest.indexOf(":");
+    if (firstColon < 0) return null;
+    const pluginId = rest.slice(0, firstColon);
+    const id = rest.slice(firstColon + 1);
+    if (!pluginId || !id) return null;
+    return { kind: "plugin_segment", pluginId, id };
+  }
+  return null;
+}
+
+/**
+ * Builds a canonical **forward** timeline from lobby → … → final.
+ *
+ * IMPORTANT:
+ * - This must be built from forward-only segment definitions, not the bidirectional edge map.
+ *   Otherwise nav can loop back (e.g. round:1 → spectator_picks → round:1) and "skip" to final.
+ */
+function buildPhaseNav(): Phase[] {
+  const anchorNext: Record<string, string | undefined> = {
+    lobby: "round:1",
+    "round:1": "round:2",
+    "round:2": "round:3",
+    "round:3": "final",
+    final: undefined,
+  };
+
+  const segByKey = new Map<string, { segKey: string; toPhaseKey: string }>();
+  for (const seg of pluginRegistry.segments) {
+    const segKey = `plugin_segment:${seg.pluginId}:${seg.id}`;
+    segByKey.set(segKey, { segKey, toPhaseKey: seg.toPhaseKey });
+  }
+
+  const firstSegFrom = (fromPhaseKey: string): string | null => {
+    const seg = pluginRegistry.segments.find((s) => s.fromPhaseKey === fromPhaseKey);
+    if (!seg) return null;
+    return `plugin_segment:${seg.pluginId}:${seg.id}`;
+  };
+
+  const phases: Phase[] = [];
+  const seen = new Set<string>();
+
+  let curKey = "lobby";
+  for (let guard = 0; guard < 64; guard++) {
+    if (seen.has(curKey)) break;
+    seen.add(curKey);
+
+    const curPhase = phaseFromKey(curKey);
+    if (!curPhase) break;
+    phases.push(curPhase);
+    if (curKey === "final") break;
+
+    let nextKey: string | null = null;
+
+    if (curKey.startsWith("plugin_segment:")) {
+      nextKey = segByKey.get(curKey)?.toPhaseKey ?? null;
+    } else {
+      nextKey = firstSegFrom(curKey) ?? anchorNext[curKey] ?? null;
+    }
+
+    if (!nextKey) break;
+    curKey = nextKey;
+  }
+
+  if (!phases.some((p) => p.kind === "final")) {
+    phases.push({ kind: "final" });
+  }
+
+  return phases;
 }
 
 export function parsePhase(input: unknown): Phase | null {

@@ -43,10 +43,12 @@ export function phaseKey(p: Phase): string {
  */
 const CORE_ALLOWED: ReadonlyMap<string, ReadonlySet<string>> = new Map([
   ["lobby",   new Set(["round:1"])],
-  ["round:1", new Set(["round:2"])],
-  ["round:2", new Set(["round:3"])],
-  ["round:3", new Set(["final"])],
-  ["final",   new Set()],
+  // Allow host to move back/forward between rounds (REQ: header arrows).
+  ["round:1", new Set(["lobby", "round:2"])],
+  ["round:2", new Set(["round:1", "round:3"])],
+  ["round:3", new Set(["round:2", "final"])],
+  // `final` is terminal for gameplay, but the host can navigate back.
+  ["final",   new Set(["round:3"])],
 ]);
 
 /**

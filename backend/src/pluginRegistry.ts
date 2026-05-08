@@ -73,6 +73,9 @@ class PluginRegistryImpl {
     this._segmentDefs.set(segKey, def);
     this.addEdge(def.fromPhaseKey, segKey);
     this.addEdge(segKey, def.toPhaseKey);
+    // Host navigation supports moving backward through segments as well.
+    this.addEdge(def.toPhaseKey, segKey);
+    this.addEdge(segKey, def.fromPhaseKey);
   }
 
   registerCardHandler(def: CardHandlerDef): void {
@@ -84,8 +87,17 @@ class PluginRegistryImpl {
     return this._edges;
   }
 
+  /** Segment definitions in registration order (for building a canonical phase nav timeline). */
+  get segments(): readonly SegmentDefinition[] {
+    return Array.from(this._segmentDefs.values());
+  }
+
   getSegmentDef(pluginId: string, segmentId: string): SegmentDefinition | undefined {
     return this._segmentDefs.get(`plugin_segment:${pluginId}:${segmentId}`);
+  }
+
+  getSegmentDefByKey(segKey: string): SegmentDefinition | undefined {
+    return this._segmentDefs.get(segKey);
   }
 
   getCardHandler(cardKind: string): CardHandlerDef | undefined {
