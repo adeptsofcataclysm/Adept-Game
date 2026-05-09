@@ -6,9 +6,13 @@ import { getDisplayName, getHostSecret } from "@/storage";
 import { GamePageHeader } from "@/components/GamePageHeader";
 import { ChatPanel } from "@/components/ChatPanel";
 import { PlayersPanel } from "@/components/PlayersPanel";
-import { PluginSegmentHost } from "@/plugins/PluginSegmentHost";
+import {
+  PluginSegmentFullScreenHost,
+  PluginSegmentMainHost,
+  PluginSegmentRailHost,
+  resolvePluginSegmentLayout,
+} from "@/plugins/PluginSegmentLayoutHost";
 import { getHttpBaseUrl } from "@/wsUrl";
-import { OpeningShowHostAside } from "@adept-plugins/opening-show/client";
 // Ensure plugin client registrations run before any render
 import "@/plugins/index";
 
@@ -109,13 +113,8 @@ export function ShowPage() {
 
   const boardPreview = useMemo(() => (snapshot ? boardForPhase(snapshot) : null), [snapshot]);
   const boardSel = useMemo(() => boardSelectorForPhase(snapshot?.phase), [snapshot?.phase]);
-  const openingShowPhase =
-    role === "host" &&
-    snapshot?.phase.kind === "plugin_segment" &&
-    snapshot.phase.pluginId === "opening-show" &&
-    snapshot.phase.id === "opening_show"
-      ? snapshot.phase
-      : null;
+
+  const pluginLayout = useMemo(() => resolvePluginSegmentLayout(snapshot), [snapshot]);
 
   if (!name) {
     return (
@@ -123,6 +122,17 @@ export function ShowPage() {
         <p>Set your name on the home page first.</p>
         <Link to="/">Back</Link>
       </div>
+    );
+  }
+
+  // Full-screen plugin segments override the entire page (no header, no chat/columns, no players panel).
+  if (pluginLayout.kind === "plugin_segment" && pluginLayout.FullScreenView && snapshot) {
+    return (
+      <PluginSegmentFullScreenHost
+        snapshot={snapshot}
+        role={role}
+        send={(type, payload) => send({ type, payload })}
+      />
     );
   }
 
@@ -195,7 +205,7 @@ export function ShowPage() {
             ) : null}
 
             {snapshot?.phase.kind === "plugin_segment" ? (
-              <PluginSegmentHost
+              <PluginSegmentMainHost
                 snapshot={snapshot}
                 role={role}
                 send={(type, payload) => send({ type, payload })}
@@ -203,12 +213,11 @@ export function ShowPage() {
             ) : null}
           </section>
 
-          <aside className="adepts-show-rail-col" aria-hidden={!openingShowPhase}>
-            {openingShowPhase ? (
-              <OpeningShowHostAside
-                snapshot={snapshot!}
-                pluginId={openingShowPhase.pluginId}
-                segmentId={openingShowPhase.id}
+          <aside className="adepts-show-rail-col" aria-hidden={snapshot?.phase.kind !== "plugin_segment"}>
+            {snapshot?.phase.kind === "plugin_segment" ? (
+              <PluginSegmentRailHost
+                snapshot={snapshot}
+                role={role}
                 send={(type, payload) => send({ type, payload })}
               />
             ) : null}

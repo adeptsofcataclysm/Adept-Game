@@ -144,7 +144,22 @@ On the server:
 
 ---
 
-## 8) Planned improvements (not required for correctness)
+## 8) Plugin UI layout slots (main / rail / full screen)
+
+A segment can contribute up to **three** client-side React views:
+
+- **Main** (`registerSegmentView`) — rendered in the main column when the show is in that `plugin_segment`.
+- **Rail** (`registerSegmentRailView`) — optional; rendered in the host **right rail** column (`adepts-show-rail-col`) alongside the main view.
+- **Full screen** (`registerSegmentFullScreenView`) — optional; **replaces the entire `ShowPage` UI** (no header, no chat/columns, no players panel).
+
+### Precedence rules
+
+- If a **full-screen** view is registered for the active segment, it takes precedence and the host renders **only** that view.
+- Otherwise, the host renders the **main** view, and additionally renders the **rail** view when present.
+
+---
+
+## 9) Planned improvements (not required for correctness)
 
 - **Generated client plugin barrel**: generate `frontend/src/plugins/index.ts` by discovering installed `@adept-plugins/*` packages.
 - **Plugin validator**: check plugin manifests (edges are reachable; no illegal anchor replacements; no floating git refs when using git dependencies).
