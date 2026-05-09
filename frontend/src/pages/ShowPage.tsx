@@ -224,7 +224,11 @@ export function ShowPage() {
           </aside>
         </div>
 
-        <PlayersPanel />
+        <PlayersPanel
+          snapshot={snapshot}
+          role={role}
+          send={(type: string, payload: unknown) => send({ type, payload })}
+        />
       </div>
 
       {editTheme.open ? (

@@ -140,6 +140,312 @@ code {
   min-height: 7.5rem;
 }
 
+.adepts-players-panel__strip {
+  margin: 0 auto;
+  max-width: 1080px;
+  align-items: stretch;
+  min-height: 7.5rem;
+}
+
+/* Octagonal slot strip (matches Node-Script Scoreboard shell). */
+.adepts-players-panel__strip--slots {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 0.4rem;
+  overflow-x: auto;
+  overscroll-behavior-x: contain;
+  min-width: min(100%, 528px);
+  padding-bottom: 2px;
+}
+
+@media (min-width: 768px) {
+  .adepts-players-panel__strip--slots {
+    gap: 0.55rem;
+  }
+}
+
+@media (min-width: 1024px) {
+  .adepts-players-panel__strip--slots {
+    gap: 0.65rem;
+  }
+}
+
+.adepts-slot-card-shell {
+  position: relative;
+  min-height: 120px;
+}
+
+@media (min-width: 768px) {
+  .adepts-slot-card-shell {
+    min-height: 134px;
+  }
+}
+
+@media (min-width: 1024px) {
+  .adepts-slot-card-shell {
+    min-height: 147px;
+  }
+}
+
+.adepts-slot-card {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  min-height: 120px;
+  transition:
+    box-shadow 0.5s ease-out,
+    filter 0.5s ease-out;
+}
+
+@media (min-width: 768px) {
+  .adepts-slot-card {
+    min-height: 134px;
+  }
+}
+
+@media (min-width: 1024px) {
+  .adepts-slot-card {
+    min-height: 147px;
+  }
+}
+
+.adepts-slot-card--turn {
+  filter: brightness(1.19);
+}
+
+.adepts-slot-card__glow-top {
+  pointer-events: none;
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  opacity: 1;
+  transition: opacity 0.5s ease-out;
+}
+
+.adepts-slot-card__glow-top--off {
+  opacity: 0;
+}
+
+.adepts-slot-card__glow-mid {
+  pointer-events: none;
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  opacity: 0.13;
+}
+
+.adepts-slot-card__name-zone {
+  position: relative;
+  z-index: 1;
+  flex-shrink: 0;
+  border-bottom: 1px solid transparent;
+  padding: 0.35rem 0.45rem 0.55rem;
+  text-align: center;
+}
+
+.adepts-slot-name {
+  margin-top: 2px;
+  width: 100%;
+  box-sizing: border-box;
+  text-align: center;
+  font-size: clamp(10px, 2.1vw, 12px);
+  font-weight: 600;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  line-height: 1.2;
+}
+
+.adepts-slot-name--readonly {
+  padding: 0.15rem 0.2rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.adepts-slot-name--input {
+  border-radius: 0.35rem;
+  border: 1px solid transparent;
+  background: rgb(0 0 0 / 0.65);
+  padding: 0.35rem 0.4rem;
+  outline: none;
+}
+
+@media (min-width: 768px) {
+  .adepts-slot-name {
+    font-size: 13px;
+  }
+}
+
+.adepts-slot-portrait {
+  position: relative;
+  z-index: 1;
+  flex: 1;
+  flex-grow: 1;
+  min-height: 52px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 0.35rem 0.35rem;
+}
+
+@media (min-width: 768px) {
+  .adepts-slot-portrait {
+    min-height: 62px;
+  }
+}
+
+.adepts-slot-portrait__turn-badge {
+  pointer-events: none;
+  position: absolute;
+  left: 0.25rem;
+  top: 0.25rem;
+  z-index: 2;
+  border-radius: 0.25rem;
+  padding: 1px 0.35rem;
+  font-size: 9px;
+  font-weight: 600;
+  line-height: 1.15;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+@media (min-width: 768px) {
+  .adepts-slot-portrait__turn-badge {
+    left: 0.35rem;
+    top: 0.35rem;
+    font-size: 10px;
+  }
+}
+
+.adepts-slot-portrait__ambient {
+  pointer-events: none;
+  position: absolute;
+  left: 10%;
+  right: 10%;
+  top: 8%;
+  height: 78%;
+  filter: blur(14px);
+}
+
+.adepts-slot-portrait__img {
+  position: relative;
+  z-index: 1;
+  max-height: 4.05rem;
+  width: auto;
+  max-width: 72%;
+  object-fit: contain;
+  opacity: 0.98;
+  user-select: none;
+}
+
+@media (min-width: 768px) {
+  .adepts-slot-portrait__img {
+    max-height: 4.5rem;
+  }
+}
+
+.adepts-slot-portrait__fallback {
+  position: relative;
+  z-index: 1;
+  height: 4.05rem;
+  width: auto;
+  max-width: 88%;
+}
+
+@media (min-width: 768px) {
+  .adepts-slot-portrait__fallback {
+    height: 4.5rem;
+  }
+}
+
+.adepts-slot-card__score-zone {
+  position: relative;
+  z-index: 1;
+  flex-shrink: 0;
+  margin-top: auto;
+  border-top: 1px solid transparent;
+  padding: 0.35rem 0.4rem 0.5rem;
+}
+
+.adepts-slot-score-row {
+  display: flex;
+  width: 100%;
+  min-width: 0;
+  align-items: center;
+  gap: 0.35rem;
+}
+
+/* Middle score grows so long values stay visible in the slot. */
+.adepts-slot-score-row .adepts-slot-score--input,
+.adepts-slot-score-row .adepts-slot-score--readonly {
+  flex: 1 1 0;
+  min-width: 0;
+}
+
+.adepts-slot-score-step {
+  width: 1.75rem;
+  height: 1.75rem;
+  flex: 0 0 auto;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 0.375rem;
+  border: none;
+  background: transparent;
+  color: rgb(255 255 255 / 0.86);
+  font-size: 1rem;
+  line-height: 1;
+  font-weight: 700;
+  padding: 0;
+  transition: background 0.12s ease;
+}
+
+.adepts-slot-score-step:hover {
+  background: rgb(255 255 255 / 0.06);
+}
+
+.adepts-slot-score-step--minus {
+  color: rgb(248 113 113 / 0.95);
+}
+
+.adepts-slot-score-step--minus:hover {
+  background: rgb(239 68 68 / 0.12);
+}
+
+.adepts-slot-score {
+  font-family: Cinzel, "Times New Roman", serif;
+  font-weight: 800;
+  line-height: 1;
+  text-align: center;
+  font-variant-numeric: tabular-nums;
+}
+
+.adepts-slot-score--readonly {
+  font-size: clamp(1.15rem, 2.4vw, 1.5rem);
+  padding: 0.2rem 0;
+}
+
+.adepts-slot-score--input {
+  width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
+  border-radius: 0.375rem;
+  border: 1px solid transparent;
+  background: rgb(0 0 0 / 0.55);
+  padding: 0.25rem 0.2rem;
+  font-size: clamp(1.05rem, 2.2vw, 1.35rem);
+  outline: none;
+  -moz-appearance: textfield;
+}
+
+.adepts-slot-score--input::-webkit-outer-spin-button,
+.adepts-slot-score--input::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
 .adepts-show-chat-col {
   min-width: 0;
   min-height: 0;

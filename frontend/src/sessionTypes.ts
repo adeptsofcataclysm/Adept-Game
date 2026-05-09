@@ -73,6 +73,8 @@ export type SessionSnapshot = {
   phase: Phase;
   /** Canonical phase timeline for host navigation UI (from backend). */
   phaseNav: Phase[];
+  /** Fixed seat names (0–4). Host-editable. */
+  seatNames: [string, string, string, string, string];
   scores: Scores;
   currentTurnSeat: number;
   roundBoard: Record<RoundIndex, RoundBoardRuntime>;

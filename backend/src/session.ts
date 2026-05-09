@@ -32,6 +32,8 @@ export type SessionSnapshot = {
   phase: Phase;
   /** Canonical phase timeline for host navigation UI. */
   phaseNav: Phase[];
+  /** Fixed seat names (0–4). Host-editable. */
+  seatNames: [string, string, string, string, string];
   scores: Scores;
   /** Seat 0–4 = Player numbers 1–5 (REQ-2). */
   currentTurnSeat: number;
@@ -65,6 +67,7 @@ export function createInitialSession(showId: string): SessionSnapshot {
     version: 1,
     phase: { kind: "lobby" },
     phaseNav: buildPhaseNav(),
+    seatNames: ["P1", "P2", "P3", "P4", "P5"],
     scores: [0, 0, 0, 0, 0],
     currentTurnSeat: 0,
     roundBoard,

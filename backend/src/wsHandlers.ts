@@ -272,6 +272,46 @@ function handleHostScoreStep(ctx: HandlerCtx, ws: WebSocket, meta: ClientMeta, p
   if (r.ok) ctx.broadcast(meta.showId, { type: "snapshot", payload: r.snapshot });
 }
 
+function handleHostSetScore(ctx: HandlerCtx, ws: WebSocket, meta: ClientMeta, payload: unknown): void {
+  if (meta.role !== "host") {
+    ctx.sendError(ws, "Host only");
+    return;
+  }
+  if (!isRecord(payload)) return;
+  const seatIndex = payload["seatIndex"];
+  const score = payload["score"];
+  if (typeof seatIndex !== "number" || seatIndex < 0 || seatIndex > 4) return;
+  if (typeof score !== "number" || !Number.isFinite(score)) return;
+
+  const clamped = Math.max(-999_999, Math.min(999_999, Math.trunc(score)));
+  const r = ctx.store.mutate(meta.showId, (snap) => {
+    snap.scores[seatIndex] = clamped;
+    return { ok: true };
+  });
+  if (r.ok) ctx.broadcast(meta.showId, { type: "snapshot", payload: r.snapshot });
+}
+
+function handleHostSetSeatName(ctx: HandlerCtx, ws: WebSocket, meta: ClientMeta, payload: unknown): void {
+  if (meta.role !== "host") {
+    ctx.sendError(ws, "Host only");
+    return;
+  }
+  if (!isRecord(payload)) return;
+  const seatIndex = payload["seatIndex"];
+  const nameRaw = payload["name"];
+  if (typeof seatIndex !== "number" || seatIndex < 0 || seatIndex > 4) return;
+
+  const name = String(nameRaw ?? "").trim().slice(0, 32) || `P${seatIndex + 1}`;
+  const r = ctx.store.mutate(meta.showId, (snap) => {
+    if (!Array.isArray(snap.seatNames) || snap.seatNames.length !== 5) {
+      snap.seatNames = ["P1", "P2", "P3", "P4", "P5"];
+    }
+    snap.seatNames[seatIndex] = name;
+    return { ok: true };
+  });
+  if (r.ok) ctx.broadcast(meta.showId, { type: "snapshot", payload: r.snapshot });
+}
+
 function handlePluginEvent(ctx: HandlerCtx, ws: WebSocket, meta: ClientMeta, payload: unknown): void {
   if (!isRecord(payload)) return;
   const pluginId = String(payload["pluginId"] ?? "").trim();
@@ -353,6 +393,18 @@ export function routeInbound(
       const meta = requireMeta();
       if (!meta) return;
       handleHostScoreStep(ctx, ws, meta, inbound.payload);
+      return;
+    }
+    case "host_set_score": {
+      const meta = requireMeta();
+      if (!meta) return;
+      handleHostSetScore(ctx, ws, meta, inbound.payload);
+      return;
+    }
+    case "host_set_seat_name": {
+      const meta = requireMeta();
+      if (!meta) return;
+      handleHostSetSeatName(ctx, ws, meta, inbound.payload);
       return;
     }
     case "plugin_event": {
