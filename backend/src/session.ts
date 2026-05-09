@@ -40,7 +40,7 @@ export type SessionSnapshot = {
   /** Per-round board: themes + question cells from JSON; `revealed` tracks opened cells (REQ-1). */
   roundBoard: Record<RoundIndex, RoundBoardRuntime>;
   /**
-   * Board for the **transition to Final** and **Final** segment (REQ-13), loaded from `data/round-4.json`.
+   * Board for the **transition to Final** and **Final** segment (REQ-13), loaded from `data/rounds/round-4.json`.
    */
   finalTransitionBoard: RoundBoardRuntime;
   /**
@@ -82,6 +82,8 @@ export function createInitialSession(showId: string): SessionSnapshot {
 
 export type SessionStore = {
   get(showId: string): SessionSnapshot | undefined;
+  /** Replace in-memory session with a fresh snapshot (quiz boards re-read from disk). */
+  reset(showId: string): void;
   mutate(
     showId: string,
     fn: (s: SessionSnapshot) => { ok: true } | { ok: false; error: string },
@@ -94,6 +96,9 @@ export function createSessionStore(): SessionStore {
   return {
     get(showId) {
       return map.get(showId);
+    },
+    reset(showId) {
+      map.set(showId, createInitialSession(showId));
     },
     mutate(showId, fn) {
       let cur = map.get(showId);

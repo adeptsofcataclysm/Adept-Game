@@ -49,6 +49,15 @@ export function attachWebsocket(
     return [...ids];
   }
 
+  function listMetasInShow(showId: string): ClientMeta[] {
+    const out: ClientMeta[] = [];
+    for (const ws of room(showId)) {
+      const m = metaBySocket.get(ws);
+      if (m && m.showId === showId) out.push(m);
+    }
+    return out;
+  }
+
   const ctx: HandlerCtx = {
     store: opts.store,
     dataDir: opts.dataDir,
@@ -59,6 +68,7 @@ export function attachWebsocket(
     getMeta: (ws) => metaBySocket.get(ws),
     isHostAuthorized: opts.isHostAuthorized,
     getOnlineParticipantIds: collectOnlineParticipantIds,
+    listMetasInShow,
   };
 
   wss.on("connection", (ws, req) => {

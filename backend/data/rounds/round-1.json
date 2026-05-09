@@ -23,21 +23,21 @@
     [
       {
         "text": "Что это за босс?",
-        "questionUrl": "/bossy-100.mp4",
+        "questionUrl": "/quiz_media/bossy-100.mp4",
         "answerText": "Ониксия",
-        "answerUrl": "/bossy-100-answer.jpg"
+        "answerUrl": "/quiz_media/bossy-100-answer.jpg"
       },
       {
         "text": "В битве с этим боссом лучше лишний раз не шуметь, чтобы не дать себя обнаружить.",
         "questionUrl": "",
         "answerText": "Атрамед",
-        "answerUrl": "/bossy-200-answer.jpg"
+        "answerUrl": "/quiz_media/bossy-200-answer.jpg"
       },
       {
-        "text": "Назовите босса, бывшего нам союзника, который перед впадением в безумие бафает рейд, чтобы рейду было проще с ним справиться.",
+        "text": "Назовите босса, бывшего нам союзником, который перед впадением в безумие бафает рейд, чтобы рейду было проще с ним справиться.",
         "questionUrl": "",
         "answerText": "Валестраз",
-        "answerUrl": "/bossy-300-answer.webp"
+        "answerUrl": "/quiz_media/bossy-300-answer.webp"
       },
       {
         "text": "Назовите этого босса?",
@@ -49,7 +49,7 @@
         "text": "Жители Даларана! Поднимите глаза и взгляните на это небо!\nЕсли вы это слышите, значит кто-то победил...",
         "questionUrl": "",
         "answerText": "Алгалона",
-        "answerUrl": "/bossy-500-answer.jpg",
+        "answerUrl": "/quiz_media/bossy-500-answer.jpg",
         "splashUrl": "/raccoon.png"
       }
     ],
@@ -58,14 +58,14 @@
         "text": "Имя этого NPC — гибрид имени актёра Харрисона Форда и его героя Индианы Джонса. Вся цепочка квестов в Ульдуме с его участием копирует сцены из фильмов про знаменитого археолога.",
         "questionUrl": "",
         "answerText": "Харрисон Джонс",
-        "answerUrl": "/pashalki-100-answer.jpg",
+        "answerUrl": "/quiz_media/pashalki-100-answer.jpg",
         "splashUrl": "/raccoon.png"
       },
       {
         "text": "В ЛБРС рука робота около лавы — к чему эта пасхалка?",
         "questionUrl": "",
         "answerText": "Терминатор 2",
-        "answerUrl": "/pashalki-200-answer.jpg"
+        "answerUrl": "/quiz_media/pashalki-200-answer.jpg"
       },
       {
         "text": "",
@@ -77,13 +77,13 @@
         "text": "На одном из островов в Низине Шолазар находится люк с выбитыми на нём цифрами 5, 9, 16, 17, 24, 43. Это почти точная копия загадочного люка из сериала. Назовите сериал?",
         "questionUrl": "",
         "answerText": "Остаться в живых (Lost)",
-        "answerUrl": "/pashalki-400-answer.jpg"
+        "answerUrl": "/quiz_media/pashalki-400-answer.jpg"
       },
       {
         "text": "Эта иконка является «плейсхолдером» иконок некоторых скилов в старых версиях WoW. Вопрос: кто на ней изображён?",
         "questionUrl": "https://wow.zamimg.com/images/wow/icons/large/classic_temp.jpg",
         "answerText": "Сэмуайз Дидье — арт-директор Blizzard Entertainment (бывший, проработал там почти с основания компании и до 2023 года)",
-        "answerUrl": "/pashalki-500-answer.jpg"
+        "answerUrl": "/quiz_media/pashalki-500-answer.jpg"
       }
     ],
     [

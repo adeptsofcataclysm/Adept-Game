@@ -9,6 +9,8 @@ export type GamePageHeaderProps = {
   viewerRole: Role;
   phase?: Phase;
   phaseNav?: Phase[];
+  /** Host-only full session reset (clears state and reloads grids from disk). */
+  onHostReset?: () => void;
   onHostTransition?: (to: Phase) => void;
 };
 
@@ -131,6 +133,7 @@ export function GamePageHeader({
   viewerRole,
   phase,
   phaseNav,
+  onHostReset,
   onHostTransition,
 }: GamePageHeaderProps) {
   const navigate = useNavigate();
@@ -143,6 +146,17 @@ export function GamePageHeader({
     navigate("/", { replace: true });
   }
 
+  function handleHostResetClick() {
+    if (!onHostReset) return;
+    if (
+      !window.confirm(
+        "Сбросить игру? Будут очищены очки, чат, состояние сегментов и открытые клетки; сетки вопросов перечитаются с диска. Участники останутся в комнате.",
+      )
+    )
+      return;
+    onHostReset();
+  }
+
   return (
     <header className="game-header">
       <h1 className="game-header__title">САМЫЙ ДУШНЫЙ 3.0</h1>
@@ -150,6 +164,17 @@ export function GamePageHeader({
         <span className="adepts-quiz-badge adepts-game-header__badge">{badgeLabel}</span>
       </div>
       <div className="game-header__actions">
+        {viewerRole === "host" && onHostReset ? (
+          <button
+            type="button"
+            className="game-header__reset"
+            onClick={handleHostResetClick}
+            disabled={!connected}
+            title={connected ? undefined : "Нет соединения с сервером"}
+          >
+            Reset
+          </button>
+        ) : null}
         {viewerRole === "host" ? (
           <HostPhaseNav phase={phase} phaseNav={phaseNav} onHostTransition={onHostTransition} />
         ) : null}
@@ -179,7 +204,7 @@ export function GamePageHeader({
           </div>
         </div>
         <button type="button" className="game-header__logout" onClick={handleLogout}>
-        ➜]
+          →
         </button>
       </div>
     </header>

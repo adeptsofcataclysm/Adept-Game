@@ -10,7 +10,7 @@ No code is copied from other repositories.
 
 ## Quiz content (JSON)
 
-Themes and questions for **rounds 1–3** load from `backend/data/round-1.json` … `round-3.json` at session startup (see `backend/src/quizData.ts`). The initial files were taken from the legacy defaults under `Node-Script/artifacts/api-server/src/lib/default-adepts-quiz-board-*.json`.
+Round packs (`round-1.json` … `round-4.json`) live under **`backend/data/rounds/`** and load at session startup (see `backend/src/quizData.ts`). Theme icons uploads and quiz image uploads go to **`backend/data/theme_icons/`** and **`backend/data/quiz_media/`** respectively; HTTP paths stay `/theme_icons/…` and `/quiz_media/…`. Initial JSON was taken from the legacy defaults under `Node-Script/artifacts/api-server/src/lib/default-adepts-quiz-board-*.json`.
 
 **`round-4.json`** is loaded into every session as **`finalTransitionBoard`**: it is the board data for the **transition to Final** and **Final** phases (`between_final`, `final`, REQ-13). The SPA shows this board instead of a main-round grid while those phases are active.
 

@@ -6,6 +6,7 @@ import { getDisplayName, getHostSecret } from "@/storage";
 import { GamePageHeader } from "@/components/GamePageHeader";
 import { ChatPanel } from "@/components/ChatPanel";
 import { PlayersPanel } from "@/components/PlayersPanel";
+import { QuizQuestionModal } from "@/components/QuizQuestionModal";
 import {
   PluginSegmentFullScreenHost,
   PluginSegmentMainHost,
@@ -111,8 +112,32 @@ export function ShowPage() {
     busy: false,
   });
 
+  const [questionModalCell, setQuestionModalCell] = useState<{ rowIndex: number; colIndex: number } | null>(null);
+
   const boardPreview = useMemo(() => (snapshot ? boardForPhase(snapshot) : null), [snapshot]);
   const boardSel = useMemo(() => boardSelectorForPhase(snapshot?.phase), [snapshot?.phase]);
+
+  /** Host or the viewer whose display name matches the active seat (`seatNames[currentTurnSeat]`). */
+  const canOpenQuestionModal = useMemo(() => {
+    if (!snapshot) return false;
+    if (role === "host") return true;
+    const seat = snapshot.currentTurnSeat;
+    if (typeof seat !== "number" || seat < 0 || seat > 4) return false;
+    const slotName = (snapshot.seatNames[seat] ?? "").trim().toLowerCase();
+    const me = name.trim().toLowerCase();
+    return me.length > 0 && slotName.length > 0 && me === slotName;
+  }, [snapshot, role, name]);
+
+  const questionModalPayload = useMemo(() => {
+    if (!questionModalCell || !boardPreview) return null;
+    const { rowIndex, colIndex } = questionModalCell;
+    const cell = boardPreview.board.questions[rowIndex]?.[colIndex];
+    if (!cell) return null;
+    const rawTheme = boardPreview.board.themes[rowIndex] ?? "";
+    const themeName = rawTheme.trim() ? rawTheme.trim() : `Тема ${rowIndex + 1}`;
+    const points = boardPreview.board.pointValues?.[rowIndex]?.[colIndex] ?? (colIndex + 1) * 100;
+    return { cell, themeName, points };
+  }, [questionModalCell, boardPreview]);
 
   const pluginLayout = useMemo(() => resolvePluginSegmentLayout(snapshot), [snapshot]);
 
@@ -145,6 +170,7 @@ export function ShowPage() {
         viewerRole={role}
         phase={snapshot?.phase}
         phaseNav={snapshot?.phaseNav}
+        onHostReset={role === "host" ? () => send({ type: "host_reset_session", payload: {} }) : undefined}
         onHostTransition={(to) => send({ type: "host_transition", payload: to })}
       />
 
@@ -178,6 +204,8 @@ export function ShowPage() {
                         board={boardPreview.board}
                         role={role}
                         boardSel={boardSel}
+                        canOpenQuestionModal={canOpenQuestionModal}
+                        onQuestionCellClick={(rowIndex, colIndex) => setQuestionModalCell({ rowIndex, colIndex })}
                         onEditTheme={(rowIndex) => {
                           if (role !== "host") return;
                           if (!boardSel) return;
@@ -387,6 +415,20 @@ export function ShowPage() {
           </div>
         </div>
       ) : null}
+
+      <QuizQuestionModal
+        isOpen={questionModalPayload != null}
+        themeName={questionModalPayload?.themeName ?? ""}
+        points={questionModalPayload?.points ?? 0}
+        cell={questionModalPayload?.cell ?? null}
+        onClose={() => setQuestionModalCell(null)}
+        isHost={role === "host"}
+        boardSel={boardSel}
+        cellCoords={questionModalCell}
+        snapshotVersion={snapshot?.version ?? 0}
+        send={send}
+        hostSecret={hostSecretStored || undefined}
+      />
     </div>
   );
 }
@@ -395,11 +437,15 @@ function BoardPreview({
   board,
   role,
   boardSel,
+  canOpenQuestionModal,
+  onQuestionCellClick,
   onEditTheme,
 }: {
   board: RoundBoardRuntime;
   role: Role;
   boardSel: BoardSelector | null;
+  canOpenQuestionModal: boolean;
+  onQuestionCellClick: (rowIndex: number, colIndex: number) => void;
   onEditTheme: (rowIndex: number) => void;
 }) {
   return (
@@ -446,28 +492,45 @@ function BoardPreview({
             {board.questions[ri]?.map((cell, ci) => {
               const opened = Boolean(board.revealed?.[ri]?.[ci]);
               const points = board.pointValues?.[ri]?.[ci] ?? (ci + 1) * 100;
-              return (
-                <div
+              const cellClass = [
+                "adepts-quiz-board-preview__cell",
+                opened ? "adepts-quiz-board-preview__cell--opened" : "adepts-quiz-board-preview__cell--closed",
+                canOpenQuestionModal ? "adepts-quiz-board-preview__cell--clickable" : "",
+              ]
+                .filter(Boolean)
+                .join(" ");
+              const title = opened
+                ? `${cell.text || "Открытый вопрос"} · полный текст в модальном окне`
+                : `${points} — открыть вопрос`;
+
+              const body = opened ? (
+                <div className="adepts-quiz-board-preview__opened">
+                  <div className="adepts-quiz-board-preview__opened-text">
+                    {cell.questionUrl ? <span>media · </span> : null}
+                    {cell.text ? `${cell.text.slice(0, 80)}${cell.text.length > 80 ? "…" : ""}` : "—"}
+                  </div>
+                  <div className="adepts-quiz-board-preview__opened-sub">opened</div>
+                </div>
+              ) : (
+                <div className="adepts-quiz-board-preview__closed">
+                  <div className="glow-text adepts-quiz-board-preview__points">{points}</div>
+                </div>
+              );
+
+              return canOpenQuestionModal ? (
+                <button
                   key={ci}
-                  className={[
-                    "adepts-quiz-board-preview__cell",
-                    opened ? "adepts-quiz-board-preview__cell--opened" : "adepts-quiz-board-preview__cell--closed",
-                  ].join(" ")}
-                  title={opened ? (cell.text || "") : `${points}`}
+                  type="button"
+                  className={cellClass}
+                  title={title}
+                  aria-label={`Вопрос ${points} баллов`}
+                  onClick={() => onQuestionCellClick(ri, ci)}
                 >
-                  {opened ? (
-                    <div className="adepts-quiz-board-preview__opened">
-                      <div className="adepts-quiz-board-preview__opened-text">
-                        {cell.questionUrl ? <span>media · </span> : null}
-                        {cell.text ? `${cell.text.slice(0, 80)}${cell.text.length > 80 ? "…" : ""}` : "—"}
-                      </div>
-                      <div className="adepts-quiz-board-preview__opened-sub">opened</div>
-                    </div>
-                  ) : (
-                    <div className="adepts-quiz-board-preview__closed">
-                      <div className="glow-text adepts-quiz-board-preview__points">{points}</div>
-                    </div>
-                  )}
+                  {body}
+                </button>
+              ) : (
+                <div key={ci} className={cellClass} title={opened ? cell.text || "" : `${points}`}>
+                  {body}
                 </div>
               );
             })}

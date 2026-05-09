@@ -4,7 +4,7 @@ import type { RawData } from "ws";
 import type { WebSocket } from "ws";
 import type { Phase } from "./phase.js";
 import { pluginRegistry } from "./pluginRegistry.js";
-import type { Role, SessionStore } from "./session.js";
+import type { Participant, Role, SessionStore } from "./session.js";
 import { appendChat, applyHostTransition, parsePhase } from "./session.js";
 
 export type ClientMeta = {
@@ -29,6 +29,8 @@ export type HandlerCtx = {
   getMeta: (ws: WebSocket) => ClientMeta | undefined;
   isHostAuthorized: (role: Role, hostSecret: string | undefined) => boolean;
   getOnlineParticipantIds: (showId: string) => string[];
+  /** Joined socket metas currently in `showId` (one entry per connection). */
+  listMetasInShow: (showId: string) => ClientMeta[];
 };
 
 function isRecord(v: unknown): v is Record<string, unknown> {
@@ -103,6 +105,53 @@ function tryPersistRoundPackEdit(
   }
 }
 
+function tryPersistRoundPackQuestionEdit(
+  dataDir: string,
+  args: {
+    roundFile: 1 | 2 | 3 | 4;
+    rowIndex: number;
+    colIndex: number;
+    questionText: string;
+    answerText: string;
+    questionUrl: string;
+    answerUrl: string;
+  },
+): { ok: true } | { ok: false; error: string } {
+  const fileName = `round-${args.roundFile}.json`;
+  const filePath = path.join(dataDir, fileName);
+  if (!fs.existsSync(filePath)) return { ok: false, error: `${fileName} not found` };
+
+  let parsed: unknown;
+  try {
+    parsed = JSON.parse(fs.readFileSync(filePath, "utf8")) as unknown;
+  } catch {
+    return { ok: false, error: `${fileName}: invalid JSON` };
+  }
+  if (!parsed || typeof parsed !== "object") return { ok: false, error: `${fileName}: invalid object` };
+  const o = parsed as Record<string, unknown>;
+  const qs = o["questions"];
+  if (!Array.isArray(qs)) return { ok: false, error: `${fileName}: missing questions` };
+  const row = qs[args.rowIndex];
+  if (!Array.isArray(row)) return { ok: false, error: "theme row out of range" };
+  if (args.colIndex < 0 || args.colIndex >= row.length) return { ok: false, error: "column out of range" };
+  const cell = row[args.colIndex];
+  if (!cell || typeof cell !== "object") return { ok: false, error: "cell missing" };
+
+  row[args.colIndex] = {
+    ...(cell as Record<string, unknown>),
+    text: args.questionText,
+    questionUrl: args.questionUrl,
+    answerText: args.answerText,
+    answerUrl: args.answerUrl,
+  };
+  try {
+    fs.writeFileSync(filePath, `${JSON.stringify(parsed, null, 2)}\n`, "utf8");
+    return { ok: true };
+  } catch {
+    return { ok: false, error: `${fileName}: write failed` };
+  }
+}
+
 function handleJoin(
   ctx: HandlerCtx,
   ws: WebSocket,
@@ -161,6 +210,31 @@ function handleChat(ctx: HandlerCtx, ws: WebSocket, meta: ClientMeta, payload: u
   const text = String(payload["text"] ?? "");
   const r = ctx.store.mutate(meta.showId, (snap) => appendChat(snap, meta.displayName, meta.role, text));
   if (r.ok) ctx.broadcast(meta.showId, { type: "snapshot", payload: r.snapshot });
+  else ctx.sendError(ws, r.error);
+}
+
+function participantsFromConnectedMetas(metas: ClientMeta[]): Participant[] {
+  const byId = new Map<string, Participant>();
+  for (const m of metas) {
+    byId.set(m.participantId, { id: m.participantId, displayName: m.displayName, role: m.role });
+  }
+  return [...byId.values()];
+}
+
+function handleHostResetSession(ctx: HandlerCtx, ws: WebSocket, meta: ClientMeta): void {
+  if (meta.role !== "host") {
+    ctx.sendError(ws, "Host only");
+    return;
+  }
+  const showId = meta.showId;
+  const metas = ctx.listMetasInShow(showId);
+  ctx.store.reset(showId);
+  const r = ctx.store.mutate(showId, (snap) => {
+    snap.participants = participantsFromConnectedMetas(metas);
+    snap.onlineParticipantIds = ctx.getOnlineParticipantIds(showId);
+    return { ok: true };
+  });
+  if (r.ok) ctx.broadcast(showId, { type: "snapshot", payload: r.snapshot });
   else ctx.sendError(ws, r.error);
 }
 
@@ -245,6 +319,96 @@ function handleHostEditQuizTheme(
           : null;
     if (roundFile) {
       const persist = tryPersistRoundPackEdit(ctx.dataDir, { roundFile, rowIndex, themeText, iconUrl });
+      if (!persist.ok) {
+        ctx.sendError(ws, `Persist failed: ${persist.error}`);
+      }
+    }
+    ctx.broadcast(meta.showId, { type: "snapshot", payload: r.snapshot });
+  } else ctx.sendError(ws, r.error);
+}
+
+const MAX_QUESTION_TEXT_LEN = 16_384;
+const MAX_ANSWER_TEXT_LEN = 16_384;
+const MAX_MEDIA_URL_LEN = 4_096;
+
+function handleHostEditQuizQuestion(
+  ctx: HandlerCtx,
+  ws: WebSocket,
+  meta: ClientMeta,
+  payload: unknown,
+): void {
+  if (meta.role !== "host") {
+    ctx.sendError(ws, "Host only");
+    return;
+  }
+  if (!isRecord(payload)) return;
+
+  const boardKind = String(payload["boardKind"] ?? "").trim();
+  const roundIndex = payload["roundIndex"];
+  const rowIndex = payload["rowIndex"];
+  const colIndex = payload["colIndex"];
+  const questionTextRaw = payload["questionText"];
+  const answerTextRaw = payload["answerText"];
+  const questionUrlRaw = payload["questionUrl"];
+  const answerUrlRaw = payload["answerUrl"];
+
+  if (
+    typeof rowIndex !== "number" ||
+    !Number.isFinite(rowIndex) ||
+    rowIndex < 0 ||
+    typeof colIndex !== "number" ||
+    !Number.isFinite(colIndex) ||
+    colIndex < 0
+  )
+    return;
+  if (
+    typeof questionTextRaw !== "string" ||
+    typeof answerTextRaw !== "string" ||
+    typeof questionUrlRaw !== "string" ||
+    typeof answerUrlRaw !== "string"
+  )
+    return;
+
+  const questionText = questionTextRaw.slice(0, MAX_QUESTION_TEXT_LEN);
+  const answerText = answerTextRaw.slice(0, MAX_ANSWER_TEXT_LEN);
+  const questionUrl = questionUrlRaw.trim().slice(0, MAX_MEDIA_URL_LEN);
+  const answerUrl = answerUrlRaw.trim().slice(0, MAX_MEDIA_URL_LEN);
+
+  const r = ctx.store.mutate(meta.showId, (snap) => {
+    const board =
+      boardKind === "finalTransition"
+        ? snap.finalTransitionBoard
+        : boardKind === "round" && (roundIndex === 1 || roundIndex === 2 || roundIndex === 3)
+          ? snap.roundBoard[roundIndex]
+          : null;
+    if (!board) return { ok: false, error: "Invalid board selector" };
+    if (rowIndex >= board.themes.length) return { ok: false, error: "Theme row out of range" };
+    const row = board.questions[rowIndex];
+    if (!row || colIndex >= row.length) return { ok: false, error: "Question column out of range" };
+    row[colIndex].text = questionText;
+    row[colIndex].answerText = answerText;
+    row[colIndex].questionUrl = questionUrl;
+    row[colIndex].answerUrl = answerUrl;
+    return { ok: true };
+  });
+
+  if (r.ok) {
+    const roundFile: 1 | 2 | 3 | 4 | null =
+      boardKind === "finalTransition"
+        ? 4
+        : boardKind === "round" && (roundIndex === 1 || roundIndex === 2 || roundIndex === 3)
+          ? roundIndex
+          : null;
+    if (roundFile) {
+      const persist = tryPersistRoundPackQuestionEdit(ctx.dataDir, {
+        roundFile,
+        rowIndex,
+        colIndex,
+        questionText,
+        answerText,
+        questionUrl,
+        answerUrl,
+      });
       if (!persist.ok) {
         ctx.sendError(ws, `Persist failed: ${persist.error}`);
       }
@@ -383,10 +547,22 @@ export function routeInbound(
       handleHostTransition(ctx, ws, meta, inbound.payload);
       return;
     }
+    case "host_reset_session": {
+      const meta = requireMeta();
+      if (!meta) return;
+      handleHostResetSession(ctx, ws, meta);
+      return;
+    }
     case "host_edit_quiz_theme": {
       const meta = requireMeta();
       if (!meta) return;
       handleHostEditQuizTheme(ctx, ws, meta, inbound.payload);
+      return;
+    }
+    case "host_edit_quiz_question": {
+      const meta = requireMeta();
+      if (!meta) return;
+      handleHostEditQuizQuestion(ctx, ws, meta, inbound.payload);
       return;
     }
     case "host_score_step": {

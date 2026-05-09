@@ -32,7 +32,8 @@ export type RoundBoardRuntime = {
   pointValues: number[][];
 };
 
-const DATA_DIR = join(dirname(fileURLToPath(import.meta.url)), "..", "data");
+/** Round pack JSON files (`round-1.json` …) live under `backend/data/rounds/`. */
+const DATA_DIR = join(dirname(fileURLToPath(import.meta.url)), "..", "data", "rounds");
 
 const STANDARD_FIVE = [100, 200, 300, 400, 500];
 
