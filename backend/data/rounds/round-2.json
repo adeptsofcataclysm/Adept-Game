@@ -23,33 +23,33 @@
     [
       {
         "text": "",
-        "questionUrl": "/ded-primi-tabletki-100-question.mp4",
+        "questionUrl": "/quiz_media/ded-primi-tabletki-100-question.mp4",
         "answerText": "Плащ из чешуи Ониксии",
-        "answerUrl": "/ded-primi-tabletki-100-answer.png"
+        "answerUrl": "/quiz_media/ded-primi-tabletki-100-answer.jpg"
       },
       {
         "text": "",
-        "questionUrl": "/ded-primi-tabletki-200-question.mp4",
+        "questionUrl": "/quiz_media/ded-primi-tabletki-200-question.mp4",
         "answerText": "1) Нужно было поговорить с ЭТИМ огром.\n2) Глазки заметили ДЕДА",
-        "answerUrl": "/ded-primi-tabletki-200-answer.png"
+        "answerUrl": "/quiz_media/ded-primi-tabletki-200-answer.jpg"
       },
       {
         "text": "",
-        "questionUrl": "/ded-primi-tabletki-300-question.mp4",
+        "questionUrl": "/quiz_media/ded-primi-tabletki-300-question.mp4",
         "answerText": "1) На самом южном островке\n2) Дед должен взять только 1 тушилку. По сути, он и \"может\" только 1 взять. Это уникальный предмет.",
-        "answerUrl": "/ded-primi-tabletki-300-answer.png"
+        "answerUrl": "/quiz_media/ded-primi-tabletki-300-answer.jpg"
       },
       {
         "text": "",
-        "questionUrl": "/ded-primi-tabletki-400-question.mp4",
+        "questionUrl": "/quiz_media/ded-primi-tabletki-400-question.mp4",
         "answerText": "Жужки на фрост резист фармятся с  химер",
-        "answerUrl": "/ded-primi-tabletki-400-answer.png"
+        "answerUrl": "/quiz_media/ded-primi-tabletki-400-answer.jpg"
       },
       {
         "text": "",
-        "questionUrl": "/ded-primi-tabletki-500-question.mp4",
+        "questionUrl": "/quiz_media/ded-primi-tabletki-500-question.mp4",
         "answerText": "На ласт фазе выходят 5 жуков. Пристам нужно было зашаклить ровно 3, не больше. Иначе Кел'Тузад их освободит.",
-        "answerUrl": "/ded-primi-tabletki-500-answer.png"
+        "answerUrl": "/quiz_media/ded-primi-tabletki-500-answer.jpg"
       }
     ],
     [
@@ -61,28 +61,28 @@
       },
       {
         "text": "",
-        "questionUrl": "/tactics-200-question.mp4",
+        "questionUrl": "/quiz_media/tactics-200-question.mp4",
         "answerText": "Вы получаете 3 крутки Колеса Адептов",
-        "answerUrl": "/freebie-400-question.png"
+        "answerUrl": "/quiz_media/freebie-400-question.png"
       },
       {
         "text": "Чтобы лучше запомнить тактику на этого босса, достаточно посмотреть на свою клавиатуру.",
         "questionUrl": "",
         "answerText": "Тадиус (-----БОСС++++)",
-        "answerUrl": "/tactics-300-answer.png"
+        "answerUrl": "/quiz_media/tactics-300-answer.jpg"
       },
       {
         "text": "Как известно, у Адептов когда-то был творец эпохальных разборов на рейдовые подземелья. Какие-то доделаны до конца, а какие-то заброшены. Так вот, если бы сейчас появился эпохальный обзор на Осаду Оргримара, то каким по счёту он бы был?",
         "questionUrl": "",
-        "answerText": "10-й\n\nЧто было:\n1) Чёрный храм\n2) Плато Солнечного Колодца\n3) Ульдуар\n4) Цитадель Ледяной Короны\n5) Твердыня Крыла Тьмы\n6) Сумеречный Бастион\n7) Трон Четырёх Ветров\n8) Огненные Просторы\n9) Душа Дракона",
-        "answerUrl": "/tactics-400-answer.png",
+        "answerText": "10-й\n\nЧто было:\n1) Чёрный храм 2) Плато Солнечного Колодца\n3) Ульдуар 4) ЦЛК\n 5) ТКТ 6) СБ 7) ТЧВ 8) ОП 9) ДД",
+        "answerUrl": "/quiz_media/tactics-400-answer.jpg",
         "splashUrl": "/raccoon.png"
       },
       {
         "text": "Перед походом в \"Чёрный Храм\" Адептов просили полететь в Забытый город за семенами колючечника. Для какого босса нужен был этот расходник и как его применяли?",
         "questionUrl": "",
         "answerText": "Матушка Шахраз. Чтобы её стяжка 3-х игроков иногда прокала на этих мобов с семечек.",
-        "answerUrl": "/tactics-500-answer.png"
+        "answerUrl": "/quiz_media/tactics-500-answer.jpg"
       }
     ],
     [
@@ -90,7 +90,7 @@
         "text": "Есть особое достижение на каменных стражах в ПМШ. В чём суть этого достижения?",
         "questionUrl": "",
         "answerText": "\"Любовь к собакам обязательна\" — необходимо убить босса с рейдом из призванных собаками.",
-        "answerUrl": "/pets-100-answer.png",
+        "answerUrl": "/quiz_media/pets-100-answer.jpg",
         "splashUrl": "/raccoon.png"
       },
       {
@@ -128,24 +128,24 @@
       {
         "text": "Одна из самых страшных фраз, что можно услышать после многих вайпов на боссе.",
         "questionUrl": "",
-        "answerText": "«Здесь трешь реснулся.» (Рес треша происходит через 2 часа после его убийства, если жив босс перед трешом.)",
+        "answerText": "«Здесь треш реснулся.» (Рес треша происходит через 2 часа после его убийства, если жив босс перед трешом.)",
         "answerUrl": ""
       },
       {
         "text": "Назовите рейдовое подземелье, в котором вообще нет треша как такового.",
         "questionUrl": "",
-        "answerText": "(1)Испытание крестоносца, (2)Око вечности(где Малигос летает),\n(3)Трончетырёх ветров (Алакир).",
+        "answerText": "(1)Испытание крестоносца, (2)Око вечности(где Малигос летает),\n(3)Трон Четырёх Ветров (Алакир).",
         "answerUrl": ""
       },
       {
         "text": "В каком рейде нужно убить некоторое количество треша, чтобы заспавнился босс?",
         "questionUrl": "",
         "answerText": "Огненные просторы",
-        "answerUrl": "/trash-400-answer.png"
+        "answerUrl": "/quiz_media/trash-400-answer.jpg"
       },
       {
         "text": "Ящик Пандоры",
-        "questionUrl": "/halyava-500-question.mp4",
+        "questionUrl": "/quiz_media/halyava-500-question.mp4",
         "answerText": "нужно сделать либо отдельный таймер на сайте, специально для таких евентов, либо как-то по другому.",
         "answerUrl": ""
       }
@@ -155,32 +155,32 @@
         "text": "Что заиграет после этого?\n— Trifiling gnome! Your arrogance will be your undoing!\n— But i'm in charge here...\n— [...]",
         "questionUrl": "",
         "answerText": "",
-        "answerUrl": "/quotes-100-answer.mp4"
+        "answerUrl": "/quiz_media/quotes-100-answer.mp4"
       },
       {
         "text": "Дополните фразу:\n[...]. Я...этого...не хотела.",
         "questionUrl": "",
         "answerText": "",
-        "answerUrl": "/quotes-200-answer.mp4",
+        "answerUrl": "/quiz_media/quotes-200-answer.mp4",
         "splashUrl": "/raccoon.png"
       },
       {
         "text": "Дополните цитату:\nНе бывает в игре багов [...]",
         "questionUrl": "",
         "answerText": "",
-        "answerUrl": "/quotes-300-answer.mp4"
+        "answerUrl": "/quiz_media/quotes-300-answer.mp4"
       },
       {
         "text": "Кто это сказал?\n«От вас будет пахнуть огнём!»",
         "questionUrl": "",
         "answerText": "Киирилл",
-        "answerUrl": "/quotes-400-answer.mp4"
+        "answerUrl": "/quiz_media/quotes-400-answer.mp4"
       },
       {
         "text": "",
-        "questionUrl": "/quotes-500-question.mp4",
+        "questionUrl": "/quiz_media/quotes-500-question.mp4",
         "answerText": "Вы получаете 3 крутки Колеса Адептов",
-        "answerUrl": "/freebie-400-question.png"
+        "answerUrl": "/quiz_media/freebie-400-question.png"
       }
     ],
     [
@@ -188,13 +188,13 @@
         "text": "Ачивка называется — «Крутостью мне заложило уши!». Что нужно было сделать, чтобы получить данную ачивку?",
         "questionUrl": "",
         "answerText": "Победить Синестру в героическом режиме с первой попытки, не допустив смерти ни одного из участников рейда.",
-        "answerUrl": "/feats-100-answer.png"
+        "answerUrl": "/quiz_media/feats-100-answer.jpg"
       },
       {
-        "text": "Добейтесь того, чтобы пираты из шайки Кровавого Паруса начали относиться к вам с уважением, а обитатели Пиратской бухты, Круговзора, Прибамбасска, Кебестана, Ярморки Новолуния и поместья Чёрного Ворона стали вас превозносить.",
+        "text": "Добейтесь того, чтобы пираты из шайки Кровавого Паруса начали относиться к вам с уважением, а обитатели Пиратской бухты, Круговзора, Прибамбасска, Кебестана, Ярмарки Новолуния и поместья Чёрного Ворона стали вас превозносить.",
         "questionUrl": "",
         "answerText": "Чокнутый",
-        "answerUrl": "/feats-200-answer.png"
+        "answerUrl": "/quiz_media/feats-200-answer.jpg"
       },
       {
         "text": "В течение одного сохранённого рейда убейте всех боссов в Наксрамасе на 10 игроков, не допустив смерти ни одного участника рейда.",
@@ -207,7 +207,7 @@
         "text": "Назовите ачивку, для которой нужно убить всех лидеров фракции противника в их столицах. Наградой будет огромный Чёрный боевой медведь.",
         "questionUrl": "",
         "answerText": "За Альянс!",
-        "answerUrl": "/feats-400-answer.png"
+        "answerUrl": "/quiz_media/feats-400-answer.jpg"
       },
       {
         "text": "Назовите великий подвиг, связанный с этой фигуркой.",
@@ -221,31 +221,31 @@
         "text": "Солнцетень",
         "questionUrl": "",
         "answerText": "Луносвет",
-        "answerUrl": "/nayaborot-100-answer.webp"
+        "answerUrl": "/quiz_media/nayaborot-100-answer.webp"
       },
       {
         "text": "Равнины пространства",
         "questionUrl": "",
         "answerText": "Пещеры времени",
-        "answerUrl": "/nayaborot-200-answer.jpg"
+        "answerUrl": "/quiz_media/nayaborot-200-answer.jpg"
       },
       {
         "text": "Мокрая компашка",
         "questionUrl": "",
         "answerText": "Пылающий легион",
-        "answerUrl": "/nayaborot-300-answer.webp"
+        "answerUrl": "/quiz_media/nayaborot-300-answer.webp"
       },
       {
         "text": "Слив конца",
         "questionUrl": "",
         "answerText": "Источник вечности",
-        "answerUrl": "/nayaborot-400-answer.png?v=7e000c8a"
+        "answerUrl": "/quiz_media/nayaborot-400-answer.jpg"
       },
       {
         "text": "Квадростоп Наполнения",
         "questionUrl": "",
         "answerText": "Круговерть Путоты",
-        "answerUrl": "/nayaborot-500-answer.jpg",
+        "answerUrl": "/quiz_media/nayaborot-500-answer.jpg",
         "headerUrl": "/wheel.png"
       }
     ],
@@ -258,13 +258,13 @@
       },
       {
         "text": "Как называют всё это вот?",
-        "questionUrl": "/abilities-200-question.jpg",
+        "questionUrl": "/quiz_media/abilities-200-question.jpg",
         "answerText": "Лужи",
         "answerUrl": ""
       },
       {
         "text": "Опишите эту способность:",
-        "questionUrl": "/abilities-300-question.jpg",
+        "questionUrl": "/quiz_media/abilities-300-question.jpg",
         "answerText": "«Цеповуха» К'Туна. Чем дальше скачет — тем больше урон.",
         "splashUrl": "/raccoon.png",
         "answerUrl": ""
@@ -273,11 +273,11 @@
         "text": "Назовите абилку по описанию:\nДруид получает одну из способностей связанного с ним класса. Выбор зависит от специализации. Цель также получает одну из способностей друида. Время действия — 1 ч. Эффект сохраняется после смерти.",
         "questionUrl": "",
         "answerText": "Симбиоз.",
-        "answerUrl": "/abilities-400-answer.png"
+        "answerUrl": "/quiz_media/abilities-400-answer.png"
       },
       {
         "text": "Почему тут аж три камня здоровья?",
-        "questionUrl": "/abilities-500-question.png",
+        "questionUrl": "/quiz_media/abilities-500-question.jpg",
         "answerText": "Когда-то у варлока были разные уровни заклинания для камней здоровья. Эти камушки не стакались между собой в инвентаре.",
         "answerUrl": ""
       }

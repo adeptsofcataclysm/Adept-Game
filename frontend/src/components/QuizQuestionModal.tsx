@@ -410,8 +410,12 @@ export function QuizQuestionModal({
                                 className="adepts-question-modal__media"
                                 src={resolveQuizAssetUrl(qUrl)}
                                 controls
+                                autoPlay
                                 playsInline
-                                preload="metadata"
+                                preload="auto"
+                                onLoadedData={(e) => {
+                                  (e.currentTarget as HTMLVideoElement).play().catch(() => {});
+                                }}
                               />
                             ) : (
                               <img
@@ -446,8 +450,12 @@ export function QuizQuestionModal({
                                 className="adepts-question-modal__media"
                                 src={resolveQuizAssetUrl(aUrl)}
                                 controls
+                                autoPlay
                                 playsInline
-                                preload="metadata"
+                                preload="auto"
+                                onLoadedData={(e) => {
+                                  (e.currentTarget as HTMLVideoElement).play().catch(() => {});
+                                }}
                               />
                             ) : (
                               <img

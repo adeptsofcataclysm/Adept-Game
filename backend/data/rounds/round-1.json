@@ -69,9 +69,9 @@
       },
       {
         "text": "",
-        "questionUrl": "/pashalki-300-question.mp4",
+        "questionUrl": "/quiz_media/pashalki-300-question.mp4",
         "answerText": "Вы получаете 3 крутки Колеса Адептов",
-        "answerUrl": "/freebie-400-question.png"
+        "answerUrl": "/quiz_media/freebie-400-question.png"
       },
       {
         "text": "На одном из островов в Низине Шолазар находится люк с выбитыми на нём цифрами 5, 9, 16, 17, 24, 43. Это почти точная копия загадочного люка из сериала. Назовите сериал?",
@@ -91,31 +91,31 @@
         "text": "Кто это говорит?\n«Вы не готовы!»",
         "questionUrl": "",
         "answerText": "Иллидан",
-        "answerUrl": "/vy-ne-gotovy.mp4"
+        "answerUrl": "/quiz_media/vy-ne-gotovy.mp4"
       },
       {
         "text": "Продолжите цитату:\nAllright chamss. Let's do this, [...]",
         "questionUrl": "",
         "answerText": "LEEEEROY JANKINS",
-        "answerUrl": "/leeroy.mp4"
+        "answerUrl": "/quiz_media/leeroy.mp4"
       },
       {
-        "text": "Разрешите доебаться... (с)",
+        "text": "Разрешите доебаться... ©",
         "questionUrl": "",
         "answerText": "Джентельменыч",
-        "answerUrl": "/razreshite.mp4"
+        "answerUrl": "/quiz_media/razreshite.mp4"
       },
       {
         "text": "Закончите уравнение:\n3x³ + [...]",
         "questionUrl": "",
         "answerText": "const... ну что там?",
-        "answerUrl": "/3x3.mp4"
+        "answerUrl": "/quiz_media/3x3.mp4"
       },
       {
         "text": "Закончите цитату:\nYou think you do, [...]",
         "questionUrl": "",
         "answerText": "but you don't.",
-        "answerUrl": "/you-think.mp4"
+        "answerUrl": "/quiz_media/you-think.mp4"
       }
     ],
     [
@@ -123,26 +123,26 @@
         "text": "Как назывался единый континент на Азероте до Великого Раскола?",
         "questionUrl": "",
         "answerText": "Калимдор",
-        "answerUrl": "/lor-wow-100-answer.webp",
+        "answerUrl": "/quiz_media/lor-wow-100-answer.jpg",
         "headerUrl": "/wheel.png"
       },
       {
         "text": "Чем закончилась Первая война против орды?",
         "questionUrl": "",
         "answerText": "Разрушением Штормграда",
-        "answerUrl": "/lor-wow-200-answer.jpg"
+        "answerUrl": "/quiz_media/lor-wow-200-answer.jpg"
       },
       {
         "text": "Какого известного персонажа победил Артас перед тем, как взобраться на Ледяную Корону?",
         "questionUrl": "",
         "answerText": "Иллидан",
-        "answerUrl": "/lor-wow-300-answer.jpg"
+        "answerUrl": "/quiz_media/lor-wow-300-answer.jpg"
       },
       {
-        "text": "Почти на всех мирах существовали духи стихии: воды, огня, воздуха, земли. Но не первобытный Дренор. Каким элементом он был пропитан?",
+        "text": "Почти на всех мирах существовали духи стихии: воды, огня, воздуха, земли. Но не в первобытном Дреноре. Каким элементом он был пропитан?",
         "questionUrl": "",
         "answerText": "Дух Жизни",
-        "answerUrl": "/lor-wow-400-answer.webp"
+        "answerUrl": "/quiz_media/lor-wow-400-answer.webp"
       },
       {
         "text": "Какое событие изображено на картинке?",
@@ -155,33 +155,33 @@
     [
       {
         "text": "",
-        "questionUrl": "/cosplay-100-question.jpg",
+        "questionUrl": "/quiz_media/cosplay-100-question.jpg",
         "answerText": "",
-        "answerUrl": "/cosplay-100-answer.jpg"
+        "answerUrl": "/quiz_media/cosplay-100-answer.jpg"
       },
       {
         "text": "",
-        "questionUrl": "/cosplay-200-question.jpg",
+        "questionUrl": "/quiz_media/cosplay-200-question.jpg",
         "answerText": "",
-        "answerUrl": "/cosplay-200-answer.jpg"
+        "answerUrl": "/quiz_media/cosplay-200-answer.jpg"
       },
       {
         "text": "",
-        "questionUrl": "/cosplay-300-question.jpg",
+        "questionUrl": "/quiz_media/cosplay-300-question.jpg",
         "answerText": "",
-        "answerUrl": "/cosplay-300-answer.jpg"
+        "answerUrl": "/quiz_media/cosplay-300-answer.jpg"
       },
       {
         "text": "",
-        "questionUrl": "/cosplay-400-question.jpg",
+        "questionUrl": "/quiz_media/cosplay-400-question.jpg",
         "answerText": "",
-        "answerUrl": "/cosplay-400-answer.jpg"
+        "answerUrl": "/quiz_media/cosplay-400-answer.jpg"
       },
       {
         "text": "",
-        "questionUrl": "/cosplay-500-question.jpg",
+        "questionUrl": "/quiz_media/cosplay-500-question.jpg",
         "answerText": "Ауриайя",
-        "answerUrl": "/cosplay-500-answer.jpg"
+        "answerUrl": "/quiz_media/cosplay-500-answer.jpg"
       }
     ],
     [
@@ -206,13 +206,13 @@
       },
       {
         "text": "",
-        "questionUrl": "/freebie-400-question.mp4",
+        "questionUrl": "/quiz_media/freebie-400-question.mp4",
         "answerText": "Вы получаете 3 крутки Колеса Адептов",
-        "answerUrl": "/freebie-400-question.png"
+        "answerUrl": "/quiz_media/freebie-400-question.png"
       },
       {
         "text": "Ящик Пандоры",
-        "questionUrl": "/halyava-500-question.mp4",
+        "questionUrl": "/quiz_media/halyava-500-question.mp4",
         "answerText": "",
         "answerUrl": ""
       }
@@ -222,31 +222,31 @@
         "text": "В какой локации расположен вход в легендарное подземелье «Огненные Недра» (Molten Core)?",
         "questionUrl": "",
         "answerText": "Чёрная гора",
-        "answerUrl": "/locations-200-answer.jpg"
+        "answerUrl": "/quiz_media/locations-100-answer.jpg"
       },
       {
         "text": "Как называется город-крепость, который служит главной столицей Орды в Калимдоре?",
         "questionUrl": "",
         "answerText": "Оргриммар",
-        "answerUrl": "/locations-100-answer.jpg"
+        "answerUrl": "/quiz_media/locations-200-answer.jpg"
       },
       {
         "text": "Как называлось Мировое древо, у которого располагалась столица ночных эльфов Дарнас?",
         "questionUrl": "",
         "answerText": "Тельдрасил",
-        "answerUrl": "/locations-300-answer.webp"
+        "answerUrl": "/quiz_media/locations-300-answer.jpg"
       },
       {
         "text": "Через какой перевал в Восточных королевствах можно попасть в локацию Болото Печали, если идти из Сумеречного леса?",
         "questionUrl": "",
         "answerText": "Перевал мёртвого ветра",
-        "answerUrl": "/locations-400-answer.jpg"
+        "answerUrl": "/quiz_media/locations-400-answer.jpg"
       },
       {
         "text": "В какой локации Пандарии игроки могли выращивать собственные овощи и строить отношения с фракцией Земледельцев?",
         "questionUrl": "",
         "answerText": "Ферма солнечной песни",
-        "answerUrl": "/locations-500-answer.webp"
+        "answerUrl": "/quiz_media/locations-500-answer.jpg"
       }
     ],
     [
@@ -254,32 +254,32 @@
         "text": "«Гоблинская» и «Гномская» — о какой профессии идёт речь?",
         "questionUrl": "",
         "answerText": "Инженерия",
-        "answerUrl": "/professions-100-answer.png"
+        "answerUrl": "/quiz_media/professions-100-answer.jpg"
       },
       {
         "text": "Обладатели какой профессии могли изготавливать волшебные масла?",
         "questionUrl": "",
         "answerText": "Наложение чар",
-        "answerUrl": "/professions-200-answer.png",
+        "answerUrl": "/quiz_media/professions-200-answer.jpg",
         "splashUrl": "/raccoon.png"
       },
       {
         "text": "Какая новая профессия появилась в WotLK?",
         "questionUrl": "",
         "answerText": "Начертание",
-        "answerUrl": "/professions-300-answer.png"
+        "answerUrl": "/quiz_media/professions-300-answer.jpg"
       },
       {
         "text": "С помощью какой профессии призывался один из боссов в дополнении TBC?",
         "questionUrl": "",
         "answerText": "Рыбалка",
-        "answerUrl": "/professions-400-answer.png"
+        "answerUrl": "/quiz_media/professions-400-answer.jpg"
       },
       {
         "text": "Сколько специализаций в кузнечном деле было в TBC? Бонус: назовите их.",
         "questionUrl": "",
         "answerText": "4: бронник, оружейник-мечи, оружейник-булавы, оружейник-топоры.",
-        "answerUrl": "/professions-500-answer.png"
+        "answerUrl": "/quiz_media/professions-500-answer.jpg"
       }
     ]
   ]

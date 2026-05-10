@@ -42,7 +42,7 @@
       },
       {
         "text": "К чему была приурочена эта гифка?",
-        "questionUrl": "/lor-400-question.gif",
+        "questionUrl": "/quiz_media/lor-400-question.gif",
         "answerText": "Переезд гильдии с сервера Рок-Делар на Пламегор (бля там написано «АдеТПы»)",
         "answerUrl": ""
       },
@@ -56,27 +56,27 @@
     [
       {
         "text": "Угадайте персонажа по косплею:",
-        "questionUrl": "/cursed-cosplay-200.png",
+        "questionUrl": "/quiz_media/cursed-cosplay-100.jpg",
         "answerText": "Пандарен",
         "answerUrl": "https://mir-s3-cdn-cf.behance.net/project_modules/hd_webp/42b0ab50391213.560881a922da1.jpg"
       },
       {
         "text": "Угадайте персонажа по косплею:",
-        "questionUrl": "/cursed-cosplay-400.png",
+        "questionUrl": "/quiz_media/cursed-cosplay-200.jpg",
         "answerText": "Гулдан",
         "answerUrl": "https://cs19.pikabu.ru/s/2025/12/20/13/6ljew2eq.webp"
       },
       {
         "text": "Угадайте персонажа по косплею:",
-        "questionUrl": "/cursed-cosplay-100.png",
+        "questionUrl": "/quiz_media/cursed-cosplay-300-question.jpg",
         "answerText": "Артас",
-        "answerUrl": "/cursed-cosplay-300-answer.png"
+        "answerUrl": "/quiz_media/cursed-cosplay-300-answer.jpg"
       },
       {
         "text": "Угадайте персонажа по косплею:",
-        "questionUrl": "/cursed-cosplay-300.png",
+        "questionUrl": "/quiz_media/cursed-cosplay-400-question.jpg",
         "answerText": "Шаман",
-        "answerUrl": "/cursed-cosplay-400-answer.png"
+        "answerUrl": "/quiz_media/cursed-cosplay-400-answer.jpg"
       },
       {
         "text": "Угадайте персонажа по косплею:",
@@ -98,7 +98,7 @@
         "text": "Как называется этот маунт?",
         "questionUrl": "https://wow.zamimg.com/uploads/screenshots/normal/321464-%D0%BF%D0%BE%D0%B2%D0%BE%D0%B4%D1%8C%D1%8F-%D0%B1%D0%BE%D0%BB%D1%8C%D1%88%D0%BE%D0%B3%D0%BE-%D1%8F%D0%BA%D0%B0-%D0%B4%D0%BB%D1%8F-%D0%BF%D1%83%D1%82%D0%B5%D1%88%D0%B5%D1%81%D1%82%D0%B2%D0%B8%D0%B9.jpg",
         "answerText": "Поводья большого яка для путешествий",
-        "answerUrl": "/mounts-200-answer.png"
+        "answerUrl": "/quiz_media/mounts-200-answer.png"
       },
       {
         "text": "Получить этого редкого маунта можно было только во время эвента «Открытие врат Ан'Киража». Как называется маунт?",
@@ -132,7 +132,7 @@
       },
       {
         "text": "Ящик Пандоры",
-        "questionUrl": "/halyava-500-question.mp4",
+        "questionUrl": "/quiz_media/halyava-500-question.mp4",
         "answerText": "нужно сделать либо отдельный таймер на сайте, специально для таких евентов, либо как-то по другому.",
         "answerUrl": ""
       },
@@ -164,7 +164,7 @@
       },
       {
         "text": "Какой спек у этого паладина?",
-        "questionUrl": "/zaceni-look-200-question.png",
+        "questionUrl": "/quiz_media/zaceni-look-200-question.jpg",
         "answerText": "Хил...но в душе он остаётся ретриком)",
         "answerUrl": ""
       },
@@ -177,15 +177,15 @@
       },
       {
         "text": "Какой из классов мог носить эту версию Атиеша?",
-        "questionUrl": "/zaceni-look-400-question.png",
+        "questionUrl": "/quiz_media/zaceni-look-400-question.jpg",
         "answerText": "Чернокнижник (синяя лента — чернокнижник, оранжевая — жрец, зелёная — друид, красная — маг)",
         "answerUrl": ""
       },
       {
         "text": "",
-        "questionUrl": "/zaceni-look-500-question.mp4",
+        "questionUrl": "/quiz_media/zaceni-look-500-question.mp4",
         "answerText": "Вы получаете 3 крутки Колеса Адептов",
-        "answerUrl": "/freebie-400-question.png"
+        "answerUrl": "/quiz_media/freebie-400-question.png"
       }
     ],
     [
@@ -197,9 +197,9 @@
       },
       {
         "text": "",
-        "questionUrl": "/bosses-200-question.mp4",
+        "questionUrl": "/quiz_media/bosses-200-question.mp4",
         "answerText": "Вы получаете 3 крутки Колеса Адептов",
-        "answerUrl": "/freebie-400-question.png"
+        "answerUrl": "/quiz_media/freebie-400-question.png"
       },
       {
         "text": "После победы над этим боссом, в благодарность, он благословляет рейд и дарует бафф для упрощения следующего энкаунтера (в героическом режиме).\nНазовите этого босса?",
@@ -231,7 +231,7 @@
         "text": "Побочная фракция в TBC, связанная с грибочками.",
         "questionUrl": "",
         "answerText": "Спорегар",
-        "answerUrl": "https://static.wikia.nocookie.net/wow/images/4/49/Sporeggar_Concept_Art_Peter_Lee.jpg/revision/latest?cb=20131115184120&path-prefix=ru",
+        "answerUrl": "/quiz_media/factions-200-answer.webp",
         "splashUrl": "/raccoon.png"
       },
       {
@@ -256,7 +256,7 @@
     [
       {
         "text": "Что за праздник?",
-        "questionUrl": "/wow-events-100-question.png",
+        "questionUrl": "/quiz_media/wow-events-100-question.jpg",
         "answerText": "Зимний Покров",
         "answerUrl": ""
       },
@@ -270,17 +270,17 @@
         "text": "Несчастный, ты достиг конца пути! Судьба решит, кому вперёд идти!\nДанную фразу можно услышать от босса этого события.",
         "questionUrl": "",
         "answerText": "Тыквовин",
-        "answerUrl": "/wow-events-300-answer.png"
+        "answerUrl": "/quiz_media/wow-events-300-answer.jpg"
       },
       {
         "text": "Почему всё в огне?",
-        "questionUrl": "/wow-events-400-question.png",
+        "questionUrl": "/quiz_media/wow-events-400-question.jpg",
         "answerText": "Событие в локации: прилетел Смертокрыл",
-        "answerUrl": "/wow-events-400-answer.png"
+        "answerUrl": "/quiz_media/wow-events-400-answer.jpg"
       },
       {
         "text": "Что за событие происходило, когда в игре появлялись подобные NPC?",
-        "questionUrl": "/wow-events-500-question.png",
+        "questionUrl": "/quiz_media/wow-events-500-question.jpg",
         "answerText": "Подготовка к открытию Врат Ан'киража",
         "answerUrl": "https://drive.google.com/uc?export=view&id=17AFs6awvOAhukzbHGvCyslHPkOm4f_Dt",
         "splashUrl": "/raccoon.png"
