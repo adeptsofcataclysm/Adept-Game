@@ -1143,6 +1143,9 @@ code {
   text-align: center;
   text-shadow: 0 0 20px hsla(280, 65%, 70%, 0.18);
   word-break: break-word;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  text-wrap: nowrap;
 }
 
 .adepts-quiz-theme .adepts-quiz-board-preview__theme-icon {
