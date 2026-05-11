@@ -1,0 +1,46 @@
+/* Show page outer shell + body wrappers (column + grid). */
+
+.adepts-show-shell {
+  font-family: "Space Grotesk", system-ui, sans-serif;
+  color: hsl(210, 40%, 98%);
+  background: linear-gradient(135deg, #0d0d1a 0%, #1a0d2e 50%, #0d1a1a 100%);
+  background-attachment: fixed;
+  /* Lock to viewport so the players strip stays on-screen; center column scrolls inside. */
+  height: 100vh;
+  max-height: 100vh;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  box-sizing: border-box;
+}
+
+.adepts-show-shell .adepts-show-body {
+  flex: 1;
+  min-height: 0;
+  padding: 0 1.25rem 0.75rem;
+  overflow: hidden;
+}
+
+/* Stack: chat + main grid, then full-width players strip. */
+.adepts-show-body--column {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  overflow: hidden;
+}
+
+/* Two-column show layout: chat column fills height. */
+.adepts-show-body--grid {
+  flex: 1;
+  min-height: 0;
+  display: grid;
+  grid-template-columns: minmax(220px, 280px) minmax(0, 1fr) minmax(220px, 280px);
+  /* One row fills the flex area; min height keeps the chat list visible even when 1fr collapses. */
+  grid-template-rows: minmax(12rem, 1fr);
+  gap: 1rem;
+  align-items: stretch;
+  overflow: hidden;
+}

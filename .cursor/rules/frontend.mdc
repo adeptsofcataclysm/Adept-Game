@@ -1,6 +1,6 @@
 ---
 description: Frontend rules for the Vite + React 19 SPA (WebSocket projections, role-gated views)
-globs: frontend/**/*.{ts,tsx}
+globs: frontend/**/*.{ts,tsx,css}
 alwaysApply: false
 ---
 # Frontend (Vite + React + React Router SPA)
@@ -34,4 +34,12 @@ Render projections of the server snapshot (REQ-15.1). The Node session service i
 - Import via the `@/` alias for `src/*` (configured in `vite.config.ts` + `tsconfig.json`).
 - Type `Phase`, `Role`, `SessionSnapshot`, `RoundBoardRuntime` from `@/sessionTypes` instead of restating shapes inline.
 - Strict TypeScript: no `any`, no untyped state. Narrow union members with `phase.kind === ...` switches.
-- Keep visual styling in `src/index.css`. Inline styles only for ad-hoc layout already established in the file.
+
+## Styles
+
+- `src/index.css` is an `@import` manifest only — never add rules to it. Append rules to the matching partial in `src/styles/`.
+- Partials (in load order, which is the cascade order): `base.css`, `show-shell.css`, `players-panel.css`, `show-columns.css`, `lobby-slideshow.css`, `quiz-board.css`, `modal.css`, `question-modal.css`, `forms.css`, `theme-icon-editor.css`, `quiz-board-cells.css`, `login.css`, `chat-panel.css`, `game-header.css`, `layout-modifiers.css`.
+- Pick the partial whose name matches the component/feature you are styling. Create a new partial (and add it to the manifest) only when the rules belong to a clearly distinct topic with no existing home.
+- Do not reorder existing `@import` lines without a reason — order is the global cascade. New partials go before `layout-modifiers.css` so page-level overrides stay last.
+- Co-locate `@keyframes` with the rule that uses them, in the same partial.
+- Inline styles only for ad-hoc layout already established in the codebase.

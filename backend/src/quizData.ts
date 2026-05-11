@@ -3,7 +3,7 @@ import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import type { RoundIndex } from "./phase.js";
 
-/** Matches persisted quiz JSON (derived from legacy default board files). */
+/** Matches persisted quiz JSON. */
 export type QuestionCell = {
   text: string;
   questionUrl: string;

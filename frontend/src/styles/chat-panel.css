@@ -1,0 +1,182 @@
+/* Show chat panel (header, scroll list, emoji sheet, composer). */
+
+.chat-panel {
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  border-radius: 0.75rem;
+  border: 1px solid rgba(192, 38, 211, 0.55);
+  background: hsla(260, 40%, 7%, 0.8);
+  box-shadow: 0 0 18px hsla(300, 90%, 55%, 0.28);
+  backdrop-filter: blur(8px);
+  min-width: 0;
+  flex: 1;
+  min-height: 0;
+}
+
+.chat-panel__head {
+  flex-shrink: 0;
+  border-bottom: 1px solid rgba(192, 38, 211, 0.25);
+  padding: 0.625rem 1rem;
+}
+
+.chat-panel__title {
+  margin: 0;
+  font-family: Cinzel, "Times New Roman", serif;
+  font-size: 0.7rem;
+  font-weight: 600;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: hsla(45, 93%, 47%, 0.7);
+}
+
+.chat-panel__scroll {
+  flex: 1;
+  min-height: 5rem;
+  overflow-y: auto;
+  padding: 0.5rem 0.75rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  scrollbar-width: thin;
+  scrollbar-color: hsla(300, 90%, 55%, 0.5) transparent;
+}
+
+.chat-panel__scroll::-webkit-scrollbar {
+  width: 6px;
+}
+
+.chat-panel__scroll::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.chat-panel__scroll::-webkit-scrollbar-thumb {
+  border-radius: 999px;
+  background: hsla(300, 90%, 55%, 0.45);
+}
+
+.chat-panel__scroll::-webkit-scrollbar-thumb:hover {
+  background: hsla(300, 90%, 55%, 0.75);
+}
+
+.chat-panel__empty {
+  margin: 0;
+  padding: 0.35rem 0.25rem;
+  font-size: 0.8rem;
+  line-height: 1.35;
+  color: hsla(210, 25%, 72%, 0.88);
+}
+
+.chat-panel__line-text {
+  color: rgba(255, 255, 255, 0.88);
+  font-family: "Arial", "Noto Color Emoji", "Apple Color Emoji", "Segoe UI Emoji", system-ui, sans-serif;
+}
+
+.chat-panel__emoji-sheet {
+  flex-shrink: 0;
+  border-top: 1px solid rgba(192, 38, 211, 0.25);
+  background: hsla(260, 40%, 7%, 0.9);
+  padding: 0.35rem;
+}
+
+.chat-panel__emoji-grid {
+  display: grid;
+  grid-template-columns: repeat(6, 1fr);
+  gap: 2px;
+}
+
+.chat-panel__emoji-cell {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: none;
+  border-radius: 0.25rem;
+  padding: 0.25rem;
+  line-height: 1;
+  font-family: "Noto Color Emoji", "Apple Color Emoji", "Segoe UI Emoji", system-ui, sans-serif;
+  background: transparent;
+  color: inherit;
+  transition:
+    background 0.15s,
+    transform 0.1s;
+}
+
+.chat-panel__emoji-cell:hover {
+  background: hsla(300, 90%, 55%, 0.2);
+}
+
+.chat-panel__emoji-cell:active {
+  transform: scale(0.9);
+}
+
+.chat-panel__bar {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  border-top: 1px solid rgba(192, 38, 211, 0.25);
+  padding: 0.5rem;
+}
+
+.chat-panel__input {
+  flex: 1;
+  min-width: 0;
+  border-radius: 0.25rem;
+  border: 1px solid hsla(260, 30%, 25%, 0.65);
+  background: hsla(260, 40%, 5%, 0.5);
+  padding: 0.35rem 0.5rem;
+  font-size: 0.875rem;
+  font-family: "Arial", "Noto Color Emoji", "Apple Color Emoji", "Segoe UI Emoji", system-ui, sans-serif;
+  color: hsl(210, 40%, 98%);
+}
+
+.chat-panel__input::placeholder {
+  color: hsl(260, 20%, 55%);
+}
+
+.chat-panel__input:focus {
+  outline: none;
+  border-color: hsla(45, 93%, 47%, 0.5);
+}
+
+.chat-panel__emoji-toggle {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 0.25rem;
+  border: 1px solid hsla(260, 30%, 25%, 0.5);
+  background: hsla(260, 40%, 5%, 0.4);
+  padding: 0.35rem 0.5rem;
+  color: hsla(210, 40%, 98%, 0.6);
+  transition:
+    border-color 0.15s,
+    background 0.15s,
+    color 0.15s;
+}
+
+.chat-panel__emoji-toggle:hover {
+  border-color: hsla(300, 90%, 55%, 0.5);
+  color: hsl(300, 80%, 78%);
+}
+
+.chat-panel__emoji-toggle--open {
+  border-color: hsla(300, 90%, 55%, 0.55);
+  background: hsla(300, 90%, 55%, 0.2);
+  color: hsl(300, 80%, 82%);
+}
+
+.chat-panel__send {
+  flex-shrink: 0;
+  border-radius: 0.25rem;
+  border: 1px solid hsla(45, 93%, 47%, 0.4);
+  background: hsla(45, 93%, 47%, 0.15);
+  padding: 0.35rem 0.75rem;
+  font-size: 0.875rem;
+  color: hsl(45, 93%, 47%);
+  transition: background 0.15s;
+}
+
+.chat-panel__send:hover {
+  background: hsla(45, 93%, 47%, 0.28);
+}

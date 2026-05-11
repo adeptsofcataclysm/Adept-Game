@@ -1,0 +1,70 @@
+/* Base: tokens, fonts, element resets, .layout, .card. */
+
+:root {
+  font-family: system-ui, "Noto Color Emoji", "Apple Color Emoji", "Segoe UI Emoji", sans-serif;
+  line-height: 1.45;
+  color: #e8eaef;
+  background: #12141a;
+}
+
+@font-face {
+  font-family: "Noto Color Emoji";
+  src: url("/fonts/NotoColorEmoji.ttf") format("truetype");
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "WarCraft";
+  src: url("/fonts/WarCraft.ttf") format("truetype");
+  font-display: swap;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  height: 100%;
+}
+
+body {
+  margin: 0;
+}
+
+#root {
+  min-height: 100%;
+}
+
+a {
+  color: #8ab4ff;
+}
+
+button,
+input,
+select,
+textarea {
+  font: inherit;
+}
+
+button {
+  cursor: pointer;
+}
+
+code {
+  font-size: 0.9em;
+}
+
+.layout {
+  max-width: 960px;
+  margin: 0 auto;
+  padding: 1rem 1.25rem;
+}
+
+.card {
+  background: #1c1f28;
+  border: 1px solid #2a3142;
+  border-radius: 10px;
+  padding: 1rem 1.25rem;
+  margin-bottom: 1rem;
+}

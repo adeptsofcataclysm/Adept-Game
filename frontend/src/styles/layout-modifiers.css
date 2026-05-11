@@ -1,0 +1,13 @@
+/* Page-level .layout modifiers that strip the default centered container. */
+
+.layout--show {
+  max-width: none;
+  margin: 0;
+  padding: 0;
+}
+
+.layout--login {
+  max-width: none;
+  margin: 0;
+  padding: 0;
+}

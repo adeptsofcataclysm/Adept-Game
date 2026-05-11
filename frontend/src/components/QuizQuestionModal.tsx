@@ -309,7 +309,7 @@ export function QuizQuestionModal({
       {isOpen && pack ? (
         <motion.div
           key="quiz-q-modal"
-          className="adepts-question-modal-overlay"
+          className="question-modal-overlay"
           role="presentation"
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
@@ -322,65 +322,65 @@ export function QuizQuestionModal({
             role="dialog"
             aria-modal="true"
             aria-label="Вопрос квиза"
-            className="adepts-question-modal adepts-quiz-theme"
+            className="question-modal adepts-quiz-theme"
             initial={{ scale: 0.92, opacity: 0, y: 24 }}
             animate={{ scale: 1, opacity: 1, y: 0 }}
             exit={{ scale: 0.92, opacity: 0, y: 24 }}
             transition={{ type: "spring", damping: 26, stiffness: 320 }}
             onMouseDown={(e) => e.stopPropagation()}
           >
-            <div className="adepts-question-modal__header">
-              <div className="adepts-question-modal__header-main">
-                <div className="adepts-question-modal__title-block">
-                  <div className="adepts-question-modal__theme-label">{pack.themeName}</div>
-                  <div className="adepts-question-modal__points glow-text">{pack.points}</div>
+            <div className="question-modal__header">
+              <div className="question-modal__header-main">
+                <div className="question-modal__title-block">
+                  <div className="question-modal__theme-label">{pack.themeName}</div>
+                  <div className="question-modal__points glow-text">{pack.points}</div>
                 </div>
                 {pack.cell.headerUrl?.trim() ? (
                   <>
-                    <span className="adepts-question-modal__plus glow-text">+</span>
-                    <div className="adepts-question-modal__header-bonus">
+                    <span className="question-modal__plus glow-text">+</span>
+                    <div className="question-modal__header-bonus">
                       <img src={resolveQuizAssetUrl(pack.cell.headerUrl)} alt="" draggable={false} />
-                      <span className="adepts-question-modal__header-bonus-cap">1 крутка</span>
+                      <span className="question-modal__header-bonus-cap">1 крутка</span>
                     </div>
                   </>
                 ) : null}
                 {(pack.cell.headerCornerUrl || pack.cell.splashUrl || "").trim() ? (
                   <img
-                    className="adepts-question-modal__corner"
+                    className="question-modal__corner"
                     src={resolveQuizAssetUrl((pack.cell.headerCornerUrl || pack.cell.splashUrl || "").trim())}
                     alt=""
                     draggable={false}
                   />
                 ) : null}
                 {!editing ? (
-                  <div className="adepts-question-modal__stage-pills" role="tablist" aria-label="Этап">
+                  <div className="question-modal__stage-pills" role="tablist" aria-label="Этап">
                     <button
                       type="button"
                       role="tab"
                       aria-selected={stage === "question"}
-                      className={`adepts-question-modal__pill${stage === "question" ? " adepts-question-modal__pill--on" : ""}`}
+                      className={`question-modal__pill${stage === "question" ? " question-modal__pill--on" : ""}`}
                       onClick={() => setStage("question")}
                     >
                       Вопрос
                     </button>
-                    <span className="adepts-question-modal__chev" aria-hidden>
+                    <span className="question-modal__chev" aria-hidden>
                       ›
                     </span>
                     <button
                       type="button"
                       role="tab"
                       aria-selected={stage === "answer"}
-                      className={`adepts-question-modal__pill${stage === "answer" ? " adepts-question-modal__pill--on" : ""}`}
+                      className={`question-modal__pill${stage === "answer" ? " question-modal__pill--on" : ""}`}
                       onClick={() => setStage("answer")}
                     >
                       Ответ
                     </button>
                   </div>
                 ) : (
-                  <span className="adepts-question-modal__edit-badge">Редактирование</span>
+                  <span className="question-modal__edit-badge">Редактирование</span>
                 )}
               </div>
-              <div className="adepts-question-modal__header-center">
+              <div className="question-modal__header-center">
                 {showHeaderTimer ? <QuestionHeaderCountdown seconds={countdown} /> : null}
                 {headerTimerExpired ? (
                   <span
@@ -392,11 +392,11 @@ export function QuizQuestionModal({
                   </span>
                 ) : null}
               </div>
-              <div className="adepts-question-modal__header-actions">
+              <div className="question-modal__header-actions">
                 {canEdit ? (
                   <button
                     type="button"
-                    className={`adepts-question-modal__icon-btn${editing ? " adepts-question-modal__icon-btn--on" : ""}`}
+                    className={`question-modal__icon-btn${editing ? " question-modal__icon-btn--on" : ""}`}
                     onClick={() => (editing ? cancelEdit() : setEditing(true))}
                     title={editing ? "Закончить редактирование" : "Редактировать текст"}
                     aria-pressed={editing}
@@ -404,13 +404,13 @@ export function QuizQuestionModal({
                     ✎
                   </button>
                 ) : null}
-                <button type="button" className="adepts-question-modal__close-x" onClick={onClose} aria-label="Закрыть">
+                <button type="button" className="question-modal__close-x" onClick={onClose} aria-label="Закрыть">
                   ✕
                 </button>
               </div>
             </div>
 
-            <div className="adepts-question-modal__body">
+            <div className="question-modal__body">
               {editing ? (
                 <div className="adepts-question-modal__editor">
                   <QuizMediaUrlEditRow
@@ -468,7 +468,7 @@ export function QuizQuestionModal({
                   </div>
                 </div>
               ) : stage === "question" ? (
-                <div className="adepts-question-modal__pane">
+                <div className="question-modal__pane">
                   {(() => {
                     const qText = pack.cell.text?.trim() ?? "";
                     const qUrl = pack.cell.questionUrl?.trim() ?? "";
@@ -485,7 +485,7 @@ export function QuizQuestionModal({
                   })()}
                 </div>
               ) : (
-                <div className="adepts-question-modal__pane">
+                <div className="question-modal__pane">
                   {(() => {
                     const aText = pack.cell.answerText?.trim() ?? "";
                     const aUrl = pack.cell.answerUrl?.trim() ?? "";

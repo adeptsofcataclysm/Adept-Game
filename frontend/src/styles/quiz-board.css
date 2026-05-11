@@ -1,0 +1,102 @@
+/* Quiz board container + theme card header (left rail of the board preview). */
+
+.adepts-show-board-card .adepts-show-board-scroll {
+  flex: 1;
+  min-height: 0;
+  overflow: auto;
+  /* Room for hover transform (translateY + scale) so borders are not clipped. */
+  padding: 6px 5px;
+  box-sizing: border-box;
+}
+
+.adepts-quiz-theme {
+  font-family: "Space Grotesk", system-ui, sans-serif;
+  color: hsl(210, 40%, 98%);
+  background: transparent;
+  box-shadow: 0 0 18px hsla(300, 90%, 55%, 0.18);
+}
+
+/* Board scroll: hide visible scrollbar (prevents flicker on board swaps). */
+.adepts-quiz-theme .adepts-quiz-board-scroll {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+.adepts-quiz-theme .adepts-quiz-board-scroll::-webkit-scrollbar {
+  width: 0;
+  height: 0;
+  display: none;
+}
+
+.adepts-quiz-theme .glow-text {
+  text-shadow:
+    0 0 10px hsla(45, 93%, 47%, 0.5),
+    0 0 20px hsla(45, 93%, 47%, 0.3);
+}
+
+.adepts-quiz-theme .adepts-quiz-board-preview {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  height: 100%;
+  min-height: 0;
+  width: 100%;
+}
+
+.adepts-quiz-theme .adepts-quiz-board-preview__row {
+  display: flex;
+  gap: 0.75rem;
+  align-items: stretch;
+  flex: 1;
+  min-height: 0;
+}
+
+.adepts-quiz-theme .adepts-quiz-board-preview__theme {
+  flex: 0 0 21%;
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 0.75rem;
+  overflow: hidden;
+  position: relative;
+  background: linear-gradient(105deg, hsla(270, 40%, 12%, 0.95) 0%, hsla(270, 30%, 9%, 0.7) 100%);
+  border: 1px solid hsla(280, 40%, 35%, 0.4);
+  border-left: 3px solid hsla(280, 65%, 58%, 0.85);
+  box-shadow: inset 0 0 30px hsla(280, 60%, 15%, 0.4);
+  padding: 0.75rem 3.25rem 0.75rem 0.9rem;
+}
+
+.adepts-quiz-theme .adepts-quiz-board-preview__theme-edit {
+  position: absolute;
+  left: 0.45rem;
+  top: 0.45rem;
+  width: 28px;
+  height: 28px;
+  border-radius: 8px;
+  border: 1px solid hsla(45, 93%, 47%, 0.35);
+  background: hsla(260, 40%, 7%, 0.55);
+  color: hsla(45, 93%, 47%, 0.9);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  line-height: 0;
+  opacity: 0;
+  transform: translateY(-2px);
+  transition: opacity 0.12s ease, transform 0.12s ease, background 0.12s ease, border-color 0.12s ease;
+}
+
+.adepts-quiz-theme .adepts-quiz-board-preview__theme:hover .adepts-quiz-board-preview__theme-edit {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.adepts-quiz-theme .adepts-quiz-board-preview__theme-edit:hover {
+  background: hsla(45, 93%, 47%, 0.12);
+  border-color: hsla(45, 93%, 47%, 0.6);
+}
+
+.adepts-quiz-theme .adepts-quiz-board-preview__theme-edit:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 2px rgba(46, 204, 113, 0.45);
+}

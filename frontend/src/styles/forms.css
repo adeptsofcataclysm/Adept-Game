@@ -1,0 +1,67 @@
+/* Generic form field + button primitives (.adepts-field*, .adepts-btn*). */
+
+.adepts-field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
+.adepts-field__label {
+  font-size: 0.75rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.6);
+}
+
+.adepts-field__input {
+  border-radius: 10px;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  background: rgba(255, 255, 255, 0.04);
+  color: rgba(255, 255, 255, 0.92);
+  padding: 0.55rem 0.7rem;
+  outline: none;
+}
+
+.adepts-field__input:focus {
+  border-color: hsla(45, 93%, 47%, 0.55);
+}
+
+.adepts-btn {
+  border-radius: 10px;
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  background: rgba(255, 255, 255, 0.06);
+  color: rgba(255, 255, 255, 0.86);
+  padding: 0.5rem 0.75rem;
+  transition: background 0.12s ease, border-color 0.12s ease;
+}
+
+.adepts-btn:hover {
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.adepts-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.adepts-btn--primary {
+  border-color: hsla(45, 93%, 47%, 0.45);
+  background: hsla(45, 93%, 47%, 0.14);
+  color: hsla(45, 93%, 47%, 0.95);
+}
+
+.adepts-btn--primary:hover {
+  background: hsla(45, 93%, 47%, 0.22);
+}
+
+.adepts-btn--file {
+  position: relative;
+  overflow: hidden;
+}
+
+.adepts-btn--file input[type="file"] {
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  cursor: pointer;
+}

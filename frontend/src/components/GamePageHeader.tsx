@@ -161,7 +161,7 @@ export function GamePageHeader({
     <header className="game-header">
       <h1 className="game-header__title">САМЫЙ ДУШНЫЙ 3.0</h1>
       <div className="game-header__mid">
-        <span className="adepts-quiz-badge adepts-game-header__badge">{badgeLabel}</span>
+        <span className="adepts-quiz-badge game-header__badge">{badgeLabel}</span>
       </div>
       <div className="game-header__actions">
         {viewerRole === "host" && onHostReset ? (

@@ -29,68 +29,6 @@ const QUIZ_MEDIA_DIR = path.join(DATA_ROOT, "quiz_media");
 const LOBBY_SLIDES_DIR = path.join(DATA_ROOT, "lobby");
 const ROUNDS_DATA_DIR = path.join(DATA_ROOT, "rounds");
 
-/** One-time relocate from older layout: `data/round-*.json`, `backend/theme_icons`, `backend/quiz_media`. */
-function migrateLegacyQuizDataDirs(): void {
-  fs.mkdirSync(ROUNDS_DATA_DIR, { recursive: true });
-  fs.mkdirSync(THEME_ICON_DIR, { recursive: true });
-  fs.mkdirSync(QUIZ_MEDIA_DIR, { recursive: true });
-  fs.mkdirSync(LOBBY_SLIDES_DIR, { recursive: true });
-
-  for (let n = 1; n <= 4; n++) {
-    const name = `round-${n}.json`;
-    const legacy = path.join(DATA_ROOT, name);
-    const dest = path.join(ROUNDS_DATA_DIR, name);
-    if (fs.existsSync(legacy)) {
-      try {
-        if (!fs.existsSync(dest)) fs.renameSync(legacy, dest);
-      } catch {
-        /* ignore */
-      }
-    }
-  }
-
-  const legacyIconsDir = path.join(backendRoot, "theme_icons");
-  if (fs.existsSync(legacyIconsDir)) {
-    try {
-      for (const f of fs.readdirSync(legacyIconsDir)) {
-        const from = path.join(legacyIconsDir, f);
-        try {
-          if (!fs.statSync(from).isFile()) continue;
-        } catch {
-          continue;
-        }
-        const to = path.join(THEME_ICON_DIR, f);
-        if (!fs.existsSync(to)) fs.renameSync(from, to);
-      }
-      const left = fs.readdirSync(legacyIconsDir);
-      if (left.length === 0) fs.rmSync(legacyIconsDir, { recursive: false });
-    } catch {
-      /* ignore */
-    }
-  }
-
-  const legacyQm = path.join(backendRoot, "quiz_media");
-  if (fs.existsSync(legacyQm)) {
-    try {
-      for (const f of fs.readdirSync(legacyQm)) {
-        const from = path.join(legacyQm, f);
-        try {
-          if (!fs.statSync(from).isFile()) continue;
-        } catch {
-          continue;
-        }
-        const to = path.join(QUIZ_MEDIA_DIR, f);
-        if (!fs.existsSync(to)) fs.renameSync(from, to);
-      }
-      if (fs.readdirSync(legacyQm).length === 0) fs.rmSync(legacyQm, { recursive: false });
-    } catch {
-      /* ignore */
-    }
-  }
-}
-
-migrateLegacyQuizDataDirs();
-
 function lobbySlideSortKey(name: string): { primary: number; secondary: string } {
   const m = /(\d+)/.exec(name);
   return { primary: m ? Number(m[1]) : Number.MAX_SAFE_INTEGER, secondary: name };

@@ -1,0 +1,156 @@
+/* Quiz board preview: theme text/icons + cell grid (closed/opened/played states). */
+
+.adepts-quiz-board-preview__cell--clickable {
+  cursor: pointer;
+  padding: 0;
+  margin: 0;
+  font: inherit;
+  color: inherit;
+  text-align: inherit;
+  appearance: none;
+  -webkit-appearance: none;
+}
+
+.adepts-quiz-board-preview__cell--clickable:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 2px hsla(45, 93%, 47%, 0.55);
+}
+
+.adepts-quiz-theme .adepts-quiz-board-preview__theme-text {
+  font-family: "WarCraft", Cinzel, "Times New Roman", serif;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  font-size: clamp(0.85rem, 1.35vw, 1.2rem);
+  text-align: center;
+  text-shadow: 0 0 20px hsla(280, 65%, 70%, 0.18);
+  word-break: break-word;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  text-wrap: nowrap;
+}
+
+.adepts-quiz-theme .adepts-quiz-board-preview__theme-icon {
+  position: absolute;
+  right: 0.6rem;
+  top: 50%;
+  transform: translateY(-50%);
+  height: 3.1rem;
+  width: auto;
+  object-fit: contain;
+  pointer-events: none;
+  user-select: none;
+  filter:
+    drop-shadow(0 0 5px hsla(45, 100%, 60%, 0.35))
+    drop-shadow(0 0 12px hsla(45, 100%, 55%, 0.18));
+  opacity: 0.95;
+}
+
+.adepts-quiz-theme .adepts-quiz-board-preview__theme-icon-fallback {
+  position: absolute;
+  right: 0.75rem;
+  top: 50%;
+  transform: translateY(-50%);
+  height: 2.35rem;
+  width: 2.35rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 999px;
+  border: 1px solid hsla(45, 93%, 47%, 0.3);
+  background: hsla(45, 93%, 47%, 0.08);
+  color: hsla(45, 93%, 47%, 0.85);
+  font-family: Cinzel, "Times New Roman", serif;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  pointer-events: none;
+  user-select: none;
+}
+
+.adepts-quiz-theme .adepts-quiz-board-preview__cells {
+  flex: 1;
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 0.75rem;
+  min-width: 0;
+  min-height: 0;
+  align-items: stretch;
+}
+
+.adepts-quiz-theme .adepts-quiz-board-preview__cell {
+  position: relative;
+  border-radius: 0.75rem;
+  overflow: hidden;
+  border: 1px solid hsla(45, 93%, 47%, 0.22);
+  background: hsla(270, 50%, 15%, 0.22);
+  box-shadow: 0 0 0 rgba(0, 0, 0, 0);
+  transition:
+    transform 0.12s ease-out,
+    border-color 0.12s ease-out,
+    background 0.12s ease-out,
+    box-shadow 0.12s ease-out,
+    opacity 0.12s ease-out;
+  min-height: 0;
+  display: flex;
+  font-family: Cinzel, "Times New Roman", serif;
+}
+
+.adepts-quiz-theme .adepts-quiz-board-preview__cell--closed:hover {
+  transform: translateY(-2px) scale(1.02);
+  border-color: hsla(45, 93%, 47%, 0.45);
+  box-shadow: 0 0 22px hsla(280, 65%, 50%, 0.18);
+}
+
+/* Played cell — Node-Script `QuizBoard` q.used: muted shell + diagonal strike */
+.adepts-quiz-theme .adepts-quiz-board-preview__cell--opened {
+  cursor: not-allowed;
+  border-color: hsla(215, 14%, 42%, 0.38);
+  background: hsla(220, 14%, 8%, 0.35);
+  color: hsla(215, 14%, 48%, 0.35);
+  box-shadow: none;
+}
+
+.adepts-quiz-theme .adepts-quiz-board-preview__cell--opened:hover {
+  transform: none;
+  border-color: hsla(215, 14%, 42%, 0.38);
+  box-shadow: none;
+}
+
+.adepts-quiz-theme .adepts-quiz-board-preview__played {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  pointer-events: none;
+}
+
+.adepts-quiz-theme .adepts-quiz-board-preview__played-line {
+  width: 100%;
+  height: 1px;
+  background: hsla(215, 16%, 55%, 0.32);
+  transform: rotate(-15deg);
+  transform-origin: center;
+}
+
+.adepts-quiz-theme .adepts-quiz-board-preview__closed {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.35rem;
+}
+
+.adepts-quiz-theme .adepts-quiz-board-preview__points {
+  font-family: Cinzel, "Times New Roman", serif;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  font-size: clamp(1.25rem, 2.6vw, 2rem);
+  color: hsl(45, 93%, 47%);
+  opacity: 0.92;
+}
+
+.adepts-quiz-theme .adepts-quiz-board-preview__cell--clickable:disabled {
+  opacity: 1;
+  cursor: not-allowed;
+}

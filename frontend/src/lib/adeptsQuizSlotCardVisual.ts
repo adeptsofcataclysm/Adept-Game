@@ -1,4 +1,4 @@
-/** Slot colors 1–5 — shared quiz / player strip (from Node-Script). */
+/** Slot colors 1–5 — shared quiz / player strip . */
 export const ADEPTS_SLOT_THEMES: { hsl: string }[] = [
   { hsl: "280 92% 62%" },
   { hsl: "192 98% 52%" },

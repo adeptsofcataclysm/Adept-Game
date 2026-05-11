@@ -1,0 +1,66 @@
+/* Generic modal shell (overlay + card + head/body/foot). */
+
+.adepts-modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.65);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1rem;
+  z-index: 1000;
+}
+
+.adepts-modal {
+  width: min(720px, 96vw);
+  max-height: min(80vh, 720px);
+  overflow: auto;
+  border-radius: 12px;
+  border: 1px solid #2a3142;
+  background: #12161f;
+  box-shadow: 0 12px 42px rgba(0, 0, 0, 0.55);
+}
+
+.adepts-modal__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  padding: 0.85rem 1rem;
+  border-bottom: 1px solid rgba(192, 38, 211, 0.2);
+}
+
+.adepts-modal__title {
+  font-family: Cinzel, "Times New Roman", serif;
+  letter-spacing: 0.08em;
+  font-weight: 700;
+  color: hsla(45, 93%, 47%, 0.92);
+}
+
+.adepts-modal__x {
+  width: 32px;
+  height: 32px;
+  border-radius: 10px;
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  background: rgba(255, 255, 255, 0.05);
+  color: rgba(255, 255, 255, 0.8);
+}
+
+.adepts-modal__x:hover {
+  background: rgba(255, 255, 255, 0.09);
+}
+
+.adepts-modal__body {
+  padding: 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.9rem;
+}
+
+.adepts-modal__foot {
+  padding: 0.85rem 1rem;
+  border-top: 1px solid rgba(192, 38, 211, 0.2);
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.5rem;
+}

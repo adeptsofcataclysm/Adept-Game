@@ -56,30 +56,30 @@ export function LobbySlideshow() {
     : loadError
       ? "Не удалось загрузить список слайдов."
       : slides.length === 0
-        ? "Добавьте изображения в backend/data/lobby на сервере сессии."
+        ? "Добавьте изображения в backend/data/lobby на сервере."
         : null;
 
   return (
-    <div className="adepts-lobby-slideshow card adepts-show-board-card adepts-quiz-theme">
-      <div className="adepts-lobby-slideshow__frame">
+    <div className="lobby-slideshow card adepts-show-board-card adepts-quiz-theme">
+      <div className="lobby-slideshow__frame">
         {current ? (
           <img
             key={current}
-            className="adepts-lobby-slideshow__img"
+            className="lobby-slideshow__img"
             src={slideSrc(current)}
             alt=""
             draggable={false}
           />
         ) : (
-          <div className="adepts-lobby-slideshow__placeholder">
+          <div className="lobby-slideshow__placeholder">
             <p>{placeholderText}</p>
           </div>
         )}
       </div>
       {slides.length > 1 ? (
-        <div className="adepts-lobby-slideshow__dots" aria-hidden="true">
+        <div className="lobby-slideshow__dots" aria-hidden="true">
           {slides.map((name, i) => (
-            <span key={`${i}-${name}`} className={i === index ? "adepts-lobby-slideshow__dot is-active" : "adepts-lobby-slideshow__dot"} />
+            <span key={`${i}-${name}`} className={i === index ? "lobby-slideshow__dot is-active" : "lobby-slideshow__dot"} />
           ))}
         </div>
       ) : null}
