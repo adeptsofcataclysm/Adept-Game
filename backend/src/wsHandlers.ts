@@ -455,6 +455,72 @@ function handleHostSetScore(ctx: HandlerCtx, ws: WebSocket, meta: ClientMeta, pa
   if (r.ok) ctx.broadcast(meta.showId, { type: "snapshot", payload: r.snapshot });
 }
 
+function handleHostAdvanceTurn(ctx: HandlerCtx, ws: WebSocket, meta: ClientMeta, _payload: unknown): void {
+  if (meta.role !== "host") {
+    ctx.sendError(ws, "Host only");
+    return;
+  }
+  const r = ctx.store.mutate(meta.showId, (snap) => {
+    const cur = snap.currentTurnSeat;
+    const norm =
+      typeof cur === "number" && Number.isFinite(cur) ? (((Math.trunc(cur) % 5) + 5) % 5) : 0;
+    snap.currentTurnSeat = (norm + 1) % 5;
+    return { ok: true };
+  });
+  if (r.ok) ctx.broadcast(meta.showId, { type: "snapshot", payload: r.snapshot });
+}
+
+function handleHostRevealQuizCell(ctx: HandlerCtx, ws: WebSocket, meta: ClientMeta, payload: unknown): void {
+  if (meta.role !== "host") {
+    ctx.sendError(ws, "Host only");
+    return;
+  }
+  if (!isRecord(payload)) return;
+
+  const boardKind = String(payload["boardKind"] ?? "").trim();
+  const roundIndex = payload["roundIndex"];
+  const rowIndex = payload["rowIndex"];
+  const colIndex = payload["colIndex"];
+
+  if (
+    typeof rowIndex !== "number" ||
+    !Number.isFinite(rowIndex) ||
+    rowIndex < 0 ||
+    typeof colIndex !== "number" ||
+    !Number.isFinite(colIndex) ||
+    colIndex < 0
+  )
+    return;
+
+  const r = ctx.store.mutate(meta.showId, (snap) => {
+    const board =
+      boardKind === "finalTransition"
+        ? snap.finalTransitionBoard
+        : boardKind === "round" && (roundIndex === 1 || roundIndex === 2 || roundIndex === 3)
+          ? snap.roundBoard[roundIndex]
+          : null;
+    if (!board) return { ok: false, error: "Invalid board selector" };
+    if (rowIndex >= board.themes.length) return { ok: false, error: "Theme row out of range" };
+    const row = board.questions[rowIndex];
+    if (!row || colIndex >= row.length) return { ok: false, error: "Question column out of range" };
+
+    if (!Array.isArray(board.revealed) || board.revealed.length !== board.themes.length) {
+      board.revealed = board.themes.map((_, ri) => board.questions[ri]!.map(() => false));
+    }
+    const revRow = board.revealed[rowIndex];
+    if (!Array.isArray(revRow) || revRow.length !== row.length) {
+      board.revealed[rowIndex] = row.map(() => false);
+    }
+    const rr = board.revealed[rowIndex];
+    if (!rr || colIndex >= rr.length) return { ok: false, error: "Reveal grid out of range" };
+    rr[colIndex] = true;
+    return { ok: true };
+  });
+
+  if (r.ok) ctx.broadcast(meta.showId, { type: "snapshot", payload: r.snapshot });
+  else ctx.sendError(ws, r.error);
+}
+
 function handleHostSetSeatName(ctx: HandlerCtx, ws: WebSocket, meta: ClientMeta, payload: unknown): void {
   if (meta.role !== "host") {
     ctx.sendError(ws, "Host only");
@@ -575,6 +641,18 @@ export function routeInbound(
       const meta = requireMeta();
       if (!meta) return;
       handleHostSetScore(ctx, ws, meta, inbound.payload);
+      return;
+    }
+    case "host_advance_turn": {
+      const meta = requireMeta();
+      if (!meta) return;
+      handleHostAdvanceTurn(ctx, ws, meta, inbound.payload);
+      return;
+    }
+    case "host_reveal_quiz_cell": {
+      const meta = requireMeta();
+      if (!meta) return;
+      handleHostRevealQuizCell(ctx, ws, meta, inbound.payload);
       return;
     }
     case "host_set_seat_name": {

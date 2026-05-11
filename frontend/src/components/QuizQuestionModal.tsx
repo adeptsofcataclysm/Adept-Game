@@ -1,7 +1,12 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, type CSSProperties } from "react";
 import { AnimatePresence, motion } from "framer-motion";
-import type { QuestionCell } from "@/sessionTypes";
+import type { QuestionCell, Scores } from "@/sessionTypes";
+import { ADEPTS_SLOT_THEMES, hsl } from "@/lib/adeptsQuizSlotCardVisual";
+import { resolveQuizAssetUrl } from "@/lib/quizMedia";
 import { getHttpBaseUrl } from "@/wsUrl";
+import { QuestionHeaderCountdown, QUESTION_TIMER_SECONDS } from "@/components/QuestionHeaderCountdown";
+import { QuizMediaView } from "@/components/QuizMediaView";
+import { QuizMediaUrlEditRow } from "@/components/QuizMediaUrlEditRow";
 
 type Stage = "question" | "answer";
 
@@ -9,79 +14,6 @@ type Stage = "question" | "answer";
 export type QuizBoardSelector =
   | { boardKind: "round"; roundIndex: 1 | 2 | 3 }
   | { boardKind: "finalTransition" };
-
-function resolveQuizAssetUrl(url: string): string {
-  const u = url.trim();
-  if (!u) return u;
-  if (u.startsWith("http") || u.startsWith("//")) return u;
-  return `${getHttpBaseUrl()}${u.startsWith("/") ? u : `/${u}`}`;
-}
-
-function isVideoUrl(url: string) {
-  return /\.(mp4|webm|ogg)$/i.test(url);
-}
-
-const QUESTION_TIMER_SECONDS = 30;
-const TIMER_RING_RADIUS = 31;
-const TIMER_RING_CIRC = 2 * Math.PI * TIMER_RING_RADIUS;
-
-/** Circular countdown — same geometry/colors as Node-Script `QuestionModal` `CountdownTimer`. */
-function QuestionHeaderCountdown({ seconds }: { seconds: number }) {
-  const fraction = seconds / QUESTION_TIMER_SECONDS;
-  const dashOffset = TIMER_RING_CIRC * (1 - fraction);
-
-  const color =
-    seconds > 15 ? "hsl(45, 93%, 62%)" : seconds > 7 ? "hsl(35, 95%, 55%)" : "hsl(0, 75%, 55%)";
-
-  const glowColor =
-    seconds > 15 ? "hsla(45, 93%, 47%, 0.45)" : seconds > 7 ? "hsla(35, 95%, 55%, 0.45)" : "hsla(0, 75%, 55%, 0.55)";
-
-  return (
-    <div
-      className="adepts-question-modal__header-timer"
-      style={{ filter: `drop-shadow(0 0 8px ${glowColor})` }}
-      role="img"
-      aria-label={`Осталось ${seconds} сек.`}
-    >
-      <svg width="75" height="75" viewBox="0 0 75 75">
-        <circle
-          cx="37.5"
-          cy="37.5"
-          r={TIMER_RING_RADIUS}
-          fill="none"
-          stroke="hsla(280, 30%, 30%, 0.4)"
-          strokeWidth="5"
-        />
-        <circle
-          cx="37.5"
-          cy="37.5"
-          r={TIMER_RING_RADIUS}
-          fill="none"
-          stroke={color}
-          strokeWidth="5"
-          strokeLinecap="round"
-          strokeDasharray={TIMER_RING_CIRC}
-          strokeDashoffset={dashOffset}
-          transform="rotate(-90 37.5 37.5)"
-          style={{ transition: "stroke-dashoffset 0.95s linear, stroke 0.4s ease" }}
-        />
-        <text
-          x="37.5"
-          y="37.5"
-          dominantBaseline="central"
-          textAnchor="middle"
-          fontSize="20"
-          fontWeight="bold"
-          fontFamily="inherit"
-          fill={color}
-          style={{ transition: "fill 0.4s ease" }}
-        >
-          {seconds}
-        </text>
-      </svg>
-    </div>
-  );
-}
 
 export function QuizQuestionModal({
   isOpen,
@@ -95,6 +27,10 @@ export function QuizQuestionModal({
   snapshotVersion,
   send,
   hostSecret,
+  seatNames,
+  scores,
+  currentTurnSeat,
+  cellRevealed,
 }: {
   isOpen: boolean;
   themeName: string;
@@ -107,6 +43,11 @@ export function QuizQuestionModal({
   snapshotVersion: number;
   send: (msg: unknown) => void;
   hostSecret?: string;
+  seatNames: [string, string, string, string, string];
+  scores: Scores;
+  currentTurnSeat: number;
+  /** Server `revealed` flag for this cell (opened / played on the board). */
+  cellRevealed: boolean;
 }) {
   const [stage, setStage] = useState<Stage>("question");
   const [editing, setEditing] = useState(false);
@@ -117,6 +58,7 @@ export function QuizQuestionModal({
   const [saving, setSaving] = useState(false);
   const [uploading, setUploading] = useState<null | "question" | "answer">(null);
   const [countdown, setCountdown] = useState(QUESTION_TIMER_SECONDS);
+  const [awardedSeat, setAwardedSeat] = useState<number | null>(null);
   const frozen = useRef<{ cell: QuestionCell; themeName: string; points: number } | null>(null);
   const saveFromVersionRef = useRef<number | null>(null);
   const timerIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
@@ -151,6 +93,10 @@ export function QuizQuestionModal({
   useEffect(() => {
     if (isOpen) setStage("question");
   }, [isOpen, cell?.text, cell?.questionUrl, cell?.answerText]);
+
+  useEffect(() => {
+    setAwardedSeat(null);
+  }, [isOpen, cellCoords?.rowIndex, cellCoords?.colIndex]);
 
   useEffect(() => {
     if (!isOpen) {
@@ -241,6 +187,18 @@ export function QuizQuestionModal({
     };
   };
 
+  const buildRevealPayload = () => {
+    if (!boardSel || !cellCoords) return null;
+    const { rowIndex, colIndex } = cellCoords;
+    if (boardSel.boardKind === "finalTransition") {
+      return { type: "host_reveal_quiz_cell" as const, payload: { boardKind: "finalTransition" as const, rowIndex, colIndex } };
+    }
+    return {
+      type: "host_reveal_quiz_cell" as const,
+      payload: { boardKind: "round" as const, roundIndex: boardSel.roundIndex, rowIndex, colIndex },
+    };
+  };
+
   const handleSave = () => {
     const msg = buildEditPayload();
     if (!msg) return;
@@ -291,13 +249,60 @@ export function QuizQuestionModal({
   const canEdit = isHost && boardSel != null && cellCoords != null;
   const editBlocked = !canEdit || saving || uploading != null;
 
+  const activeTurnSeatNorm =
+    typeof currentTurnSeat === "number" && Number.isInteger(currentTurnSeat)
+      ? ((currentTurnSeat % 5) + 5) % 5
+      : -1;
+
+  const handleAwardSeat = (seatIndex: number) => {
+    if (!isHost || awardedSeat !== null) return;
+    const p = frozen.current;
+    if (!p) return;
+    const cur = scores[seatIndex] ?? 0;
+    const delta = Math.trunc(p.points);
+    const next = Math.max(-999_999, Math.min(999_999, cur + delta));
+    send({ type: "host_set_score", payload: { seatIndex, score: next } });
+    const revealMsg = buildRevealPayload();
+    if (revealMsg) send(revealMsg);
+    setAwardedSeat(seatIndex);
+    onClose();
+  };
+
+  const handleHostWrongAnswer = () => {
+    if (!isHost || awardedSeat !== null || cellRevealed) return;
+    const p = frozen.current;
+    if (!p || activeTurnSeatNorm < 0) return;
+    const cur = scores[activeTurnSeatNorm] ?? 0;
+    const delta = Math.trunc(p.points);
+    const next = Math.max(-999_999, Math.min(999_999, cur - delta));
+    send({ type: "host_set_score", payload: { seatIndex: activeTurnSeatNorm, score: next } });
+    const revealMsg = buildRevealPayload();
+    if (revealMsg) send(revealMsg);
+    send({ type: "host_advance_turn", payload: {} });
+    onClose();
+  };
+
+  const handleHostPassTurnNext = () => {
+    if (!isHost || awardedSeat !== null) return;
+    send({ type: "host_advance_turn", payload: {} });
+    onClose();
+  };
+
+  const handleHostCloseCellOnly = () => {
+    if (!isHost || awardedSeat !== null || cellRevealed) return;
+    const msg = buildRevealPayload();
+    if (!msg) return;
+    send(msg);
+    onClose();
+  };
+
   const showHeaderTimer =
     !editing &&
     stage === "question" &&
-    !(pack.cell.splashUrl ?? "").trim() &&
+    !(pack?.cell?.splashUrl ?? "").trim() &&
     countdown > 0;
   const headerTimerExpired =
-    !editing && stage === "question" && !(pack.cell.splashUrl ?? "").trim() && countdown === 0;
+    !editing && stage === "question" && !(pack?.cell?.splashUrl ?? "").trim() && countdown === 0;
 
   return (
     <AnimatePresence>
@@ -408,87 +413,28 @@ export function QuizQuestionModal({
             <div className="adepts-question-modal__body">
               {editing ? (
                 <div className="adepts-question-modal__editor">
-                  <div className="adepts-question-modal__media-edit-grid">
-                    <label className="adepts-field">
-                      <span className="adepts-field__label">Медиа вопроса (URL)</span>
-                      <input
-                        className="adepts-field__input"
-                        value={draftQuestionUrl}
-                        onChange={(e) => setDraftQuestionUrl(e.target.value)}
-                        disabled={saving || uploading != null}
-                        placeholder="/quiz_media/... или https://..."
-                      />
-                    </label>
-                    <div className="adepts-question-modal__upload">
-                      <label
-                        className={`adepts-btn adepts-btn--file ${uploading === "question" ? "adepts-question-modal__upload--busy" : ""}`}
-                        title={hostSecret ? "Upload image to backend" : "Host secret required for upload"}
-                      >
-                        {uploading === "question" ? "Загрузка…" : "Загрузить картинку"}
-                        <input
-                          type="file"
-                          accept="image/*"
-                          disabled={saving || uploading != null || !hostSecret}
-                          onChange={(e) => {
-                            const f = e.target.files?.[0];
-                            if (!f) return;
-                            void uploadImage("question", f);
-                            e.currentTarget.value = "";
-                          }}
-                        />
-                      </label>
-                      <button
-                        type="button"
-                        className="adepts-btn"
-                        disabled={saving || uploading != null}
-                        onClick={() => setDraftQuestionUrl("")}
-                        title="Очистить медиа"
-                      >
-                        Очистить
-                      </button>
-                    </div>
-                  </div>
-
-                  <div className="adepts-question-modal__media-edit-grid">
-                    <label className="adepts-field">
-                      <span className="adepts-field__label">Медиа ответа (URL)</span>
-                      <input
-                        className="adepts-field__input"
-                        value={draftAnswerUrl}
-                        onChange={(e) => setDraftAnswerUrl(e.target.value)}
-                        disabled={saving || uploading != null}
-                        placeholder="/quiz_media/... или https://..."
-                      />
-                    </label>
-                    <div className="adepts-question-modal__upload">
-                      <label
-                        className={`adepts-btn adepts-btn--file ${uploading === "answer" ? "adepts-question-modal__upload--busy" : ""}`}
-                        title={hostSecret ? "Upload image to backend" : "Host secret required for upload"}
-                      >
-                        {uploading === "answer" ? "Загрузка…" : "Загрузить картинку"}
-                        <input
-                          type="file"
-                          accept="image/*"
-                          disabled={saving || uploading != null || !hostSecret}
-                          onChange={(e) => {
-                            const f = e.target.files?.[0];
-                            if (!f) return;
-                            void uploadImage("answer", f);
-                            e.currentTarget.value = "";
-                          }}
-                        />
-                      </label>
-                      <button
-                        type="button"
-                        className="adepts-btn"
-                        disabled={saving || uploading != null}
-                        onClick={() => setDraftAnswerUrl("")}
-                        title="Очистить медиа"
-                      >
-                        Очистить
-                      </button>
-                    </div>
-                  </div>
+                  <QuizMediaUrlEditRow
+                    label="Медиа вопроса (URL)"
+                    value={draftQuestionUrl}
+                    onValueChange={setDraftQuestionUrl}
+                    isRowUploading={uploading === "question"}
+                    inputsDisabled={saving || uploading != null}
+                    fileInputDisabled={saving || uploading != null || !hostSecret}
+                    hasHostSecret={Boolean(hostSecret)}
+                    onFile={(f) => void uploadImage("question", f)}
+                    onClear={() => setDraftQuestionUrl("")}
+                  />
+                  <QuizMediaUrlEditRow
+                    label="Медиа ответа (URL)"
+                    value={draftAnswerUrl}
+                    onValueChange={setDraftAnswerUrl}
+                    isRowUploading={uploading === "answer"}
+                    inputsDisabled={saving || uploading != null}
+                    fileInputDisabled={saving || uploading != null || !hostSecret}
+                    hasHostSecret={Boolean(hostSecret)}
+                    onFile={(f) => void uploadImage("answer", f)}
+                    onClear={() => setDraftAnswerUrl("")}
+                  />
 
                   <label className="adepts-field">
                     <span className="adepts-field__label">Текст вопроса</span>
@@ -528,30 +474,7 @@ export function QuizQuestionModal({
                     const qUrl = pack.cell.questionUrl?.trim() ?? "";
                     return (
                       <>
-                        {qUrl ? (
-                          <div className="adepts-question-modal__media-wrap">
-                            {isVideoUrl(qUrl) ? (
-                              <video
-                                className="adepts-question-modal__media"
-                                src={resolveQuizAssetUrl(qUrl)}
-                                controls
-                                autoPlay
-                                playsInline
-                                preload="auto"
-                                onLoadedData={(e) => {
-                                  (e.currentTarget as HTMLVideoElement).play().catch(() => {});
-                                }}
-                              />
-                            ) : (
-                              <img
-                                className="adepts-question-modal__media adepts-question-modal__media--img"
-                                src={resolveQuizAssetUrl(qUrl)}
-                                alt=""
-                                draggable={false}
-                              />
-                            )}
-                          </div>
-                        ) : null}
+                        {qUrl ? <QuizMediaView url={qUrl} /> : null}
                         {qText ? (
                           <p className="adepts-question-modal__question-text">{qText}</p>
                         ) : !qUrl ? (
@@ -568,30 +491,7 @@ export function QuizQuestionModal({
                     const aUrl = pack.cell.answerUrl?.trim() ?? "";
                     return (
                       <>
-                        {aUrl ? (
-                          <div className="adepts-question-modal__media-wrap">
-                            {isVideoUrl(aUrl) ? (
-                              <video
-                                className="adepts-question-modal__media"
-                                src={resolveQuizAssetUrl(aUrl)}
-                                controls
-                                autoPlay
-                                playsInline
-                                preload="auto"
-                                onLoadedData={(e) => {
-                                  (e.currentTarget as HTMLVideoElement).play().catch(() => {});
-                                }}
-                              />
-                            ) : (
-                              <img
-                                className="adepts-question-modal__media adepts-question-modal__media--img"
-                                src={resolveQuizAssetUrl(aUrl)}
-                                alt=""
-                                draggable={false}
-                              />
-                            )}
-                          </div>
-                        ) : null}
+                        {aUrl ? <QuizMediaView url={aUrl} /> : null}
                         {aText ? (
                           <p className="adepts-question-modal__answer-text">{aText}</p>
                         ) : !aUrl ? (
@@ -600,9 +500,127 @@ export function QuizQuestionModal({
                       </>
                     );
                   })()}
+                  {isHost && !editing ? (
+                    <div className="adepts-question-modal__award">
+                      <div className="adepts-question-modal__award-head">
+                        <span className="adepts-question-modal__award-trophy" aria-hidden>
+                          🏆
+                        </span>
+                        <span className="adepts-question-modal__award-title">Начислить очки игроку</span>
+                      </div>
+                      {activeTurnSeatNorm >= 0 ? (
+                        <p className="adepts-question-modal__award-turn">
+                          Сейчас ход:{" "}
+                          <span className="adepts-question-modal__award-turn-name">
+                            {(seatNames[activeTurnSeatNorm] ?? "").trim()
+                              ? seatNames[activeTurnSeatNorm]
+                              : `Игрок ${activeTurnSeatNorm + 1}`}
+                          </span>
+                        </p>
+                      ) : null}
+                      <div className="adepts-question-modal__award-grid">
+                        {([0, 1, 2, 3, 4] as const).map((seatIndex) => {
+                          const accent = ADEPTS_SLOT_THEMES[seatIndex]?.hsl ?? "280 92% 62%";
+                          const isAwarded = awardedSeat === seatIndex;
+                          const isTurn = activeTurnSeatNorm >= 0 && seatIndex === activeTurnSeatNorm;
+                          const label = (seatNames[seatIndex] ?? "").trim()
+                            ? seatNames[seatIndex]
+                            : `Игрок ${seatIndex + 1}`;
+                          const disabled = awardedSeat !== null;
+                          return (
+                            <motion.button
+                              key={seatIndex}
+                              type="button"
+                              whileHover={disabled ? undefined : { scale: 1.04 }}
+                              whileTap={disabled ? undefined : { scale: 0.97 }}
+                              disabled={disabled}
+                              title={isTurn ? "Сейчас ход этого игрока" : `Начислить ${pack.points} очков`}
+                              aria-current={isTurn && awardedSeat === null ? "true" : undefined}
+                              className={[
+                                "adepts-question-modal__award-seat",
+                                isAwarded ? "adepts-question-modal__award-seat--awarded" : "",
+                                isTurn && awardedSeat === null ? "adepts-question-modal__award-seat--turn" : "",
+                                disabled && !isAwarded ? "adepts-question-modal__award-seat--dim" : "",
+                              ]
+                                .filter(Boolean)
+                                .join(" ")}
+                              style={
+                                {
+                                  "--award-accent": hsl(accent, 0.85),
+                                  "--award-accent-soft": hsl(accent, 0.35),
+                                  "--award-accent-glow": hsl(accent, 0.28),
+                                } as CSSProperties
+                              }
+                              onClick={() => handleAwardSeat(seatIndex)}
+                            >
+                              {isAwarded ? (
+                                <span className="adepts-question-modal__award-seat-trophy" aria-hidden>
+                                  🏆
+                                </span>
+                              ) : (
+                                <span className="adepts-question-modal__award-seat-delta glow-text">
+                                  +{pack.points}
+                                </span>
+                              )}
+                              <span className="adepts-question-modal__award-seat-name">{label}</span>
+                              <span className="adepts-question-modal__award-seat-score">{scores[seatIndex] ?? 0}</span>
+                            </motion.button>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  ) : null}
                 </div>
               )}
             </div>
+
+            {isHost && !editing && stage === "answer" && awardedSeat === null ? (
+              <div className="adepts-question-modal__host-foot">
+                <div className="adepts-question-modal__host-foot-inner">
+                  <button
+                    type="button"
+                    className="adepts-btn adepts-question-modal__host-foot-btn adepts-question-modal__host-foot-btn--muted"
+                    disabled={
+                      activeTurnSeatNorm < 0 ||
+                      cellRevealed ||
+                      boardSel == null ||
+                      cellCoords == null
+                    }
+                    title={
+                      cellRevealed
+                        ? "Карточка уже сыграна"
+                        : activeTurnSeatNorm < 0
+                          ? "Нет активного хода"
+                          : `Снять ${pack.points} очков у игрока на ходу, пометить карточку сыгранной и передать ход`
+                    }
+                    onClick={handleHostWrongAnswer}
+                  >
+                    Неверный ответ
+                  </button>
+                  <button
+                    type="button"
+                    className="adepts-btn adepts-question-modal__host-foot-btn adepts-question-modal__host-foot-btn--muted adepts-question-modal__host-foot-btn--mono"
+                    title="Передать ход следующему игроку без снятия очков"
+                    onClick={handleHostPassTurnNext}
+                  >
+                    {"=>"}
+                  </button>
+                  <button
+                    type="button"
+                    className="adepts-btn adepts-question-modal__host-foot-btn adepts-question-modal__host-foot-btn--secondary"
+                    disabled={cellRevealed || !boardSel || !cellCoords}
+                    title={
+                      cellRevealed
+                        ? "Карточка уже закрыта на доске"
+                        : "Закрыть карточку на доске без смены хода и очков"
+                    }
+                    onClick={handleHostCloseCellOnly}
+                  >
+                    Никто не ответил — закрыть
+                  </button>
+                </div>
+              </div>
+            ) : null}
           </motion.div>
         </motion.div>
       ) : null}

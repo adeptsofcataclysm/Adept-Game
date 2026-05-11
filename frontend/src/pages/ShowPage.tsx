@@ -138,7 +138,8 @@ export function ShowPage() {
     const rawTheme = boardPreview.board.themes[rowIndex] ?? "";
     const themeName = rawTheme.trim() ? rawTheme.trim() : `Тема ${rowIndex + 1}`;
     const points = boardPreview.board.pointValues?.[rowIndex]?.[colIndex] ?? (colIndex + 1) * 100;
-    return { cell, themeName, points };
+    const cellRevealed = Boolean(boardPreview.board.revealed?.[rowIndex]?.[colIndex]);
+    return { cell, themeName, points, cellRevealed };
   }, [questionModalCell, boardPreview]);
 
   const pluginLayout = useMemo(() => resolvePluginSegmentLayout(snapshot), [snapshot]);
@@ -434,6 +435,10 @@ export function ShowPage() {
         snapshotVersion={snapshot?.version ?? 0}
         send={send}
         hostSecret={hostSecretStored || undefined}
+        seatNames={snapshot?.seatNames ?? ["P1", "P2", "P3", "P4", "P5"]}
+        scores={snapshot?.scores ?? [0, 0, 0, 0, 0]}
+        currentTurnSeat={snapshot?.currentTurnSeat ?? 0}
+        cellRevealed={questionModalPayload?.cellRevealed ?? false}
       />
     </div>
   );
@@ -501,21 +506,15 @@ function BoardPreview({
               const cellClass = [
                 "adepts-quiz-board-preview__cell",
                 opened ? "adepts-quiz-board-preview__cell--opened" : "adepts-quiz-board-preview__cell--closed",
-                canOpenQuestionModal ? "adepts-quiz-board-preview__cell--clickable" : "",
+                canOpenQuestionModal && !opened ? "adepts-quiz-board-preview__cell--clickable" : "",
               ]
                 .filter(Boolean)
                 .join(" ");
-              const title = opened
-                ? `${cell.text || "Открытый вопрос"} · полный текст в модальном окне`
-                : `${points} — открыть вопрос`;
+              const title = opened ? "Сыграно" : `${points} — открыть вопрос`;
 
               const body = opened ? (
-                <div className="adepts-quiz-board-preview__opened">
-                  <div className="adepts-quiz-board-preview__opened-text">
-                    {cell.questionUrl ? <span>media · </span> : null}
-                    {cell.text ? `${cell.text.slice(0, 80)}${cell.text.length > 80 ? "…" : ""}` : "—"}
-                  </div>
-                  <div className="adepts-quiz-board-preview__opened-sub">opened</div>
+                <div className="adepts-quiz-board-preview__played" aria-hidden>
+                  <div className="adepts-quiz-board-preview__played-line" />
                 </div>
               ) : (
                 <div className="adepts-quiz-board-preview__closed">
@@ -529,13 +528,16 @@ function BoardPreview({
                   type="button"
                   className={cellClass}
                   title={title}
-                  aria-label={`Вопрос ${points} баллов`}
-                  onClick={() => onQuestionCellClick(ri, ci)}
+                  aria-label={opened ? "Сыграно" : `Вопрос ${points} баллов`}
+                  disabled={opened}
+                  onClick={() => {
+                    if (!opened) onQuestionCellClick(ri, ci);
+                  }}
                 >
                   {body}
                 </button>
               ) : (
-                <div key={ci} className={cellClass} title={opened ? cell.text || "" : `${points}`}>
+                <div key={ci} className={cellClass} title={opened ? "Сыграно" : `${points}`}>
                   {body}
                 </div>
               );
