@@ -14,6 +14,7 @@ import {
   resolvePluginSegmentLayout,
 } from "@/plugins/PluginSegmentLayoutHost";
 import { getHttpBaseUrl } from "@/wsUrl";
+import { LobbySlideshow } from "@/components/LobbySlideshow";
 // Ensure plugin client registrations run before any render
 import "@/plugins/index";
 
@@ -195,7 +196,8 @@ export function ShowPage() {
               <p style={{ color: "#f88" }}>{lastError}</p>
             </div>
             )) : null}
-            
+
+            {snapshot?.phase.kind === "lobby" ? <LobbySlideshow /> : null}
 
             {snapshot?.phase.kind !== "lobby" && snapshot?.phase.kind !== "plugin_segment" ? (
               <div className="card adepts-show-board-card adepts-quiz-theme">

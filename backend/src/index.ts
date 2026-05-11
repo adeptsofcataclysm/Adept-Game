@@ -26,6 +26,7 @@ function isHostAuthorized(role: Role, hostSecret: string | undefined): boolean {
 const DATA_ROOT = path.join(backendRoot, "data");
 const THEME_ICON_DIR = path.join(DATA_ROOT, "theme_icons");
 const QUIZ_MEDIA_DIR = path.join(DATA_ROOT, "quiz_media");
+const LOBBY_SLIDES_DIR = path.join(DATA_ROOT, "lobby");
 const ROUNDS_DATA_DIR = path.join(DATA_ROOT, "rounds");
 
 /** One-time relocate from older layout: `data/round-*.json`, `backend/theme_icons`, `backend/quiz_media`. */
@@ -33,6 +34,7 @@ function migrateLegacyQuizDataDirs(): void {
   fs.mkdirSync(ROUNDS_DATA_DIR, { recursive: true });
   fs.mkdirSync(THEME_ICON_DIR, { recursive: true });
   fs.mkdirSync(QUIZ_MEDIA_DIR, { recursive: true });
+  fs.mkdirSync(LOBBY_SLIDES_DIR, { recursive: true });
 
   for (let n = 1; n <= 4; n++) {
     const name = `round-${n}.json`;
@@ -88,6 +90,22 @@ function migrateLegacyQuizDataDirs(): void {
 }
 
 migrateLegacyQuizDataDirs();
+
+function lobbySlideSortKey(name: string): { primary: number; secondary: string } {
+  const m = /(\d+)/.exec(name);
+  return { primary: m ? Number(m[1]) : Number.MAX_SAFE_INTEGER, secondary: name };
+}
+
+/** Image filenames under `data/lobby/`, ordered by the first integer in the name (slide2 before slide10). */
+function sortLobbySlideFiles(names: string[]): string[] {
+  const image = /\.(png|jpe?g|webp|gif)$/i;
+  return names.filter((n) => image.test(n)).sort((a, b) => {
+    const ka = lobbySlideSortKey(a);
+    const kb = lobbySlideSortKey(b);
+    if (ka.primary !== kb.primary) return ka.primary - kb.primary;
+    return ka.secondary.localeCompare(kb.secondary, undefined, { sensitivity: "base" });
+  });
+}
 
 function contentTypeForExt(ext: string): string {
   switch (ext) {
@@ -205,6 +223,38 @@ const server = http.createServer((req, res) => {
     res.writeHead(200, {
       "Content-Type": contentTypeForExt(ext),
       "Cache-Control": "public, max-age=31536000, immutable",
+    });
+    fs.createReadStream(filePath).pipe(res);
+    return;
+  }
+
+  if (req.url === "/api/lobby-slides" && req.method === "GET") {
+    try {
+      fs.mkdirSync(LOBBY_SLIDES_DIR, { recursive: true });
+      const names = sortLobbySlideFiles(fs.readdirSync(LOBBY_SLIDES_DIR));
+      res.writeHead(200, { "Content-Type": "application/json", "Cache-Control": "no-store" });
+      res.end(JSON.stringify({ slides: names }));
+    } catch {
+      res.writeHead(500, { "Content-Type": "application/json" });
+      res.end(JSON.stringify({ slides: [] as string[], error: "list_failed" }));
+    }
+    return;
+  }
+
+  if (req.url?.startsWith("/lobby/") && req.method === "GET") {
+    const pathname = new URL(req.url, "http://127.0.0.1").pathname;
+    const rel = pathname.slice("/lobby/".length);
+    const safe = path.basename(rel);
+    const filePath = path.join(LOBBY_SLIDES_DIR, safe);
+    if (!fs.existsSync(filePath)) {
+      res.writeHead(404);
+      res.end();
+      return;
+    }
+    const ext = path.extname(filePath).toLowerCase();
+    res.writeHead(200, {
+      "Content-Type": contentTypeForExt(ext),
+      "Cache-Control": "public, max-age=3600",
     });
     fs.createReadStream(filePath).pipe(res);
     return;
