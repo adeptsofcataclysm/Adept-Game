@@ -28,6 +28,7 @@ const THEME_ICON_DIR = path.join(DATA_ROOT, "theme_icons");
 const QUIZ_MEDIA_DIR = path.join(DATA_ROOT, "quiz_media");
 const LOBBY_SLIDES_DIR = path.join(DATA_ROOT, "lobby");
 const ROUNDS_DATA_DIR = path.join(DATA_ROOT, "rounds");
+const APP_MEDIA_DIR = path.join(DATA_ROOT, "app");
 
 function lobbySlideSortKey(name: string): { primary: number; secondary: string } {
   const m = /(\d+)/.exec(name);
@@ -152,6 +153,24 @@ const server = http.createServer((req, res) => {
     const rel = req.url.slice("/quiz_media/".length);
     const safe = path.basename(rel);
     const filePath = path.join(QUIZ_MEDIA_DIR, safe);
+    if (!fs.existsSync(filePath)) {
+      res.writeHead(404);
+      res.end();
+      return;
+    }
+    const ext = path.extname(filePath).toLowerCase();
+    res.writeHead(200, {
+      "Content-Type": contentTypeForExt(ext),
+      "Cache-Control": "public, max-age=31536000, immutable",
+    });
+    fs.createReadStream(filePath).pipe(res);
+    return;
+  }
+
+  if (req.url?.startsWith("/app/") && req.method === "GET") {
+    const rel = req.url.slice("/app/".length);
+    const safe = path.basename(rel);
+    const filePath = path.join(APP_MEDIA_DIR, safe);
     if (!fs.existsSync(filePath)) {
       res.writeHead(404);
       res.end();
