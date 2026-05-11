@@ -11,6 +11,7 @@ export type SegmentViewProps = {
   segmentId: string;
   pluginId: string;
   role: Role;
+  participantId: string;
   /** Send any WS message — allows spectator/player-initiated actions from within a segment view. */
   send(type: string, payload: unknown): void;
 };

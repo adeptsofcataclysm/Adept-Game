@@ -2,7 +2,7 @@ import { useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import { MAX_CHAT_MESSAGES, type Phase, type Role, type RoundBoardRuntime } from "@/sessionTypes";
 import { useSessionWs } from "@/useSessionWs";
-import { getDisplayName, getHostSecret } from "@/storage";
+import { getDisplayName, getHostSecret, getOrCreateParticipantId } from "@/storage";
 import { GamePageHeader } from "@/components/GamePageHeader";
 import { ChatPanel } from "@/components/ChatPanel";
 import { PlayersPanel } from "@/components/PlayersPanel";
@@ -86,6 +86,7 @@ export function ShowPage() {
   let role: Role = "spectator";
   if (hostSecretStored) role = "host";
   const name = getDisplayName();
+  const participantId = useMemo(() => getOrCreateParticipantId(), []);
   const { snapshot, lastError, connected, send } = useSessionWs({
     showId,
     role,
@@ -156,6 +157,7 @@ export function ShowPage() {
       <PluginSegmentFullScreenHost
         snapshot={snapshot}
         role={role}
+        participantId={participantId}
         send={(type, payload) => send({ type, payload })}
       />
     );
@@ -236,6 +238,7 @@ export function ShowPage() {
               <PluginSegmentMainHost
                 snapshot={snapshot}
                 role={role}
+                participantId={participantId}
                 send={(type, payload) => send({ type, payload })}
               />
             ) : null}
@@ -246,6 +249,7 @@ export function ShowPage() {
               <PluginSegmentRailHost
                 snapshot={snapshot}
                 role={role}
+                participantId={participantId}
                 send={(type, payload) => send({ type, payload })}
               />
             ) : null}

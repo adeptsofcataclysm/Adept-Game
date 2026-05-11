@@ -36,6 +36,7 @@ export function resolvePluginSegmentLayout(snapshot: SessionSnapshot | null | un
 type RenderProps = {
   snapshot: SessionSnapshot;
   role: Role;
+  participantId: string;
   send(type: string, payload: unknown): void;
 };
 
@@ -52,13 +53,22 @@ function MissingViewCard({ pluginId, segmentId, slot }: { pluginId: string; segm
 
 function renderView(
   View: ComponentType<SegmentViewProps> | undefined,
-  { snapshot, role, send }: RenderProps,
+  { snapshot, role, participantId, send }: RenderProps,
   pluginId: string,
   segmentId: string,
   slot: "main" | "rail" | "fullScreen",
 ): ReactNode {
   if (!View) return <MissingViewCard pluginId={pluginId} segmentId={segmentId} slot={slot} />;
-  return <View snapshot={snapshot} segmentId={segmentId} pluginId={pluginId} role={role} send={send} />;
+  return (
+    <View
+      snapshot={snapshot}
+      segmentId={segmentId}
+      pluginId={pluginId}
+      role={role}
+      participantId={participantId}
+      send={send}
+    />
+  );
 }
 
 export function PluginSegmentFullScreenHost(props: RenderProps): ReactNode {
