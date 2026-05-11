@@ -21,6 +21,68 @@ function isVideoUrl(url: string) {
   return /\.(mp4|webm|ogg)$/i.test(url);
 }
 
+const QUESTION_TIMER_SECONDS = 30;
+const TIMER_RING_RADIUS = 31;
+const TIMER_RING_CIRC = 2 * Math.PI * TIMER_RING_RADIUS;
+
+/** Circular countdown — same geometry/colors as Node-Script `QuestionModal` `CountdownTimer`. */
+function QuestionHeaderCountdown({ seconds }: { seconds: number }) {
+  const fraction = seconds / QUESTION_TIMER_SECONDS;
+  const dashOffset = TIMER_RING_CIRC * (1 - fraction);
+
+  const color =
+    seconds > 15 ? "hsl(45, 93%, 62%)" : seconds > 7 ? "hsl(35, 95%, 55%)" : "hsl(0, 75%, 55%)";
+
+  const glowColor =
+    seconds > 15 ? "hsla(45, 93%, 47%, 0.45)" : seconds > 7 ? "hsla(35, 95%, 55%, 0.45)" : "hsla(0, 75%, 55%, 0.55)";
+
+  return (
+    <div
+      className="adepts-question-modal__header-timer"
+      style={{ filter: `drop-shadow(0 0 8px ${glowColor})` }}
+      role="img"
+      aria-label={`Осталось ${seconds} сек.`}
+    >
+      <svg width="75" height="75" viewBox="0 0 75 75">
+        <circle
+          cx="37.5"
+          cy="37.5"
+          r={TIMER_RING_RADIUS}
+          fill="none"
+          stroke="hsla(280, 30%, 30%, 0.4)"
+          strokeWidth="5"
+        />
+        <circle
+          cx="37.5"
+          cy="37.5"
+          r={TIMER_RING_RADIUS}
+          fill="none"
+          stroke={color}
+          strokeWidth="5"
+          strokeLinecap="round"
+          strokeDasharray={TIMER_RING_CIRC}
+          strokeDashoffset={dashOffset}
+          transform="rotate(-90 37.5 37.5)"
+          style={{ transition: "stroke-dashoffset 0.95s linear, stroke 0.4s ease" }}
+        />
+        <text
+          x="37.5"
+          y="37.5"
+          dominantBaseline="central"
+          textAnchor="middle"
+          fontSize="20"
+          fontWeight="bold"
+          fontFamily="inherit"
+          fill={color}
+          style={{ transition: "fill 0.4s ease" }}
+        >
+          {seconds}
+        </text>
+      </svg>
+    </div>
+  );
+}
+
 export function QuizQuestionModal({
   isOpen,
   themeName,
@@ -54,10 +116,33 @@ export function QuizQuestionModal({
   const [draftAnswerUrl, setDraftAnswerUrl] = useState("");
   const [saving, setSaving] = useState(false);
   const [uploading, setUploading] = useState<null | "question" | "answer">(null);
+  const [countdown, setCountdown] = useState(QUESTION_TIMER_SECONDS);
   const frozen = useRef<{ cell: QuestionCell; themeName: string; points: number } | null>(null);
   const saveFromVersionRef = useRef<number | null>(null);
+  const timerIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const onCloseRef = useRef(onClose);
   onCloseRef.current = onClose;
+
+  const stopQuestionTimer = () => {
+    if (timerIntervalRef.current != null) {
+      clearInterval(timerIntervalRef.current);
+      timerIntervalRef.current = null;
+    }
+  };
+
+  const startQuestionTimer = () => {
+    stopQuestionTimer();
+    setCountdown(QUESTION_TIMER_SECONDS);
+    timerIntervalRef.current = setInterval(() => {
+      setCountdown((prev) => {
+        if (prev <= 1) {
+          stopQuestionTimer();
+          return 0;
+        }
+        return prev - 1;
+      });
+    }, 1000);
+  };
 
   if (isOpen && cell) {
     frozen.current = { cell, themeName, points };
@@ -66,6 +151,26 @@ export function QuizQuestionModal({
   useEffect(() => {
     if (isOpen) setStage("question");
   }, [isOpen, cell?.text, cell?.questionUrl, cell?.answerText]);
+
+  useEffect(() => {
+    if (!isOpen) {
+      stopQuestionTimer();
+      setCountdown(QUESTION_TIMER_SECONDS);
+    }
+    return stopQuestionTimer;
+  }, [isOpen]);
+
+  useEffect(() => {
+    if (!isOpen || !cell) return;
+    const splash = Boolean(cell.splashUrl?.trim());
+    if (editing || stage !== "question" || splash) {
+      stopQuestionTimer();
+      if (stage !== "question" || editing) setCountdown(QUESTION_TIMER_SECONDS);
+      return stopQuestionTimer;
+    }
+    startQuestionTimer();
+    return stopQuestionTimer;
+  }, [isOpen, stage, editing, cellCoords?.rowIndex, cellCoords?.colIndex, cell?.splashUrl]);
 
   useEffect(() => {
     if (!isOpen) {
@@ -186,6 +291,14 @@ export function QuizQuestionModal({
   const canEdit = isHost && boardSel != null && cellCoords != null;
   const editBlocked = !canEdit || saving || uploading != null;
 
+  const showHeaderTimer =
+    !editing &&
+    stage === "question" &&
+    !(pack.cell.splashUrl ?? "").trim() &&
+    countdown > 0;
+  const headerTimerExpired =
+    !editing && stage === "question" && !(pack.cell.splashUrl ?? "").trim() && countdown === 0;
+
   return (
     <AnimatePresence>
       {isOpen && pack ? (
@@ -261,6 +374,18 @@ export function QuizQuestionModal({
                 ) : (
                   <span className="adepts-question-modal__edit-badge">Редактирование</span>
                 )}
+              </div>
+              <div className="adepts-question-modal__header-center">
+                {showHeaderTimer ? <QuestionHeaderCountdown seconds={countdown} /> : null}
+                {headerTimerExpired ? (
+                  <span
+                    className="adepts-question-modal__header-timer-expired"
+                    role="status"
+                    aria-live="polite"
+                  >
+                    Время истекло!
+                  </span>
+                ) : null}
               </div>
               <div className="adepts-question-modal__header-actions">
                 {canEdit ? (

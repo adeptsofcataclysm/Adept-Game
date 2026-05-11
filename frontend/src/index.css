@@ -756,10 +756,10 @@ code {
 
 .adepts-question-modal__header {
   flex-shrink: 0;
-  display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  gap: 0.75rem;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+  align-items: center;
+  column-gap: 0.65rem;
   padding: 0.85rem 1rem 0.85rem 1.15rem;
   border-bottom: 1px solid hsla(280, 35%, 42%, 0.25);
   background: hsla(270, 40%, 8%, 0.75);
@@ -777,6 +777,15 @@ code {
   align-items: center;
   gap: 0.65rem 1rem;
   min-width: 0;
+  justify-self: start;
+}
+
+.adepts-question-modal__header-center {
+  justify-self: center;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  pointer-events: none;
 }
 
 .adepts-question-modal__title-block {
@@ -842,6 +851,22 @@ code {
   filter: drop-shadow(0 0 5px hsla(45, 100%, 60%, 0.45));
 }
 
+.adepts-question-modal__header-timer {
+  flex-shrink: 0;
+  line-height: 0;
+}
+
+.adepts-question-modal__header-timer-expired {
+  flex-shrink: 0;
+  font-size: 0.65rem;
+  font-weight: 800;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  white-space: nowrap;
+  color: hsl(0, 75%, 55%);
+  text-shadow: 0 0 12px hsla(0, 75%, 55%, 0.55);
+}
+
 .adepts-question-modal__stage-pills {
   display: inline-flex;
   align-items: center;
@@ -898,6 +923,7 @@ code {
   flex-shrink: 0;
   display: inline-flex;
   align-items: center;
+  justify-self: end;
   gap: 0.4rem;
 }
 
