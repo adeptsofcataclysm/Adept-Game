@@ -1,0 +1,156 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://adept-game/schemas/quiz-pack.schema.json",
+  "title": "Quiz pack (round-N.json)",
+  "description": "Schema for the on-disk quiz packs loaded by Adept-Game's session service. Documents both legacy fields (text/answerText/URLs, splash, header) and the new card-plugin fields (cardKind / cardKinds / cardParams). When new card plugins ship with validateParams schemas, the union under `definitions.QuestionCell.properties.cardParams` should be regenerated at boot from pluginRegistry.listCardKinds() — see requirements/plugin.md §10.",
+  "type": "object",
+  "required": [
+    "themes",
+    "questions"
+  ],
+  "additionalProperties": false,
+  "properties": {
+    "themes": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "string",
+        "maxLength": 64,
+        "description": "Theme label rendered on the left edge of a round row."
+      }
+    },
+    "themeIcons": {
+      "description": "Optional per-row icon URL. When present, length must match `themes`. Use `null` for any row that should fall back to the auto-generated initial icon.",
+      "type": "array",
+      "items": {
+        "oneOf": [
+          {
+            "type": "string"
+          },
+          {
+            "type": "null"
+          }
+        ]
+      }
+    },
+    "questions": {
+      "description": "Outer array indexed by theme row; inner array indexed by points column (left → right). All rows must have equal length.",
+      "type": "array",
+      "items": {
+        "type": "array",
+        "items": {
+          "$ref": "#/definitions/QuestionCell"
+        }
+      }
+    }
+  },
+  "definitions": {
+    "QuestionCell": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "text",
+        "questionUrl",
+        "answerText",
+        "answerUrl"
+      ],
+      "properties": {
+        "text": {
+          "type": "string",
+          "maxLength": 16384,
+          "description": "Question text. May be empty when a question media URL alone is sufficient."
+        },
+        "questionUrl": {
+          "type": "string",
+          "maxLength": 4096,
+          "description": "Optional media URL shown alongside the question."
+        },
+        "answerText": {
+          "type": "string",
+          "maxLength": 16384,
+          "description": "Answer text shown after the host reveals."
+        },
+        "answerUrl": {
+          "type": "string",
+          "maxLength": 4096,
+          "description": "Optional media URL shown alongside the answer."
+        },
+        "splashUrl": {
+          "type": "string",
+          "description": "Optional intro splash media URL shown before the question."
+        },
+        "splashVariant": {
+          "enum": [
+            "spiral",
+            "dedFly"
+          ],
+          "description": "Visual transition variant for the splash overlay."
+        },
+        "splashAudioUrl": {
+          "type": "string",
+          "description": "Optional audio URL played alongside the splash."
+        },
+        "splashDismissHostOnly": {
+          "type": "boolean",
+          "description": "When true, only the host can dismiss the splash overlay."
+        },
+        "headerUrl": {
+          "type": "string",
+          "description": "Optional header decoration URL (the inset bonus image)."
+        },
+        "headerCornerUrl": {
+          "type": "string",
+          "description": "Optional header corner image URL."
+        },
+        "cardKind": {
+          "type": "string",
+          "description": "Legacy single-kind form accepted on disk. The loader normalizes it to `cardKinds: [cardKind]`. Prefer `cardKinds` for new content. Value must match a `cardKind` registered by a server-side plugin."
+        },
+        "cardKinds": {
+          "description": "Card-plugin kinds attached to this cell, in declared order. Each entry must match a `cardKind` registered by a server-side plugin. Conflict rules (enforced at pack load and on host_edit_quiz_question): at most one `replace_field` kind, at most one `replace_card` kind, no `replace_field` + `replace_card` mix.",
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          },
+          "uniqueItems": true
+        },
+        "cardParams": {
+          "description": "Per-kind handler parameters. Canonical form is `Record<cardKind, object>`; the loader also accepts a single object when exactly one cardKind is declared, normalizing to the record form internally. Each kind's slot is validated by the plugin's `validateParams` hook at load time. For strict key validation against registered plugins, see `definitions.RegisteredCardParamsMap` (regenerated via `npm run gen:quiz-schema` in `backend/`).",
+          "type": "object"
+        }
+      },
+      "anyOf": [
+        {
+          "not": {
+            "required": [
+              "cardKind"
+            ]
+          }
+        },
+        {
+          "not": {
+            "required": [
+              "cardKinds"
+            ]
+          }
+        },
+        {
+          "description": "If both legacy and canonical forms are present, they must agree (host edit always writes the canonical form).",
+          "required": [
+            "cardKind",
+            "cardKinds"
+          ]
+        }
+      ]
+    },
+    "RegisteredCardParamsMap": {
+      "type": "object",
+      "description": "No card plugins registered at host boot — any object accepted. After registering card kinds, run `npm run gen:quiz-schema` in `backend/`.",
+      "additionalProperties": {
+        "type": "object"
+      }
+    }
+  },
+  "x-registeredCardKinds": []
+}

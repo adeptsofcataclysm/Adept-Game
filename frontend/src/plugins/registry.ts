@@ -1,9 +1,10 @@
 /**
  * Client-side plugin registry.
  *
- * Plugins call `registerSegmentView` / `registerCardExtension` at bundle time.
- * The host renders `<PluginSegmentHost>` and `<CardExtensionHost>` which look
- * up components here by (pluginId, segmentId) or cardKind.
+ * Plugins call `registerSegmentView` / `registerCardKindClient` at bundle time.
+ * The host renders `<PluginSegmentLayoutHost>` (segments) and card hosts from
+ * `CardFullScreenHost` / `CardModalBodyHost` / `CardActionSlots` (re-exported
+ * from `CardLayoutHost.tsx` for convenience).
  *
  * A Vite prebuild script (scripts/gen-plugin-barrel.ts, forthcoming) generates
  * `frontend/src/plugins/index.ts` by globbing node_modules/@adept-plugins/* and
@@ -11,7 +12,7 @@
  */
 
 import type { ComponentType } from "react";
-import type { SegmentViewProps, CardExtensionProps } from "./types";
+import type { CardKindClientDef, CardKindClientMetadata, SegmentViewProps } from "./types";
 
 type SegmentKey = `${string}:${string}`; // `${pluginId}:${segmentId}`
 
@@ -19,7 +20,7 @@ class ClientPluginRegistryImpl {
   private readonly _segmentViews = new Map<SegmentKey, ComponentType<SegmentViewProps>>();
   private readonly _segmentRailViews = new Map<SegmentKey, ComponentType<SegmentViewProps>>();
   private readonly _segmentFullScreenViews = new Map<SegmentKey, ComponentType<SegmentViewProps>>();
-  private readonly _cardExtensions = new Map<string, ComponentType<CardExtensionProps>>();
+  private readonly _cardKinds = new Map<string, CardKindClientDef>();
 
   registerSegmentView(
     pluginId: string,
@@ -45,8 +46,15 @@ class ClientPluginRegistryImpl {
     this._segmentFullScreenViews.set(`${pluginId}:${segmentId}`, component);
   }
 
-  registerCardExtension(cardKind: string, component: ComponentType<CardExtensionProps>): void {
-    this._cardExtensions.set(cardKind, component);
+  /**
+   * Register a card-plugin kind on the client side. `cardKind` strings are a
+   * global namespace shared with the server registry — collisions silently
+   * keep the first registration.
+   */
+  registerCardKindClient(cardKind: string, def: CardKindClientDef): void {
+    if (!this._cardKinds.has(cardKind)) {
+      this._cardKinds.set(cardKind, def);
+    }
   }
 
   getSegmentView(pluginId: string, segmentId: string): ComponentType<SegmentViewProps> | undefined {
@@ -61,8 +69,27 @@ class ClientPluginRegistryImpl {
     return this._segmentFullScreenViews.get(`${pluginId}:${segmentId}`);
   }
 
-  getCardExtension(cardKind: string): ComponentType<CardExtensionProps> | undefined {
-    return this._cardExtensions.get(cardKind);
+  getCardKindClient(cardKind: string): CardKindClientDef | undefined {
+    return this._cardKinds.get(cardKind);
+  }
+
+  /**
+   * Metadata for the host card-plugin editor (labels, capability flags).
+   * When no client registration exists for a server-registered kind, returns `undefined`.
+   */
+  getCardKindClientMetadata(cardKind: string): CardKindClientMetadata | undefined {
+    const def = this._cardKinds.get(cardKind);
+    if (!def) return undefined;
+    return {
+      label: def.label,
+      description: def.description,
+      hasDefaultParams: typeof def.defaultParams === "function",
+      hasParamsEditor: def.ParamsEditor != null,
+      hasPreRevealAction: def.PreRevealAction != null,
+      hasPostRevealAction: def.PostRevealAction != null,
+      hasModalView: def.ModalView != null,
+      hasFullScreenView: def.FullScreenView != null,
+    };
   }
 }
 

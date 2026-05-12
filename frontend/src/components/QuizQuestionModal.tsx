@@ -1,14 +1,24 @@
-import { useEffect, useRef, useState, type CSSProperties } from "react";
+import { useEffect, useMemo, useRef, useState, type CSSProperties } from "react";
 import { AnimatePresence, motion } from "framer-motion";
-import type { QuestionCell, Scores } from "@/sessionTypes";
+import type {
+  QuestionCell,
+  RegisteredCardKind,
+  Role,
+  Scores,
+  SessionSnapshot,
+} from "@/sessionTypes";
 import { ADEPTS_SLOT_THEMES, hsl } from "@/lib/adeptsQuizSlotCardVisual";
 import { resolveQuizAssetUrl } from "@/lib/quizMedia";
 import { getHttpBaseUrl } from "@/wsUrl";
 import { QuestionHeaderCountdown, QUESTION_TIMER_SECONDS } from "@/components/QuestionHeaderCountdown";
 import { QuizMediaView } from "@/components/QuizMediaView";
 import { QuizMediaUrlEditRow } from "@/components/QuizMediaUrlEditRow";
-
-type Stage = "question" | "answer";
+import {
+  CardModalBodyHost,
+  CardPostRevealActions,
+  CardPreRevealActions,
+} from "@/plugins/CardLayoutHost";
+import { clientPluginRegistry } from "@/plugins/registry";
 
 /** Matches `BoardSelector` on ShowPage (no circular import). */
 export type QuizBoardSelector =
@@ -24,6 +34,7 @@ export function QuizQuestionModal({
   isHost,
   boardSel,
   cellCoords,
+  snapshot,
   snapshotVersion,
   send,
   hostSecret,
@@ -31,6 +42,8 @@ export function QuizQuestionModal({
   scores,
   currentTurnSeat,
   cellRevealed,
+  role,
+  participantId,
 }: {
   isOpen: boolean;
   themeName: string;
@@ -40,6 +53,7 @@ export function QuizQuestionModal({
   isHost: boolean;
   boardSel: QuizBoardSelector | null;
   cellCoords: { rowIndex: number; colIndex: number } | null;
+  snapshot: SessionSnapshot | null;
   snapshotVersion: number;
   send: (msg: unknown) => void;
   hostSecret?: string;
@@ -48,18 +62,23 @@ export function QuizQuestionModal({
   currentTurnSeat: number;
   /** Server `revealed` flag for this cell (opened / played on the board). */
   cellRevealed: boolean;
+  role: Role;
+  participantId: string;
 }) {
-  const [stage, setStage] = useState<Stage>("question");
+  const activeCard = snapshot?.activeCard ?? null;
+  const stage: "question" | "answer" = activeCard?.stage ?? "question";
+
   const [editing, setEditing] = useState(false);
   const [draftQ, setDraftQ] = useState("");
   const [draftA, setDraftA] = useState("");
   const [draftQuestionUrl, setDraftQuestionUrl] = useState("");
   const [draftAnswerUrl, setDraftAnswerUrl] = useState("");
+  const [draftCardKinds, setDraftCardKinds] = useState<string[]>([]);
+  const [draftCardParams, setDraftCardParams] = useState<Record<string, unknown>>({});
   const [saving, setSaving] = useState(false);
   const [uploading, setUploading] = useState<null | "question" | "answer">(null);
   const [countdown, setCountdown] = useState(QUESTION_TIMER_SECONDS);
   const [awardedSeat, setAwardedSeat] = useState<number | null>(null);
-  const frozen = useRef<{ cell: QuestionCell; themeName: string; points: number } | null>(null);
   const saveFromVersionRef = useRef<number | null>(null);
   const timerIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const onCloseRef = useRef(onClose);
@@ -85,14 +104,6 @@ export function QuizQuestionModal({
       });
     }, 1000);
   };
-
-  if (isOpen && cell) {
-    frozen.current = { cell, themeName, points };
-  }
-
-  useEffect(() => {
-    if (isOpen) setStage("question");
-  }, [isOpen, cell?.text, cell?.questionUrl, cell?.answerText]);
 
   useEffect(() => {
     setAwardedSeat(null);
@@ -138,15 +149,14 @@ export function QuizQuestionModal({
   }, [isOpen]);
 
   useEffect(() => {
-    if (!editing) return;
-    const p = frozen.current;
-    if (p) {
-      setDraftQ(p.cell.text ?? "");
-      setDraftA(p.cell.answerText ?? "");
-      setDraftQuestionUrl(p.cell.questionUrl ?? "");
-      setDraftAnswerUrl(p.cell.answerUrl ?? "");
-    }
-  }, [editing]);
+    if (!editing || !cell) return;
+    setDraftQ(cell.text ?? "");
+    setDraftA(cell.answerText ?? "");
+    setDraftQuestionUrl(cell.questionUrl ?? "");
+    setDraftAnswerUrl(cell.answerUrl ?? "");
+    setDraftCardKinds(Array.isArray(cell.cardKinds) ? [...cell.cardKinds] : []);
+    setDraftCardParams(cell.cardParams ? { ...cell.cardParams } : {});
+  }, [editing, cell]);
 
   useEffect(() => {
     if (!saving || saveFromVersionRef.current === null) return;
@@ -166,7 +176,7 @@ export function QuizQuestionModal({
     return () => window.clearTimeout(t);
   }, [saving]);
 
-  const pack = frozen.current;
+  const registeredCardKinds: RegisteredCardKind[] = snapshot?.registeredCardKinds ?? [];
 
   const buildEditPayload = () => {
     if (!boardSel || !cellCoords) return null;
@@ -177,6 +187,8 @@ export function QuizQuestionModal({
       answerText: draftA,
       questionUrl: draftQuestionUrl,
       answerUrl: draftAnswerUrl,
+      cardKinds: draftCardKinds,
+      cardParams: draftCardParams,
     };
     if (boardSel.boardKind === "finalTransition") {
       return { type: "host_edit_quiz_question" as const, payload: { boardKind: "finalTransition" as const, ...base } };
@@ -187,17 +199,17 @@ export function QuizQuestionModal({
     };
   };
 
-  const buildRevealPayload = () => {
-    if (!boardSel || !cellCoords) return null;
-    const { rowIndex, colIndex } = cellCoords;
-    if (boardSel.boardKind === "finalTransition") {
-      return { type: "host_reveal_quiz_cell" as const, payload: { boardKind: "finalTransition" as const, rowIndex, colIndex } };
-    }
-    return {
-      type: "host_reveal_quiz_cell" as const,
-      payload: { boardKind: "round" as const, roundIndex: boardSel.roundIndex, rowIndex, colIndex },
-    };
-  };
+  /**
+   * Standard close (no scoring side-effects). Used by the X button and Esc.
+   * `outcome: "cancelled"` so the board's `revealed` flag stays untouched
+   * — closes the overlay without marking the cell played.
+   */
+  const buildCancelPayload = () =>
+    ({ type: "host_close_quiz_cell" as const, payload: { outcome: "cancelled" as const } });
+
+  /** "Marks cell played" close. Replaces the legacy host_reveal_quiz_cell flow. */
+  const buildRevealedClosePayload = () =>
+    ({ type: "host_close_quiz_cell" as const, payload: { outcome: "revealed" as const } });
 
   const handleSave = () => {
     const msg = buildEditPayload();
@@ -237,13 +249,13 @@ export function QuizQuestionModal({
 
   const cancelEdit = () => {
     setEditing(false);
-    const p = frozen.current;
-    if (p) {
-      setDraftQ(p.cell.text ?? "");
-      setDraftA(p.cell.answerText ?? "");
-      setDraftQuestionUrl(p.cell.questionUrl ?? "");
-      setDraftAnswerUrl(p.cell.answerUrl ?? "");
-    }
+    if (!cell) return;
+    setDraftQ(cell.text ?? "");
+    setDraftA(cell.answerText ?? "");
+    setDraftQuestionUrl(cell.questionUrl ?? "");
+    setDraftAnswerUrl(cell.answerUrl ?? "");
+    setDraftCardKinds(Array.isArray(cell.cardKinds) ? [...cell.cardKinds] : []);
+    setDraftCardParams(cell.cardParams ? { ...cell.cardParams } : {});
   };
 
   const canEdit = isHost && boardSel != null && cellCoords != null;
@@ -256,57 +268,73 @@ export function QuizQuestionModal({
 
   const handleAwardSeat = (seatIndex: number) => {
     if (!isHost || awardedSeat !== null) return;
-    const p = frozen.current;
-    if (!p) return;
     const cur = scores[seatIndex] ?? 0;
-    const delta = Math.trunc(p.points);
+    const delta = Math.trunc(points);
     const next = Math.max(-999_999, Math.min(999_999, cur + delta));
     send({ type: "host_set_score", payload: { seatIndex, score: next } });
-    const revealMsg = buildRevealPayload();
-    if (revealMsg) send(revealMsg);
+    send(buildRevealedClosePayload());
     setAwardedSeat(seatIndex);
-    onClose();
   };
 
   const handleHostWrongAnswer = () => {
     if (!isHost || awardedSeat !== null || cellRevealed) return;
-    const p = frozen.current;
-    if (!p || activeTurnSeatNorm < 0) return;
+    if (activeTurnSeatNorm < 0) return;
     const cur = scores[activeTurnSeatNorm] ?? 0;
-    const delta = Math.trunc(p.points);
+    const delta = Math.trunc(points);
     const next = Math.max(-999_999, Math.min(999_999, cur - delta));
     send({ type: "host_set_score", payload: { seatIndex: activeTurnSeatNorm, score: next } });
-    const revealMsg = buildRevealPayload();
-    if (revealMsg) send(revealMsg);
+    send(buildRevealedClosePayload());
     send({ type: "host_advance_turn", payload: {} });
-    onClose();
   };
 
   const handleHostPassTurnNext = () => {
     if (!isHost || awardedSeat !== null) return;
     send({ type: "host_advance_turn", payload: {} });
-    onClose();
+    send(buildCancelPayload());
   };
 
   const handleHostCloseCellOnly = () => {
     if (!isHost || awardedSeat !== null || cellRevealed) return;
-    const msg = buildRevealPayload();
-    if (!msg) return;
-    send(msg);
-    onClose();
+    send(buildRevealedClosePayload());
+  };
+
+  const handleAdvanceToAnswer = () => {
+    if (!isHost) return;
+    if (stage === "answer") return;
+    send({ type: "host_advance_card_stage", payload: { to: "answer" } });
   };
 
   const showHeaderTimer =
     !editing &&
     stage === "question" &&
-    !(pack?.cell?.splashUrl ?? "").trim() &&
+    !(cell?.splashUrl ?? "").trim() &&
     countdown > 0;
   const headerTimerExpired =
-    !editing && stage === "question" && !(pack?.cell?.splashUrl ?? "").trim() && countdown === 0;
+    !editing && stage === "question" && !(cell?.splashUrl ?? "").trim() && countdown === 0;
+
+  // Card-plugin slots / replacement body.
+  const hostCommonProps = useMemo(() => {
+    if (!snapshot || !activeCard || !cell) return null;
+    return {
+      snapshot,
+      activeCard,
+      themeName,
+      pointValue: points,
+      cell,
+      role,
+      participantId,
+      send: (type: string, payload: unknown) => send({ type, payload }),
+    };
+  }, [snapshot, activeCard, cell, themeName, points, role, participantId, send]);
+
+  const hasReplaceCardBody = useMemo(() => {
+    if (!activeCard) return false;
+    return activeCard.cardKinds.some((k) => Boolean(clientPluginRegistry.getCardKindClient(k)?.ModalView));
+  }, [activeCard]);
 
   return (
     <AnimatePresence>
-      {isOpen && pack ? (
+      {isOpen && cell ? (
         <motion.div
           key="quiz-q-modal"
           className="question-modal-overlay"
@@ -332,22 +360,22 @@ export function QuizQuestionModal({
             <div className="question-modal__header">
               <div className="question-modal__header-main">
                 <div className="question-modal__title-block">
-                  <div className="question-modal__theme-label">{pack.themeName}</div>
-                  <div className="question-modal__points glow-text">{pack.points}</div>
+                  <div className="question-modal__theme-label">{themeName}</div>
+                  <div className="question-modal__points glow-text">{points}</div>
                 </div>
-                {pack.cell.headerUrl?.trim() ? (
+                {cell.headerUrl?.trim() ? (
                   <>
                     <span className="question-modal__plus glow-text">+</span>
                     <div className="question-modal__header-bonus">
-                      <img src={resolveQuizAssetUrl(pack.cell.headerUrl)} alt="" draggable={false} />
+                      <img src={resolveQuizAssetUrl(cell.headerUrl)} alt="" draggable={false} />
                       <span className="question-modal__header-bonus-cap">1 крутка</span>
                     </div>
                   </>
                 ) : null}
-                {(pack.cell.headerCornerUrl || pack.cell.splashUrl || "").trim() ? (
+                {(cell.headerCornerUrl || cell.splashUrl || "").trim() ? (
                   <img
                     className="question-modal__corner"
-                    src={resolveQuizAssetUrl((pack.cell.headerCornerUrl || pack.cell.splashUrl || "").trim())}
+                    src={resolveQuizAssetUrl((cell.headerCornerUrl || cell.splashUrl || "").trim())}
                     alt=""
                     draggable={false}
                   />
@@ -359,7 +387,8 @@ export function QuizQuestionModal({
                       role="tab"
                       aria-selected={stage === "question"}
                       className={`question-modal__pill${stage === "question" ? " question-modal__pill--on" : ""}`}
-                      onClick={() => setStage("question")}
+                      disabled
+                      title="Вопрос"
                     >
                       Вопрос
                     </button>
@@ -371,7 +400,9 @@ export function QuizQuestionModal({
                       role="tab"
                       aria-selected={stage === "answer"}
                       className={`question-modal__pill${stage === "answer" ? " question-modal__pill--on" : ""}`}
-                      onClick={() => setStage("answer")}
+                      disabled={!isHost || stage === "answer"}
+                      onClick={handleAdvanceToAnswer}
+                      title={isHost ? "Показать ответ всем участникам" : "Ответ"}
                     >
                       Ответ
                     </button>
@@ -398,7 +429,7 @@ export function QuizQuestionModal({
                     type="button"
                     className={`question-modal__icon-btn${editing ? " question-modal__icon-btn--on" : ""}`}
                     onClick={() => (editing ? cancelEdit() : setEditing(true))}
-                    title={editing ? "Закончить редактирование" : "Редактировать текст"}
+                    title={editing ? "Закончить редактирование" : "Редактировать"}
                     aria-pressed={editing}
                   >
                     ✎
@@ -458,6 +489,16 @@ export function QuizQuestionModal({
                       maxLength={16384}
                     />
                   </label>
+
+                  <CardKindsEditor
+                    available={registeredCardKinds}
+                    selected={draftCardKinds}
+                    params={draftCardParams}
+                    saving={saving}
+                    onSelectionChange={setDraftCardKinds}
+                    onParamsChange={setDraftCardParams}
+                  />
+
                   <div className="adepts-question-modal__editor-foot">
                     <button type="button" className="adepts-btn" onClick={cancelEdit} disabled={saving}>
                       Отмена
@@ -467,11 +508,17 @@ export function QuizQuestionModal({
                     </button>
                   </div>
                 </div>
+              ) : hasReplaceCardBody && hostCommonProps ? (
+                <div className="question-modal__pane">
+                  <CardModalBodyHost {...hostCommonProps} />
+                  {stage === "question" ? <CardPreRevealActions {...hostCommonProps} /> : null}
+                  {stage === "answer" ? <CardPostRevealActions {...hostCommonProps} /> : null}
+                </div>
               ) : stage === "question" ? (
                 <div className="question-modal__pane">
                   {(() => {
-                    const qText = pack.cell.text?.trim() ?? "";
-                    const qUrl = pack.cell.questionUrl?.trim() ?? "";
+                    const qText = cell.text?.trim() ?? "";
+                    const qUrl = cell.questionUrl?.trim() ?? "";
                     return (
                       <>
                         {qUrl ? <QuizMediaView url={qUrl} /> : null}
@@ -480,6 +527,7 @@ export function QuizQuestionModal({
                         ) : !qUrl ? (
                           <p className="adepts-question-modal__empty">Нет текста вопроса</p>
                         ) : null}
+                        {hostCommonProps ? <CardPreRevealActions {...hostCommonProps} /> : null}
                       </>
                     );
                   })()}
@@ -487,8 +535,8 @@ export function QuizQuestionModal({
               ) : (
                 <div className="question-modal__pane">
                   {(() => {
-                    const aText = pack.cell.answerText?.trim() ?? "";
-                    const aUrl = pack.cell.answerUrl?.trim() ?? "";
+                    const aText = cell.answerText?.trim() ?? "";
+                    const aUrl = cell.answerUrl?.trim() ?? "";
                     return (
                       <>
                         {aUrl ? <QuizMediaView url={aUrl} /> : null}
@@ -497,6 +545,7 @@ export function QuizQuestionModal({
                         ) : !aUrl ? (
                           <p className="adepts-question-modal__empty">Нет текста ответа</p>
                         ) : null}
+                        {hostCommonProps ? <CardPostRevealActions {...hostCommonProps} /> : null}
                       </>
                     );
                   })()}
@@ -534,7 +583,7 @@ export function QuizQuestionModal({
                               whileHover={disabled ? undefined : { scale: 1.04 }}
                               whileTap={disabled ? undefined : { scale: 0.97 }}
                               disabled={disabled}
-                              title={isTurn ? "Сейчас ход этого игрока" : `Начислить ${pack.points} очков`}
+                              title={isTurn ? "Сейчас ход этого игрока" : `Начислить ${points} очков`}
                               aria-current={isTurn && awardedSeat === null ? "true" : undefined}
                               className={[
                                 "adepts-question-modal__award-seat",
@@ -559,7 +608,7 @@ export function QuizQuestionModal({
                                 </span>
                               ) : (
                                 <span className="adepts-question-modal__award-seat-delta glow-text">
-                                  +{pack.points}
+                                  +{points}
                                 </span>
                               )}
                               <span className="adepts-question-modal__award-seat-name">{label}</span>
@@ -591,7 +640,7 @@ export function QuizQuestionModal({
                         ? "Карточка уже сыграна"
                         : activeTurnSeatNorm < 0
                           ? "Нет активного хода"
-                          : `Снять ${pack.points} очков у игрока на ходу, пометить карточку сыгранной и передать ход`
+                          : `Снять ${points} очков у игрока на ходу, пометить карточку сыгранной и передать ход`
                     }
                     onClick={handleHostWrongAnswer}
                   >
@@ -626,4 +675,174 @@ export function QuizQuestionModal({
       ) : null}
     </AnimatePresence>
   );
+}
+
+/**
+ * Host-only editor: pick which `cardKind` plugins are attached to this cell,
+ * and edit each one's `cardParams`. Conflict rules (at most one replace_field,
+ * at most one replace_card, no replace_field + replace_card) are enforced at
+ * checkbox-time. Plugins without a registered client `ParamsEditor` fall back
+ * to a JSON textarea.
+ */
+function CardKindsEditor({
+  available,
+  selected,
+  params,
+  saving,
+  onSelectionChange,
+  onParamsChange,
+}: {
+  available: RegisteredCardKind[];
+  selected: string[];
+  params: Record<string, unknown>;
+  saving: boolean;
+  onSelectionChange(next: string[]): void;
+  onParamsChange(next: Record<string, unknown>): void;
+}) {
+  if (available.length === 0) {
+    return (
+      <div className="adepts-field">
+        <span className="adepts-field__label">Плагины карточки</span>
+        <p className="adepts-question-modal__empty">Нет зарегистрированных плагинов карточки</p>
+      </div>
+    );
+  }
+
+  const hasReplaceField = selected.some(
+    (k) => available.find((r) => r.cardKind === k)?.mode === "replace_field",
+  );
+  const hasReplaceCard = selected.some(
+    (k) => available.find((r) => r.cardKind === k)?.mode === "replace_card",
+  );
+
+  const isDisabled = (entry: RegisteredCardKind): boolean => {
+    if (selected.includes(entry.cardKind)) return false;
+    if (entry.mode === "replace_field" && (hasReplaceField || hasReplaceCard)) return true;
+    if (entry.mode === "replace_card" && (hasReplaceField || hasReplaceCard)) return true;
+    return false;
+  };
+
+  const toggleKind = (kind: string) => {
+    if (selected.includes(kind)) {
+      const next = selected.filter((k) => k !== kind);
+      onSelectionChange(next);
+      if (params[kind] !== undefined) {
+        const { [kind]: _omit, ...rest } = params;
+        void _omit;
+        onParamsChange(rest);
+      }
+    } else {
+      onSelectionChange([...selected, kind]);
+      if (params[kind] === undefined) {
+        const def = clientPluginRegistry.getCardKindClient(kind);
+        const initial = def?.defaultParams ? def.defaultParams() : undefined;
+        if (initial !== undefined) {
+          onParamsChange({ ...params, [kind]: initial });
+        }
+      }
+    }
+  };
+
+  return (
+    <div className="adepts-field adepts-question-modal__cardkinds">
+      <span className="adepts-field__label">Плагины карточки</span>
+      <ul className="adepts-question-modal__cardkinds-list">
+        {available.map((entry) => {
+          const meta = clientPluginRegistry.getCardKindClientMetadata(entry.cardKind);
+          const def = clientPluginRegistry.getCardKindClient(entry.cardKind);
+          const isSelected = selected.includes(entry.cardKind);
+          const disabled = saving || isDisabled(entry);
+          const label = meta?.label ?? entry.cardKind;
+          return (
+            <li key={entry.cardKind} className="adepts-question-modal__cardkind-row">
+              <label className="adepts-question-modal__cardkind-label">
+                <input
+                  type="checkbox"
+                  checked={isSelected}
+                  disabled={disabled}
+                  onChange={() => toggleKind(entry.cardKind)}
+                />
+                <span className="adepts-question-modal__cardkind-name">{label}</span>
+                <span className="adepts-question-modal__cardkind-mode">{entry.mode}</span>
+              </label>
+              {meta?.description ? (
+                <p className="adepts-question-modal__cardkind-desc">{meta.description}</p>
+              ) : null}
+              {isSelected && entry.hasParams ? (
+                <div className="adepts-question-modal__cardkind-params">
+                  {def?.ParamsEditor ? (
+                    <def.ParamsEditor
+                      value={params[entry.cardKind]}
+                      onChange={(next) => onParamsChange({ ...params, [entry.cardKind]: next })}
+                      role="host"
+                    />
+                  ) : (
+                    <JsonParamsTextarea
+                      value={params[entry.cardKind]}
+                      disabled={saving}
+                      onChange={(next) => onParamsChange({ ...params, [entry.cardKind]: next })}
+                    />
+                  )}
+                </div>
+              ) : null}
+            </li>
+          );
+        })}
+      </ul>
+    </div>
+  );
+}
+
+function JsonParamsTextarea({
+  value,
+  disabled,
+  onChange,
+}: {
+  value: unknown;
+  disabled: boolean;
+  onChange(next: unknown): void;
+}) {
+  const [text, setText] = useState(() => stringifyJson(value));
+  const [error, setError] = useState<string | null>(null);
+  useEffect(() => {
+    setText(stringifyJson(value));
+    setError(null);
+  }, [value]);
+  return (
+    <label className="adepts-field">
+      <span className="adepts-field__label">cardParams (JSON)</span>
+      <textarea
+        className="adepts-question-modal__textarea"
+        rows={3}
+        value={text}
+        disabled={disabled}
+        onChange={(e) => {
+          const next = e.target.value;
+          setText(next);
+          if (next.trim() === "") {
+            setError(null);
+            onChange(undefined);
+            return;
+          }
+          try {
+            const parsed = JSON.parse(next) as unknown;
+            setError(null);
+            onChange(parsed);
+          } catch (err) {
+            setError(err instanceof Error ? err.message : "invalid JSON");
+          }
+        }}
+      />
+      {error ? <span className="adepts-field__error">{error}</span> : null}
+    </label>
+  );
+}
+
+function stringifyJson(v: unknown): string {
+  if (v === undefined) return "";
+  try {
+    return JSON.stringify(v, null, 2);
+  } catch {
+    return "";
+  }
 }

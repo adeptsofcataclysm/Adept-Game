@@ -2,6 +2,7 @@ import { randomUUID } from "node:crypto";
 import type { Phase, RoundIndex } from "./phase.js";
 import { canTransition } from "./phase.js";
 import { pluginRegistry } from "./pluginRegistry.js";
+import type { RegisteredCardKind } from "./pluginRegistry.js";
 import { loadRoundBoard, loadRoundBoardFile } from "./quizData.js";
 import type { RoundBoardRuntime } from "./quizData.js";
 
@@ -26,6 +27,25 @@ export type Participant = {
   role: Role;
 };
 
+/**
+ * Server-authoritative descriptor of the currently-open question card.
+ * `null` when no card is open. The card layer is orthogonal to `phase`:
+ * while `activeCard` is set, `phase` remains the round it was opened from
+ * (a card-triggered mini-game does NOT change the phase).
+ */
+export type ActiveCard = {
+  board: "round" | "finalTransition";
+  /** Required when `board === "round"`. */
+  roundIndex?: RoundIndex;
+  rowIndex: number;
+  colIndex: number;
+  stage: "question" | "answer";
+  /** Normalized list of card-plugin kinds attached to this cell, in declared order. */
+  cardKinds: string[];
+  /** Per-kind ephemeral state owned by each plugin. Cleared on close. */
+  pluginState: Record<string, unknown>;
+};
+
 export type SessionSnapshot = {
   showId: string;
   version: number;
@@ -43,6 +63,18 @@ export type SessionSnapshot = {
    * Board for the **transition to Final** and **Final** segment (REQ-13), loaded from `data/rounds/round-4.json`.
    */
   finalTransitionBoard: RoundBoardRuntime;
+  /**
+   * Currently-open card overlay, or `null`. Orthogonal to `phase`.
+   * Ephemeral: never written to `round-*.json` or any on-disk snapshot; always
+   * `null` on process restart / `host_reset_session` (see `createInitialSession`).
+   */
+  activeCard: ActiveCard | null;
+  /**
+   * Plugin-discovery manifest of all card kinds registered at boot. Stable
+   * for the lifetime of the process; serves as the source of truth for the
+   * host's per-cell card-plugin picker UI.
+   */
+  registeredCardKinds: RegisteredCardKind[];
   /**
    * All plugin-managed state lives here, keyed by a stable string the plugin owns.
    * The core session service never reads or writes this object.
@@ -72,6 +104,8 @@ export function createInitialSession(showId: string): SessionSnapshot {
     currentTurnSeat: 0,
     roundBoard,
     finalTransitionBoard,
+    activeCard: null,
+    registeredCardKinds: pluginRegistry.listCardKinds(),
     segmentState: {},
     lottery: { candidates: [], optOut: {}, lastWinnerNick: null },
     chat: [],

@@ -13,6 +13,7 @@ import {
   PluginSegmentRailHost,
   resolvePluginSegmentLayout,
 } from "@/plugins/PluginSegmentLayoutHost";
+import { CardFullScreenHost, resolveActiveCardFullScreen } from "@/plugins/CardFullScreenHost";
 import { getHttpBaseUrl } from "@/wsUrl";
 import { LobbySlideshow } from "@/components/LobbySlideshow";
 // Ensure plugin client registrations run before any render
@@ -84,16 +85,23 @@ export function ShowPage() {
   }, []);
 
   const hostSecretStored = getHostSecret();
-  let role: Role = "spectator";
-  if (hostSecretStored) role = "host";
+  /** Join as spectator; opening_show (and other segments) promote players in `snapshot.participants`. */
+  const joinRole: Role = hostSecretStored ? "host" : "spectator";
   const name = getDisplayName();
   const participantId = useMemo(() => getOrCreateParticipantId(), []);
   const { snapshot, lastError, connected, send } = useSessionWs({
     showId,
-    role,
+    role: joinRole,
     enabled: name.length > 0,
     hostSecret: hostSecretStored || undefined,
   });
+
+  const role = useMemo((): Role => {
+    if (hostSecretStored) return "host";
+    if (!snapshot) return "spectator";
+    const pr = snapshot.participants.find((p) => p.id === participantId);
+    return pr?.role ?? "spectator";
+  }, [hostSecretStored, snapshot, participantId]);
 
   const [chatText, setChatText] = useState("");
   const [editTheme, setEditTheme] = useState<{
@@ -114,8 +122,6 @@ export function ShowPage() {
     busy: false,
   });
 
-  const [questionModalCell, setQuestionModalCell] = useState<{ rowIndex: number; colIndex: number } | null>(null);
-
   const boardPreview = useMemo(() => (snapshot ? boardForPhase(snapshot) : null), [snapshot]);
   const boardSel = useMemo(() => boardSelectorForPhase(snapshot?.phase), [snapshot?.phase]);
 
@@ -130,9 +136,15 @@ export function ShowPage() {
     return me.length > 0 && slotName.length > 0 && me === slotName;
   }, [snapshot, role, name]);
 
+  const activeCardCoords = useMemo(() => {
+    const ac = snapshot?.activeCard;
+    if (!ac) return null;
+    return { rowIndex: ac.rowIndex, colIndex: ac.colIndex };
+  }, [snapshot?.activeCard]);
+
   const questionModalPayload = useMemo(() => {
-    if (!questionModalCell || !boardPreview) return null;
-    const { rowIndex, colIndex } = questionModalCell;
+    if (!snapshot?.activeCard || !boardPreview) return null;
+    const { rowIndex, colIndex } = snapshot.activeCard;
     const cell = boardPreview.board.questions[rowIndex]?.[colIndex];
     if (!cell) return null;
     const rawTheme = boardPreview.board.themes[rowIndex] ?? "";
@@ -140,9 +152,26 @@ export function ShowPage() {
     const points = boardPreview.board.pointValues?.[rowIndex]?.[colIndex] ?? (colIndex + 1) * 100;
     const cellRevealed = Boolean(boardPreview.board.revealed?.[rowIndex]?.[colIndex]);
     return { cell, themeName, points, cellRevealed };
-  }, [questionModalCell, boardPreview]);
+  }, [snapshot, boardPreview]);
 
   const pluginLayout = useMemo(() => resolvePluginSegmentLayout(snapshot), [snapshot]);
+  const cardFullScreen = useMemo(() => resolveActiveCardFullScreen(snapshot), [snapshot]);
+
+  const sendOpenQuizCell = (rowIndex: number, colIndex: number) => {
+    if (!boardSel) return;
+    if (boardSel.boardKind === "finalTransition") {
+      send({ type: "open_quiz_cell", payload: { boardKind: "finalTransition", rowIndex, colIndex } });
+    } else {
+      send({
+        type: "open_quiz_cell",
+        payload: { boardKind: "round", roundIndex: boardSel.roundIndex, rowIndex, colIndex },
+      });
+    }
+  };
+
+  const sendCloseQuizCell = () => {
+    send({ type: "host_close_quiz_cell", payload: { outcome: "cancelled" } });
+  };
 
   if (!name) {
     return (
@@ -158,6 +187,22 @@ export function ShowPage() {
     return (
       <PluginSegmentFullScreenHost
         snapshot={snapshot}
+        role={role}
+        participantId={participantId}
+        send={(type, payload) => send({ type, payload })}
+      />
+    );
+  }
+
+  // A `replace_field` card plugin overlays the round shell (phase stays `round:N`).
+  if (cardFullScreen.kind === "card_full_screen" && snapshot?.activeCard && questionModalPayload) {
+    return (
+      <CardFullScreenHost
+        snapshot={snapshot}
+        activeCard={snapshot.activeCard}
+        themeName={questionModalPayload.themeName}
+        pointValue={questionModalPayload.points}
+        cell={questionModalPayload.cell}
         role={role}
         participantId={participantId}
         send={(type, payload) => send({ type, payload })}
@@ -209,8 +254,8 @@ export function ShowPage() {
                         board={boardPreview.board}
                         role={role}
                         boardSel={boardSel}
-                        canOpenQuestionModal={canOpenQuestionModal}
-                        onQuestionCellClick={(rowIndex, colIndex) => setQuestionModalCell({ rowIndex, colIndex })}
+                        canOpenQuestionModal={canOpenQuestionModal && !snapshot?.activeCard}
+                        onQuestionCellClick={(rowIndex, colIndex) => sendOpenQuizCell(rowIndex, colIndex)}
                         onEditTheme={(rowIndex) => {
                           if (role !== "host") return;
                           if (!boardSel) return;
@@ -428,10 +473,11 @@ export function ShowPage() {
         themeName={questionModalPayload?.themeName ?? ""}
         points={questionModalPayload?.points ?? 0}
         cell={questionModalPayload?.cell ?? null}
-        onClose={() => setQuestionModalCell(null)}
+        onClose={sendCloseQuizCell}
         isHost={role === "host"}
         boardSel={boardSel}
-        cellCoords={questionModalCell}
+        cellCoords={activeCardCoords}
+        snapshot={snapshot ?? null}
         snapshotVersion={snapshot?.version ?? 0}
         send={send}
         hostSecret={hostSecretStored || undefined}
@@ -439,6 +485,8 @@ export function ShowPage() {
         scores={snapshot?.scores ?? [0, 0, 0, 0, 0]}
         currentTurnSeat={snapshot?.currentTurnSeat ?? 0}
         cellRevealed={questionModalPayload?.cellRevealed ?? false}
+        role={role}
+        participantId={participantId}
       />
     </div>
   );
@@ -500,7 +548,7 @@ function BoardPreview({
           </div>
 
           <div className="adepts-quiz-board-preview__cells">
-            {board.questions[ri]?.map((cell, ci) => {
+            {board.questions[ri]?.map((_cell, ci) => {
               const opened = Boolean(board.revealed?.[ri]?.[ci]);
               const points = board.pointValues?.[ri]?.[ci] ?? (ci + 1) * 100;
               const cellClass = [

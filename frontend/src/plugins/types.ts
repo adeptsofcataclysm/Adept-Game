@@ -1,10 +1,11 @@
 /**
  * Prop types for plugin-provided React components.
- * Mirrors @adept/plugin-sdk SegmentViewProps / CardExtensionProps but typed
- * against the local SessionSnapshot so the frontend has no SDK runtime dep.
+ * Mirrors @adept/plugin-sdk types but typed against the local SessionSnapshot
+ * so the frontend has no SDK runtime dependency.
  */
 
-import type { SessionSnapshot, Role } from "@/sessionTypes";
+import type { ComponentType } from "react";
+import type { ActiveCard, QuestionCell, Role, SessionSnapshot } from "@/sessionTypes";
 
 export type SegmentViewProps = {
   snapshot: SessionSnapshot;
@@ -16,9 +17,63 @@ export type SegmentViewProps = {
   send(type: string, payload: unknown): void;
 };
 
-export type CardExtensionProps = {
+/**
+ * Common props for plugin-provided components rendered while a card is open.
+ * `cardParams` / `pluginState` are scoped to a single `cardKind`.
+ */
+export type CardActionProps = {
   snapshot: SessionSnapshot;
+  activeCard: ActiveCard;
   cardKind: string;
   cardParams: unknown;
-  revealed: boolean;
+  pluginState: unknown;
+  role: Role;
+  participantId: string;
+  /** Convenience: emits `plugin_card_event` for this cardKind. */
+  send(event: string, payload: unknown): void;
+};
+
+export type CardModalProps = CardActionProps & {
+  themeName: string;
+  pointValue: number;
+  cell: QuestionCell;
+};
+
+export type CardFullScreenProps = CardModalProps;
+
+export type CardParamsEditorProps = {
+  value: unknown;
+  onChange(next: unknown): void;
+  role: "host";
+};
+
+/**
+ * Client-side metadata + components for a `cardKind`.
+ *
+ * The host's per-cell card-plugin picker reads `label` / `description` here;
+ * `ParamsEditor` is rendered when the kind declares `hasParams` on the
+ * server-side manifest. `Pre/PostRevealAction` / `ModalView` / `FullScreenView`
+ * are rendered while a card with this kind is open.
+ */
+export type CardKindClientDef = {
+  label: string;
+  description?: string;
+  defaultParams?: () => unknown;
+  ParamsEditor?: ComponentType<CardParamsEditorProps>;
+  PreRevealAction?: ComponentType<CardActionProps>;
+  PostRevealAction?: ComponentType<CardActionProps>;
+  ModalView?: ComponentType<CardModalProps>;
+  FullScreenView?: ComponentType<CardFullScreenProps>;
+};
+
+/** Edit-UI metadata derived from a client `CardKindClientDef` (used by the host picker). */
+export type CardKindClientMetadata = {
+  label: string;
+  description?: string;
+  hasDefaultParams: boolean;
+  hasParamsEditor: boolean;
+  hasPreRevealAction: boolean;
+  hasPostRevealAction: boolean;
+  hasModalView: boolean;
+  hasFullScreenView: boolean;
 };

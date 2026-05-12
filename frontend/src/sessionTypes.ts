@@ -42,16 +42,45 @@ export type QuestionCell = {
   questionUrl: string;
   answerText: string;
   answerUrl: string;
-  /** Identifies the card handler; standard quiz cell when absent. */
-  cardKind?: string;
-  /** Handler-specific parameters for non-standard card kinds. */
-  cardParams?: unknown;
+  /**
+   * Normalized list of card-plugin kinds attached to this cell. Standard quiz
+   * cell when absent or empty. The backend loader also accepts legacy
+   * `cardKind: "x"` on disk and normalizes it on read.
+   */
+  cardKinds?: string[];
+  /** Per-kind handler parameters keyed by `cardKind`. */
+  cardParams?: Record<string, unknown>;
   splashUrl?: string;
   splashVariant?: "spiral" | "dedFly";
   splashAudioUrl?: string;
   splashDismissHostOnly?: boolean;
   headerUrl?: string;
   headerCornerUrl?: string;
+};
+
+export type CardMode = "in_card" | "replace_card" | "replace_field";
+
+/** Plugin-discovery manifest entry exposed to clients via the snapshot. */
+export type RegisteredCardKind = {
+  pluginId: string;
+  cardKind: string;
+  mode: CardMode;
+  /** True when the kind reads `cardParams` from JSON; UI shows the editor only then. */
+  hasParams: boolean;
+};
+
+/**
+ * Server-authoritative descriptor of the currently-open question card, or
+ * `null` when no card is open. Orthogonal to `phase`.
+ */
+export type ActiveCard = {
+  board: "round" | "finalTransition";
+  roundIndex?: RoundIndex;
+  rowIndex: number;
+  colIndex: number;
+  stage: "question" | "answer";
+  cardKinds: string[];
+  pluginState: Record<string, unknown>;
 };
 
 export type RoundBoardRuntime = {
@@ -80,6 +109,10 @@ export type SessionSnapshot = {
   roundBoard: Record<RoundIndex, RoundBoardRuntime>;
   /** `round-4.json` — transition to Final / Final segment (REQ-13). */
   finalTransitionBoard: RoundBoardRuntime;
+  /** Currently-open card overlay, or `null`. Orthogonal to `phase`. */
+  activeCard: ActiveCard | null;
+  /** Plugin-discovery manifest, populated at server boot from the host registry. */
+  registeredCardKinds: RegisteredCardKind[];
   segmentState: Record<string, unknown>;
   lottery: { candidates: string[]; optOut: Record<string, true>; lastWinnerNick: string | null };
   chat: ChatLine[];
