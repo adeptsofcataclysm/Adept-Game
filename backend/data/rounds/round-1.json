@@ -50,7 +50,10 @@
         "questionUrl": "",
         "answerText": "Алгалона",
         "answerUrl": "/quiz_media/bossy-500-answer.jpg",
-        "splashUrl": "/raccoon.png"
+        "splashUrl": "/app/raccoon.png",
+        "cardKinds": [
+          "raccoon"
+        ]
       }
     ],
     [
@@ -59,7 +62,10 @@
         "questionUrl": "",
         "answerText": "Харрисон Джонс",
         "answerUrl": "/quiz_media/pashalki-100-answer.jpg",
-        "splashUrl": "/raccoon.png"
+        "splashUrl": "/app/raccoon.png",
+        "cardKinds": [
+          "raccoon"
+        ]
       },
       {
         "text": "В ЛБРС рука робота около лавы — к чему эта пасхалка?",
@@ -149,7 +155,10 @@
         "questionUrl": "https://warcraft-wiki.ru/images/thumb/2/20/Chronicle3_Bolvar_and_Dranosh.jpg/450px-Chronicle3_Bolvar_and_Dranosh.jpg",
         "answerText": "Битва у Врат Гнева",
         "answerUrl": "",
-        "splashUrl": "/raccoon.png"
+        "splashUrl": "/app/raccoon.png",
+        "cardKinds": [
+          "raccoon"
+        ]
       }
     ],
     [
@@ -202,7 +211,10 @@
         "questionUrl": "",
         "answerText": "300",
         "answerUrl": "",
-        "splashUrl": "/raccoon.png"
+        "splashUrl": "/app/raccoon.png",
+        "cardKinds": [
+          "raccoon"
+        ]
       },
       {
         "text": "",
@@ -261,7 +273,10 @@
         "questionUrl": "",
         "answerText": "Наложение чар",
         "answerUrl": "/quiz_media/professions-200-answer.jpg",
-        "splashUrl": "/raccoon.png"
+        "splashUrl": "/app/raccoon.png",
+        "cardKinds": [
+          "raccoon"
+        ]
       },
       {
         "text": "Какая новая профессия появилась в WotLK?",

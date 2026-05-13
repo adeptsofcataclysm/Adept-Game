@@ -67,6 +67,9 @@ export function QuizQuestionModal({
 }) {
   const activeCard = snapshot?.activeCard ?? null;
   const stage: "question" | "answer" = activeCard?.stage ?? "question";
+  const raccoonCardActive = Boolean(
+    activeCard?.cardKinds?.includes("raccoon"),
+  );
 
   const [editing, setEditing] = useState(false);
   const [draftQ, setDraftQ] = useState("");
@@ -372,14 +375,19 @@ export function QuizQuestionModal({
                     </div>
                   </>
                 ) : null}
-                {(cell.headerCornerUrl || cell.splashUrl || "").trim() ? (
-                  <img
-                    className="question-modal__corner"
-                    src={resolveQuizAssetUrl((cell.headerCornerUrl || cell.splashUrl || "").trim())}
-                    alt=""
-                    draggable={false}
-                  />
-                ) : null}
+                {(() => {
+                  const corner =
+                    (cell.headerCornerUrl ?? "").trim() ||
+                    (!raccoonCardActive ? (cell.splashUrl ?? "").trim() : "");
+                  return corner ? (
+                    <img
+                      className="question-modal__corner"
+                      src={resolveQuizAssetUrl(corner)}
+                      alt=""
+                      draggable={false}
+                    />
+                  ) : null;
+                })()}
                 {!editing ? (
                   <div className="question-modal__stage-pills" role="tablist" aria-label="Этап">
                     <button

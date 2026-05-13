@@ -38,7 +38,10 @@
         "questionUrl": "",
         "answerText": "Экселенс",
         "answerUrl": "",
-        "splashUrl": "/raccoon.png"
+        "splashUrl": "/app/raccoon.png",
+        "cardKinds": [
+          "raccoon"
+        ]
       },
       {
         "text": "К чему была приурочена эта гифка?",
@@ -83,7 +86,10 @@
         "questionUrl": "https://s.13.cl/sites/default/files/inline-images/2021-01/south-park-wow-cosplayer-1609791777871.jpg",
         "answerText": "Jarod Nandin — самый знаменитый косплей по WoW.\nКосплей на задрота WoW.",
         "answerUrl": "https://i.redd.it/rtxt1hffn0r31.jpg",
-        "splashUrl": "/raccoon.png"
+        "splashUrl": "/app/raccoon.png",
+        "cardKinds": [
+          "raccoon"
+        ]
       }
     ],
     [
@@ -173,7 +179,10 @@
         "questionUrl": "https://wow.zamimg.com/uploads/screenshots/normal/33806-%D0%BA%D1%80%D0%BE%D0%BC%D0%BA%D0%B0-%D0%BA%D0%B0%D1%82%D0%B0%D0%BA%D0%BB%D0%B8%D0%B7%D0%BC%D0%B0.jpg",
         "answerText": "Кромка Катаклизма",
         "answerUrl": "https://drive.google.com/uc?export=view&id=1xHf3TlyN7tStHu31AgdeMjn0lxwxIG5m",
-        "splashUrl": "/raccoon.png"
+        "splashUrl": "/app/raccoon.png",
+        "cardKinds": [
+          "raccoon"
+        ]
       },
       {
         "text": "Какой из классов мог носить эту версию Атиеша?",
@@ -232,7 +241,10 @@
         "questionUrl": "",
         "answerText": "Спорегар",
         "answerUrl": "/quiz_media/factions-200-answer.webp",
-        "splashUrl": "/raccoon.png"
+        "splashUrl": "/app/raccoon.png",
+        "cardKinds": [
+          "raccoon"
+        ]
       },
       {
         "text": "Первоначально это была просто одна из многочисленных гильдий ремесленников, работающих в Стальгорне.\nПосле порабощения Повелителем огня они придумали и реализовали план побега. Сбежав из-под гнёта Повелителя Огня, эти рукастые дворфы осели в Тлеющем Ущелье.\nЭлитная группа мастеров, которые могут открыть ряд эпических рецептов, если вы приобретаете с ними достаточно репутации.\nНапример, при прокачке репутации до превознесения игроки получают доступ к «Сумеркам», которые помогают в рейдовом контенте.\nНазовите фракцию?",
@@ -283,7 +295,10 @@
         "questionUrl": "/quiz_media/wow-events-500-question.jpg",
         "answerText": "Подготовка к открытию Врат Ан'киража",
         "answerUrl": "https://drive.google.com/uc?export=view&id=17AFs6awvOAhukzbHGvCyslHPkOm4f_Dt",
-        "splashUrl": "/raccoon.png"
+        "splashUrl": "/app/raccoon.png",
+        "cardKinds": [
+          "raccoon"
+        ]
       }
     ]
   ]

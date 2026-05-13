@@ -76,7 +76,10 @@
         "questionUrl": "",
         "answerText": "10-й\n\nЧто было:\n1) Чёрный храм 2) Плато Солнечного Колодца\n3) Ульдуар 4) ЦЛК\n 5) ТКТ 6) СБ 7) ТЧВ 8) ОП 9) ДД",
         "answerUrl": "/quiz_media/tactics-400-answer.jpg",
-        "splashUrl": "/raccoon.png"
+        "splashUrl": "/app/raccoon.png",
+        "cardKinds": [
+          "raccoon"
+        ]
       },
       {
         "text": "Перед походом в \"Чёрный Храм\" Адептов просили полететь в Забытый город за семенами колючечника. Для какого босса нужен был этот расходник и как его применяли?",
@@ -91,7 +94,10 @@
         "questionUrl": "",
         "answerText": "\"Любовь к собакам обязательна\" — необходимо убить босса с рейдом из призванных собаками.",
         "answerUrl": "/quiz_media/pets-100-answer.jpg",
-        "splashUrl": "/raccoon.png"
+        "splashUrl": "/app/raccoon.png",
+        "cardKinds": [
+          "raccoon"
+        ]
       },
       {
         "text": "В WoW TBC Classic чернокнижникам в середине патча дали нового питомца. Какого?",
@@ -162,7 +168,10 @@
         "questionUrl": "",
         "answerText": "",
         "answerUrl": "/quiz_media/quotes-200-answer.mp4",
-        "splashUrl": "/raccoon.png"
+        "splashUrl": "/app/raccoon.png",
+        "cardKinds": [
+          "raccoon"
+        ]
       },
       {
         "text": "Дополните цитату:\nНе бывает в игре багов [...]",
@@ -201,7 +210,10 @@
         "questionUrl": "",
         "answerText": "Неумирающий",
         "answerUrl": "https://wow.zamimg.com/uploads/screenshots/normal/409843-%D0%BD%D0%B5%D1%83%D0%BC%D0%B8%D1%80%D0%B0%D1%8E%D1%89%D0%B8%D0%B9.jpg",
-        "splashUrl": "/raccoon.png"
+        "splashUrl": "/app/raccoon.png",
+        "cardKinds": [
+          "raccoon"
+        ]
       },
       {
         "text": "Назовите ачивку, для которой нужно убить всех лидеров фракции противника в их столицах. Наградой будет огромный Чёрный боевой медведь.",
@@ -266,8 +278,11 @@
         "text": "Опишите эту способность:",
         "questionUrl": "/quiz_media/abilities-300-question.jpg",
         "answerText": "«Цеповуха» К'Туна. Чем дальше скачет — тем больше урон.",
-        "splashUrl": "/raccoon.png",
-        "answerUrl": ""
+        "splashUrl": "/app/raccoon.png",
+        "answerUrl": "",
+        "cardKinds": [
+          "raccoon"
+        ]
       },
       {
         "text": "Назовите абилку по описанию:\nДруид получает одну из способностей связанного с ним класса. Выбор зависит от специализации. Цель также получает одну из способностей друида. Время действия — 1 ч. Эффект сохраняется после смерти.",

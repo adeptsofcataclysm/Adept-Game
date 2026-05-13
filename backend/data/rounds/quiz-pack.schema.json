@@ -146,11 +146,18 @@
     },
     "RegisteredCardParamsMap": {
       "type": "object",
-      "description": "No card plugins registered at host boot — any object accepted. After registering card kinds, run `npm run gen:quiz-schema` in `backend/`.",
+      "description": "Canonical keyed form: property names are registered `cardKind` strings. Regenerate `quiz-pack.schema.json` via `npm run gen:quiz-schema` in `backend/` when plugins change.",
+      "propertyNames": {
+        "enum": [
+          "raccoon"
+        ]
+      },
       "additionalProperties": {
         "type": "object"
       }
     }
   },
-  "x-registeredCardKinds": []
+  "x-registeredCardKinds": [
+    "raccoon"
+  ]
 }
