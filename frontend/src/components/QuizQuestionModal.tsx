@@ -14,6 +14,7 @@ import { QuestionHeaderCountdown, QUESTION_TIMER_SECONDS } from "@/components/Qu
 import { QuizMediaView } from "@/components/QuizMediaView";
 import { QuizMediaUrlEditRow } from "@/components/QuizMediaUrlEditRow";
 import {
+  CardHostAnswerFooterExtras,
   CardModalBodyHost,
   CardPostRevealActions,
   CardPreRevealActions,
@@ -675,6 +676,7 @@ export function QuizQuestionModal({
                   >
                     Никто не ответил — закрыть
                   </button>
+                  {hostCommonProps ? <CardHostAnswerFooterExtras {...hostCommonProps} /> : null}
                 </div>
               </div>
             ) : null}
@@ -771,7 +773,6 @@ function CardKindsEditor({
                   onChange={() => toggleKind(entry.cardKind)}
                 />
                 <span className="adepts-question-modal__cardkind-name">{label}</span>
-                <span className="adepts-question-modal__cardkind-mode">{entry.mode}</span>
               </label>
               {meta?.description ? (
                 <p className="adepts-question-modal__cardkind-desc">{meta.description}</p>

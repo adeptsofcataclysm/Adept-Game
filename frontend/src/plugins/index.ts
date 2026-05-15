@@ -12,6 +12,7 @@ import { registerClient as registerSpectatorBetClient } from "@adept-plugins/spe
 import { registerClient as registerFuneralClient } from "@adept-plugins/funeral/client";
 import { registerClient as registerFinalRoundSelectionClient } from "@adept-plugins/final-round-selection/client";
 import { registerClient as registerRaccoonClient } from "@adept-plugins/raccoon/client";
+import { registerClient as registerWheelOfAdeptsClient } from "@adept-plugins/wheel-of-adepts/client";
 
 // @adept-plugins/opening-show
 registerOpeningShowClient(clientPluginRegistry);
@@ -27,5 +28,8 @@ registerFinalRoundSelectionClient(clientPluginRegistry);
 
 // @adept-plugins/raccoon
 registerRaccoonClient(clientPluginRegistry);
+
+// @adept-plugins/wheel-of-adepts
+registerWheelOfAdeptsClient(clientPluginRegistry);
 
 export { clientPluginRegistry };

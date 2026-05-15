@@ -77,7 +77,15 @@
         "text": "",
         "questionUrl": "/quiz_media/pashalki-300-question.mp4",
         "answerText": "Вы получаете 3 крутки Колеса Адептов",
-        "answerUrl": "/quiz_media/freebie-400-question.png"
+        "answerUrl": "/quiz_media/freebie-400-question.png",
+        "cardKinds": [
+          "wheel_of_adepts"
+        ],
+        "cardParams": {
+          "wheel_of_adepts": {
+            "spinsPerQuestion": 3
+          }
+        }
       },
       {
         "text": "На одном из островов в Низине Шолазар находится люк с выбитыми на нём цифрами 5, 9, 16, 17, 24, 43. Это почти точная копия загадочного люка из сериала. Назовите сериал?",
@@ -220,7 +228,15 @@
         "text": "",
         "questionUrl": "/quiz_media/freebie-400-question.mp4",
         "answerText": "Вы получаете 3 крутки Колеса Адептов",
-        "answerUrl": "/quiz_media/freebie-400-question.png"
+        "answerUrl": "/quiz_media/freebie-400-question.png",
+        "cardKinds": [
+          "wheel_of_adepts"
+        ],
+        "cardParams": {
+          "wheel_of_adepts": {
+            "spinsPerQuestion": 3
+          }
+        }
       },
       {
         "text": "Ящик Пандоры",

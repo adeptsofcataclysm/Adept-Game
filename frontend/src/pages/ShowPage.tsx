@@ -14,6 +14,7 @@ import {
   resolvePluginSegmentLayout,
 } from "@/plugins/PluginSegmentLayoutHost";
 import { CardFullScreenHost, resolveActiveCardFullScreen } from "@/plugins/CardFullScreenHost";
+import { buildWheelOverlayCommonHost, type CommonHostProps } from "@/plugins/cardHostCommon";
 import { getHttpBaseUrl } from "@/wsUrl";
 import { LobbySlideshow } from "@/components/LobbySlideshow";
 // Ensure plugin client registrations run before any render
@@ -157,6 +158,30 @@ export function ShowPage() {
   const pluginLayout = useMemo(() => resolvePluginSegmentLayout(snapshot), [snapshot]);
   const cardFullScreen = useMemo(() => resolveActiveCardFullScreen(snapshot), [snapshot]);
 
+  const wheelOverlayOpen = useMemo(() => {
+    const raw = snapshot?.segmentState["wheel_of_adepts_overlay"];
+    return Boolean(raw && typeof raw === "object" && "anchor" in (raw as object));
+  }, [snapshot]);
+
+  const cardFullScreenHostProps = useMemo((): CommonHostProps | null => {
+    if (!snapshot) return null;
+    const wheel = buildWheelOverlayCommonHost(snapshot, role, participantId, (type, payload) =>
+      send({ type, payload }),
+    );
+    if (wheel) return wheel;
+    if (!snapshot.activeCard || !questionModalPayload) return null;
+    return {
+      snapshot,
+      activeCard: snapshot.activeCard,
+      themeName: questionModalPayload.themeName,
+      pointValue: questionModalPayload.points,
+      cell: questionModalPayload.cell,
+      role,
+      participantId,
+      send: (type, payload) => send({ type, payload }),
+    };
+  }, [snapshot, questionModalPayload, role, participantId, send]);
+
   const sendOpenQuizCell = (rowIndex: number, colIndex: number) => {
     if (!boardSel) return;
     if (boardSel.boardKind === "finalTransition") {
@@ -194,22 +219,6 @@ export function ShowPage() {
     );
   }
 
-  // A `replace_field` card plugin overlays the round shell (phase stays `round:N`).
-  if (cardFullScreen.kind === "card_full_screen" && snapshot?.activeCard && questionModalPayload) {
-    return (
-      <CardFullScreenHost
-        snapshot={snapshot}
-        activeCard={snapshot.activeCard}
-        themeName={questionModalPayload.themeName}
-        pointValue={questionModalPayload.points}
-        cell={questionModalPayload.cell}
-        role={role}
-        participantId={participantId}
-        send={(type, payload) => send({ type, payload })}
-      />
-    );
-  }
-
   return (
     <div className="adepts-show-shell">
       <GamePageHeader
@@ -236,25 +245,26 @@ export function ShowPage() {
           </aside>
 
           <section className="adepts-show-main-col">
-            
-            {lastError  ? ((
+            {lastError ? (
               <div className="card">
-              <p style={{ color: "#f88" }}>{lastError}</p>
-            </div>
-            )) : null}
+                <p style={{ color: "#f88" }}>{lastError}</p>
+              </div>
+            ) : null}
 
             {snapshot?.phase.kind === "lobby" ? <LobbySlideshow /> : null}
 
             {snapshot?.phase.kind !== "lobby" && snapshot?.phase.kind !== "plugin_segment" ? (
               <div className="card adepts-show-board-card adepts-quiz-theme">
-                {boardPreview ? (
+                {cardFullScreen.kind === "card_full_screen" && cardFullScreenHostProps ? (
+                  <CardFullScreenHost {...cardFullScreenHostProps} />
+                ) : boardPreview ? (
                   <>
                     <div className="adepts-show-board-scroll adepts-quiz-board-scroll">
                       <BoardPreview
                         board={boardPreview.board}
                         role={role}
                         boardSel={boardSel}
-                        canOpenQuestionModal={canOpenQuestionModal && !snapshot?.activeCard}
+                        canOpenQuestionModal={canOpenQuestionModal && !snapshot?.activeCard && !wheelOverlayOpen}
                         onQuestionCellClick={(rowIndex, colIndex) => sendOpenQuizCell(rowIndex, colIndex)}
                         onEditTheme={(rowIndex) => {
                           if (role !== "host") return;

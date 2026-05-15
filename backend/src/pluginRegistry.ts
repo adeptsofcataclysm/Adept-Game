@@ -17,6 +17,9 @@
  *   @adept-plugins/raccoon (pluginId "raccoon"):
  *     cardKind `raccoon` — spiral splash + pass turn to another seat (in_card).
  *
+ *   @adept-plugins/wheel-of-adepts (pluginId "wheel-of-adepts"):
+ *     cardKind `wheel_of_adepts` — fortune wheel (`replace_field`, gated by plugin state).
+ *
  * Card-kind registrations are added via `registerCardKind`. The `phase` is
  * intentionally NOT changed by an open card — the card layer is orthogonal
  * (see `ActiveCard` on `SessionSnapshot`).
@@ -27,6 +30,7 @@ import { registerServer as registerOpeningShow } from "@adept-plugins/opening-sh
 import { registerServer as registerFuneral } from "@adept-plugins/funeral";
 import { registerServer as registerFinalRoundSelection } from "@adept-plugins/final-round-selection";
 import { registerServer as registerRaccoon } from "@adept-plugins/raccoon";
+import { registerServer as registerWheelOfAdepts } from "@adept-plugins/wheel-of-adepts";
 import type { Phase } from "./phase.js";
 import type { SessionSnapshot, ActiveCard } from "./session.js";
 
@@ -233,6 +237,7 @@ registerSpectatorBet(pluginRegistry);
 registerFuneral(pluginRegistry);
 registerFinalRoundSelection(pluginRegistry);
 registerRaccoon(pluginRegistry);
+registerWheelOfAdepts(pluginRegistry);
 
 // ---------------------------------------------------------------------------
 // Card-plugin helpers consumed by wsHandlers.ts

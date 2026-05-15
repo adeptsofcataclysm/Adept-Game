@@ -41,6 +41,24 @@ export function CardPostRevealActions(host: CommonHostProps): ReactNode {
   );
 }
 
+/** Host-only footer row extras (same flex row as wrong-answer / close controls). */
+export function CardHostAnswerFooterExtras(host: CommonHostProps): ReactNode {
+  const slots = host.activeCard.cardKinds
+    .map((k) => {
+      const def = clientPluginRegistry.getCardKindClient(k);
+      return def?.HostAnswerFooterAction ? { cardKind: k, Action: def.HostAnswerFooterAction } : null;
+    })
+    .filter((x): x is { cardKind: string; Action: ComponentType<CardActionProps> } => x != null);
+  if (slots.length === 0) return null;
+  return (
+    <>
+      {slots.map(({ cardKind, Action }) => (
+        <Action key={cardKind} {...commonProps(host, cardKind)} />
+      ))}
+    </>
+  );
+}
+
 /** Convenience wrapper — renders pre-reveal slots only, post-reveal only, or both. */
 export function CardActionSlots(
   host: CommonHostProps & { slot: "pre" | "post" | "both" },

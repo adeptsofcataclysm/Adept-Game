@@ -64,6 +64,8 @@ export type CardKindClientDef = {
   PostRevealAction?: ComponentType<CardActionProps>;
   ModalView?: ComponentType<CardModalProps>;
   FullScreenView?: ComponentType<CardFullScreenProps>;
+  /** Host-only: extra actions in the modal footer row on the answer stage. */
+  HostAnswerFooterAction?: ComponentType<CardActionProps>;
 };
 
 /** Edit-UI metadata derived from a client `CardKindClientDef` (used by the host picker). */
@@ -76,4 +78,5 @@ export type CardKindClientMetadata = {
   hasPostRevealAction: boolean;
   hasModalView: boolean;
   hasFullScreenView: boolean;
+  hasHostAnswerFooterAction: boolean;
 };

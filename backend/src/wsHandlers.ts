@@ -3,6 +3,7 @@ import fs from "node:fs";
 import type { RawData } from "ws";
 import type { WebSocket } from "ws";
 import type { Phase, RoundIndex } from "./phase.js";
+import { handleWheelOverlayPluginEvent } from "@adept-plugins/wheel-of-adepts";
 import { pluginRegistry, makeCardCtx } from "./pluginRegistry.js";
 import type {
   Actor,
@@ -952,6 +953,11 @@ function handleHostCloseQuizCell(ctx: HandlerCtx, ws: WebSocket, meta: ClientMet
   else ctx.sendError(ws, result.error);
 }
 
+function isWheelOverlaySegmentOpen(snap: SessionSnapshot): boolean {
+  const raw = snap.segmentState["wheel_of_adepts_overlay"];
+  return Boolean(raw && typeof raw === "object" && "anchor" in (raw as object));
+}
+
 function handlePluginCardEvent(ctx: HandlerCtx, ws: WebSocket, meta: ClientMeta, payload: unknown): void {
   if (!isRecord(payload)) return;
   const cardKind = String(payload["cardKind"] ?? "").trim();
@@ -973,10 +979,24 @@ function handlePluginCardEvent(ctx: HandlerCtx, ws: WebSocket, meta: ClientMeta,
       displayName: meta.displayName,
       role: effectiveParticipantRole(snap, meta),
     };
+
+    if (cardKind === "wheel_of_adepts") {
+      const overlayOpen = isWheelOverlaySegmentOpen(snap);
+      if (overlayOpen && !snap.activeCard) {
+        return handleWheelOverlayPluginEvent(snap, event, eventPayload, actor);
+      }
+      if (overlayOpen && snap.activeCard) {
+        return { ok: false, error: "Invalid wheel overlay state" };
+      }
+    }
+
     const active = snap.activeCard;
     if (!active) return { ok: false, error: "No active card" };
     if (!active.cardKinds.includes(cardKind)) {
       return { ok: false, error: `cardKind "${cardKind}" not attached to the open card` };
+    }
+    if (cardKind === "wheel_of_adepts" && event !== "reveal_and_show_wheel") {
+      return { ok: false, error: "Open the wheel with «Крутить!» first" };
     }
     const cardCtx = makeCardCtx({
       snap,

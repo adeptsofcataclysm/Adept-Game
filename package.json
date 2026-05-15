@@ -13,6 +13,7 @@
     "@adept-plugins/spectator-bet": "file:../Adept-Game-Plugins/packages/spectator-bet",
     "@adept-plugins/funeral": "file:../Adept-Game-Plugins/packages/funeral",
     "@adept-plugins/final-round-selection": "file:../Adept-Game-Plugins/packages/final-round-selection",
-    "@adept-plugins/raccoon": "file:../Adept-Game-Plugins/packages/raccoon"
+    "@adept-plugins/raccoon": "file:../Adept-Game-Plugins/packages/raccoon",
+    "@adept-plugins/wheel-of-adepts": "file:../Adept-Game-Plugins/packages/wheel-of-adepts"
   }
 }

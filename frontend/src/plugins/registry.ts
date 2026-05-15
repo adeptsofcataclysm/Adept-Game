@@ -89,6 +89,7 @@ class ClientPluginRegistryImpl {
       hasPostRevealAction: def.PostRevealAction != null,
       hasModalView: def.ModalView != null,
       hasFullScreenView: def.FullScreenView != null,
+      hasHostAnswerFooterAction: def.HostAnswerFooterAction != null,
     };
   }
 }

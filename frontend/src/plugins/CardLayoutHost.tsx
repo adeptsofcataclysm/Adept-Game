@@ -7,5 +7,10 @@
 
 export { CardFullScreenHost, resolveActiveCardFullScreen } from "./CardFullScreenHost";
 export { CardModalBodyHost } from "./CardModalBodyHost";
-export { CardActionSlots, CardPostRevealActions, CardPreRevealActions } from "./CardActionSlots";
+export {
+  CardActionSlots,
+  CardHostAnswerFooterExtras,
+  CardPostRevealActions,
+  CardPreRevealActions,
+} from "./CardActionSlots";
 export type { CommonHostProps } from "./cardHostCommon";
