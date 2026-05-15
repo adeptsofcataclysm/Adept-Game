@@ -1,6 +1,8 @@
 node_modules/
 backend/dist/
 frontend/dist/
+.cursor/session/*.md
+.cursor/plans
 *.log
 .env
 .env.local

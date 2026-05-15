@@ -7,7 +7,7 @@
  *
  * Segment registrations:
  *   @adept-plugins/spectator-bet (pluginId "spectator-bet"):
- *     spectator_bet: lobby → spectator_bet → round:1
+ *     spectator_bet: opening_show → spectator_bet → round:1
  *   @adept-plugins/funeral (pluginId "funeral"):
  *     story_video : round:2 → story_video → donations
  *     donations   : story_video → donations → round:3

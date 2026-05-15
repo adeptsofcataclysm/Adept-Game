@@ -116,9 +116,10 @@ During a **round**, the interface shall include:
 
 ## REQ-9 — Spectator bets
 
-1. The system shall support a **Spectator bets / Spectator picks** segment before **Round 1** starts (it may be implemented as a plugin segment).
-2. **Spectators** shall **bet on a Player number** (seat).
-3. Winners shall be those who picked the **Player number** that, after **three rounds**, has the **highest** total score.
+1. The system shall support a **Spectator and Player bets** before **Round 1** starts
+2. This should be a plugin.
+3. **Users** shall **bet on a Player number** (seat).
+4. Winners shall be those who picked the **Player number** that, after **three rounds**, has the **highest** total score. **Winner resolution and presentation** (mapping final `scores` to winning seat(s), handling ties, and announcing or displaying who won the pool) shall be implemented as a **separate plugin** from the pre–Round 1 betting segment; that plugin shall consume authoritative **`scores`** after three rounds and the **bets** persisted in the betting segment’s `segmentState` (see `requirements/plugin.md`).
 
 ---
 

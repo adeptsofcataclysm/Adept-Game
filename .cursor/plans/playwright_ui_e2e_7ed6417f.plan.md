@@ -23,7 +23,7 @@ isProject: false
 
 - Root: [package.json](package.json) — pnpm-only workspace; scripts are `build` and `typecheck` only.
 - UI apps: [artifacts/game-client/package.json](artifacts/game-client/package.json) and [artifacts/roulette-game/package.json](artifacts/roulette-game/package.json) — Vite + React (`dev` / `serve` on `0.0.0.0`).
-- CI today: [.github/workflows/deploy.yml](.github/workflows/deploy.yml) — install, `pnpm run build`, deploy; **no automated tests**.
+- CI / deploy for this product is **not defined in this repo** (no top-level `.github/`); **no in-repo automated tests** today.
 
 ## Recommended layout
 
@@ -67,7 +67,7 @@ Alternative: colocate `playwright.config.ts` and `tests/` inside `artifacts/game
 
 ### 6. CI (optional but “auto” in the usual sense)
 
-- New workflow (e.g. `.github/workflows/e2e.yml`) on `pull_request` / `push` to main branches, **separate from deploy**, so failures block merges without blocking rsync.
+- Optional: add a workflow in **your** hosting or mono-repo that runs Playwright on `pull_request` / `push`, separate from deploy, so failures can block merges without blocking rsync.
 - Job steps: checkout, pnpm setup (match deploy: Node 22, cache pnpm), `pnpm install --frozen-lockfile`, `pnpm run build` (if tests hit `preview` of built assets), `playwright install --with-deps`, then `pnpm run test:e2e`.
 - Upload **`playwright-report/`** (and traces) as workflow artifacts on failure.
 
