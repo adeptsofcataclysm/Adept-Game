@@ -13,6 +13,7 @@ dotenv.config({ path: path.join(backendRoot, ".env.local"), override: true });
 
 const PORT = Number(process.env["PORT"] ?? "3847");
 const HOST_SECRET = process.env["ADEPT_HOST_SECRET"]?.trim() ?? "";
+const ALLOWED_ORIGIN = process.env["ADEPT_ALLOWED_ORIGIN"]?.trim() || "http://localhost:5173";
 
 const store = createSessionStore();
 
@@ -92,6 +93,33 @@ async function readJsonBody(req: http.IncomingMessage, maxBytes: number): Promis
   });
 }
 
+function checkMagicBytes(mime: string, buf: Buffer): boolean {
+  switch (mime) {
+    case "image/png":
+      return (
+        buf.length >= 8 &&
+        buf[0] === 0x89 && buf[1] === 0x50 && buf[2] === 0x4e && buf[3] === 0x47 &&
+        buf[4] === 0x0d && buf[5] === 0x0a && buf[6] === 0x1a && buf[7] === 0x0a
+      );
+    case "image/jpeg":
+      return buf.length >= 3 && buf[0] === 0xff && buf[1] === 0xd8 && buf[2] === 0xff;
+    case "image/webp":
+      return (
+        buf.length >= 12 &&
+        buf[0] === 0x52 && buf[1] === 0x49 && buf[2] === 0x46 && buf[3] === 0x46 &&
+        buf[8] === 0x57 && buf[9] === 0x45 && buf[10] === 0x42 && buf[11] === 0x50
+      );
+    case "image/gif":
+      return (
+        buf.length >= 6 &&
+        buf[0] === 0x47 && buf[1] === 0x49 && buf[2] === 0x46 && buf[3] === 0x38 &&
+        (buf[4] === 0x37 || buf[4] === 0x39) && buf[5] === 0x61
+      );
+    default:
+      return false;
+  }
+}
+
 function parseImageDataUrl(
   dataUrl: string,
 ): { mime: string; bytes: Buffer; ext: string } | { error: string } {
@@ -105,17 +133,20 @@ function parseImageDataUrl(
   else if (mime === "image/webp") ext = ".webp";
   else if (mime === "image/gif") ext = ".gif";
   else return { error: `Unsupported mime: ${mime}` };
+  let bytes: Buffer;
   try {
-    const bytes = Buffer.from(b64, "base64");
-    return { mime, bytes, ext };
+    bytes = Buffer.from(b64, "base64");
   } catch {
     return { error: "Invalid base64 data" };
   }
+  if (!checkMagicBytes(mime, bytes)) {
+    return { error: `File bytes do not match declared type ${mime}` };
+  }
+  return { mime, bytes, ext };
 }
 
 const server = http.createServer((req, res) => {
-  // Dev-friendly CORS so the Vite app (different origin) can call the session service.
-  res.setHeader("Access-Control-Allow-Origin", "*");
+  res.setHeader("Access-Control-Allow-Origin", ALLOWED_ORIGIN);
   res.setHeader("Access-Control-Allow-Methods", "GET,POST,OPTIONS");
   res.setHeader("Access-Control-Allow-Headers", "Content-Type");
 

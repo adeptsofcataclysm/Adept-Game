@@ -94,31 +94,31 @@ function tryPersistRoundPackEdit(
     return { ok: false, error: `${fileName}: invalid JSON` };
   }
   if (!parsed || typeof parsed !== "object") return { ok: false, error: `${fileName}: invalid object` };
-  const o = parsed as Record<string, unknown>;
-  if (!Array.isArray(o["themes"]) || !Array.isArray(o["questions"])) {
+
+  const roundData = parsed as Record<string, unknown>;
+  if (!Array.isArray(roundData["themes"]) || !Array.isArray(roundData["questions"])) {
     return { ok: false, error: `${fileName}: missing themes/questions` };
   }
 
-  const themes = o["themes"] as unknown[];
+  const themes = roundData["themes"] as unknown[];
   if (args.rowIndex < 0 || args.rowIndex >= themes.length) return { ok: false, error: "rowIndex out of range" };
-
   (themes as unknown[])[args.rowIndex] = args.themeText;
-  o["themes"] = themes;
+  roundData["themes"] = themes;
 
   let icons: (string | null)[] | null = null;
-  if (Array.isArray(o["themeIcons"])) {
-    icons = (o["themeIcons"] as unknown[]).map((v) => (typeof v === "string" ? v : null));
+  if (Array.isArray(roundData["themeIcons"])) {
+    icons = (roundData["themeIcons"] as unknown[]).map((v) => (typeof v === "string" ? v : null));
   }
   if (!icons || icons.length !== themes.length) {
     icons = Array.from({ length: themes.length }, (_, i) =>
-      Array.isArray(o["themeIcons"]) ? (icons?.[i] ?? null) : null,
+      Array.isArray(roundData["themeIcons"]) ? (icons?.[i] ?? null) : null,
     );
   }
   icons[args.rowIndex] = args.iconUrl;
-  o["themeIcons"] = icons;
+  roundData["themeIcons"] = icons;
 
   try {
-    fs.writeFileSync(filePath, `${JSON.stringify(o, null, 2)}\n`, "utf8");
+    fs.writeFileSync(filePath, `${JSON.stringify(roundData, null, 2)}\n`, "utf8");
     return { ok: true };
   } catch {
     return { ok: false, error: `${fileName}: write failed` };
@@ -224,6 +224,9 @@ function handleJoin(
   const result = ctx.store.mutate(joinShowId, (snap) => {
     const exists = snap.participants.some((x) => x.id === participantId);
     if (!exists) {
+      if (snap.participants.length >= 200) {
+        return { ok: false, error: "Show is full" };
+      }
       snap.participants.push({ id: participantId, displayName, role });
     } else {
       const pr = snap.participants.find((x) => x.id === participantId);
