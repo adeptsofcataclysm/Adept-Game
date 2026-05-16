@@ -3,6 +3,8 @@ import type { ChatLine, Role, SessionSnapshot } from "@/sessionTypes";
 import { buildWsUrl } from "@/wsUrl";
 import { getDisplayName, getOrCreateParticipantId } from "@/storage";
 
+const MAX_PENDING_OUTBOUND = 50;
+
 function isRole(x: unknown): x is Role {
   return x === "host" || x === "player" || x === "spectator";
 }
@@ -58,95 +60,121 @@ export function useSessionWs(opts: WsOpts): {
   const [lastError, setLastError] = useState<string | null>(null);
   const [connected, setConnected] = useState(false);
   const wsRef = useRef<WebSocket | null>(null);
-  /** Outbound messages (e.g. chat) sent before OPEN or dropped by send(); flushed after join. */
+  /** Outbound messages queued while the socket is not yet OPEN; capped at MAX_PENDING_OUTBOUND. */
   const pendingOutboundRef = useRef<unknown[]>([]);
 
   useEffect(() => {
     if (!opts.enabled) return;
 
-    const u = buildWsUrl(opts.showId);
-    const ws = new WebSocket(u);
-    wsRef.current = ws;
+    let cancelled = false;
+    let reconnectTimer: ReturnType<typeof setTimeout> | null = null;
+    let delayMs = 1_000;
 
-    const flushPendingOutbound = () => {
-      const w = wsRef.current;
-      if (!w || w.readyState !== WebSocket.OPEN) return;
-      const q = pendingOutboundRef.current;
-      while (q.length > 0) {
-        const m = q.shift();
-        try {
-          w.send(JSON.stringify(m));
-        } catch {
-          q.unshift(m);
-          setLastError("Не удалось отправить сообщение. Проверьте соединение и попробуйте снова.");
-          break;
-        }
-      }
-    };
+    function connect() {
+      if (cancelled) return;
 
-    ws.onopen = () => {
-      setConnected(true);
-      setLastError(null);
-      try {
-        ws.send(
-          JSON.stringify({
-            type: "join",
-            payload: {
-              showId: opts.showId,
-              role: opts.role,
-              displayName: getDisplayName() || (opts.role === "host" ? "Host" : "Guest"),
-              participantId: getOrCreateParticipantId(),
-              hostSecret: opts.hostSecret,
-            },
-          }),
-        );
-      } catch {
-        setLastError("Не удалось отправить join на сервер.");
-      }
-      queueMicrotask(flushPendingOutbound);
-    };
+      const ws = new WebSocket(buildWsUrl(opts.showId));
+      wsRef.current = ws;
 
-    ws.onmessage = (ev) => {
-      void (async () => {
-        let text: string;
-        if (typeof ev.data === "string") text = ev.data;
-        else if (ev.data instanceof Blob) text = await ev.data.text();
-        else if (ev.data instanceof ArrayBuffer) text = new TextDecoder().decode(ev.data);
-        else return;
-
-        try {
-          const msg = JSON.parse(text) as { type?: string; payload?: unknown };
-          if (msg.type === "snapshot" && msg.payload && typeof msg.payload === "object") {
-            const p = msg.payload as SessionSnapshot;
-            setLastError(null);
-            setSnapshot({
-              ...p,
-              chat: normalizeChat(p.chat),
-              onlineParticipantIds: Array.isArray(p.onlineParticipantIds) ? p.onlineParticipantIds : [],
-            });
-            queueMicrotask(flushPendingOutbound);
+      const flushPendingOutbound = () => {
+        const w = wsRef.current;
+        if (!w || w.readyState !== WebSocket.OPEN) return;
+        const q = pendingOutboundRef.current;
+        while (q.length > 0) {
+          const m = q.shift();
+          try {
+            w.send(JSON.stringify(m));
+          } catch {
+            q.unshift(m);
+            setLastError("Не удалось отправить сообщение. Проверьте соединение и попробуйте снова.");
+            break;
           }
-          if (msg.type === "error")
-            setLastError((msg.payload as { message?: string })?.message ?? "Server error");
-        } catch {
-          /* ignore malformed */
         }
-      })();
-    };
+      };
 
-    ws.onerror = () => setLastError("WebSocket error");
-    ws.onclose = () => {
-      // React Strict Mode (dev): the first socket’s `close` can fire after the second socket is
-      // already in `wsRef`. Never clear the ref for a stale instance — that would break `send()`.
-      if (wsRef.current !== ws) return;
-      wsRef.current = null;
-      setConnected(false);
-    };
+      ws.onopen = () => {
+        delayMs = 1_000;
+        setConnected(true);
+        setLastError(null);
+        try {
+          ws.send(
+            JSON.stringify({
+              type: "join",
+              payload: {
+                showId: opts.showId,
+                role: opts.role,
+                displayName: getDisplayName() || (opts.role === "host" ? "Host" : "Guest"),
+                participantId: getOrCreateParticipantId(),
+                hostSecret: opts.hostSecret,
+              },
+            }),
+          );
+        } catch {
+          setLastError("Не удалось отправить join на сервер.");
+        }
+        queueMicrotask(flushPendingOutbound);
+      };
+
+      ws.onmessage = (ev) => {
+        void (async () => {
+          let text: string;
+          if (typeof ev.data === "string") text = ev.data;
+          else if (ev.data instanceof Blob) text = await ev.data.text();
+          else if (ev.data instanceof ArrayBuffer) text = new TextDecoder().decode(ev.data);
+          else return;
+
+          try {
+            const msg = JSON.parse(text) as { type?: string; payload?: unknown };
+            if (msg.type === "snapshot" && msg.payload && typeof msg.payload === "object") {
+              const p = msg.payload as SessionSnapshot;
+              setLastError(null);
+              setSnapshot({
+                ...p,
+                chat: normalizeChat(p.chat),
+                onlineParticipantIds: Array.isArray(p.onlineParticipantIds) ? p.onlineParticipantIds : [],
+              });
+              queueMicrotask(flushPendingOutbound);
+            }
+            if (msg.type === "error")
+              setLastError((msg.payload as { message?: string })?.message ?? "Server error");
+          } catch {
+            /* ignore malformed */
+          }
+        })();
+      };
+
+      ws.onerror = () => setLastError("WebSocket error");
+
+      ws.onclose = () => {
+        // React Strict Mode (dev): the first socket's `close` can fire after the second socket is
+        // already in `wsRef`. Never clear the ref for a stale instance — that would break `send()`.
+        if (wsRef.current === ws) {
+          wsRef.current = null;
+          setConnected(false);
+        }
+        if (!cancelled) {
+          reconnectTimer = setTimeout(() => {
+            delayMs = Math.min(delayMs * 2, 30_000);
+            connect();
+          }, delayMs);
+        }
+      };
+    }
+
+    connect();
 
     return () => {
+      cancelled = true;
+      if (reconnectTimer !== null) {
+        clearTimeout(reconnectTimer);
+        reconnectTimer = null;
+      }
       pendingOutboundRef.current = [];
-      ws.close();
-      if (wsRef.current === ws) {
+      const ws = wsRef.current;
+      if (ws) {
+        // Null out onclose before closing so the handler doesn't schedule a reconnect.
+        ws.onclose = null;
+        ws.close();
         wsRef.current = null;
       }
     };
@@ -155,13 +183,17 @@ export function useSessionWs(opts: WsOpts): {
   const send = useCallback((msg: unknown) => {
     const ws = wsRef.current;
     if (!ws || ws.readyState !== WebSocket.OPEN) {
-      pendingOutboundRef.current.push(msg);
+      if (pendingOutboundRef.current.length < MAX_PENDING_OUTBOUND) {
+        pendingOutboundRef.current.push(msg);
+      }
       return;
     }
     try {
       ws.send(JSON.stringify(msg));
     } catch {
-      pendingOutboundRef.current.push(msg);
+      if (pendingOutboundRef.current.length < MAX_PENDING_OUTBOUND) {
+        pendingOutboundRef.current.push(msg);
+      }
       setLastError("Не удалось отправить сообщение. Проверьте соединение и попробуйте снова.");
     }
   }, []);

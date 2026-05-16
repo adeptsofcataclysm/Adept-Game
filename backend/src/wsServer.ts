@@ -15,6 +15,20 @@ export function attachWebsocket(
   const wss = new WebSocketServer({ server });
   const socketsByShow = new Map<string, Set<WebSocket>>();
   const metaBySocket = new Map<WebSocket, ClientMeta>();
+  const isAlive = new Map<WebSocket, boolean>();
+
+  const pingInterval = setInterval(() => {
+    for (const ws of wss.clients) {
+      if (isAlive.get(ws) === false) {
+        ws.terminate();
+        return;
+      }
+      isAlive.set(ws, false);
+      ws.ping();
+    }
+  }, 20_000);
+
+  wss.on("close", () => clearInterval(pingInterval));
 
   function send(ws: WebSocket, payload: unknown): void {
     ws.send(JSON.stringify(payload));
@@ -75,6 +89,9 @@ export function attachWebsocket(
     const connectUrl = new URL(req.url ?? "/", `http://${req.headers.host ?? "localhost"}`);
     const connectShowId = connectUrl.searchParams.get("showId")?.trim() || "default";
 
+    isAlive.set(ws, true);
+    ws.on("pong", () => isAlive.set(ws, true));
+
     ws.on("message", (raw) => {
       const inbound = parseInboundMessage(raw);
       if (!inbound) return;
@@ -82,6 +99,7 @@ export function attachWebsocket(
     });
 
     ws.on("close", () => {
+      isAlive.delete(ws);
       const m = metaBySocket.get(ws);
       if (!m) return;
       room(m.showId).delete(ws);
