@@ -232,9 +232,7 @@ function handleJoin(
       const pr = snap.participants.find((x) => x.id === participantId);
       if (pr) {
         pr.displayName = displayName;
-        if (role === "host") {
-          pr.role = role;
-        }
+        pr.role = role;
       }
     }
     snap.onlineParticipantIds = ctx.getOnlineParticipantIds(joinShowId);
@@ -317,7 +315,7 @@ function handleHostEditQuizTheme(
   const themeTextRaw = payload["themeText"];
   const iconUrlRaw = payload["iconUrl"];
 
-  if (typeof rowIndex !== "number" || !Number.isFinite(rowIndex) || rowIndex < 0) return;
+  if (typeof rowIndex !== "number" || !Number.isInteger(rowIndex) || rowIndex < 0) return;
   const themeText = String(themeTextRaw ?? "").trim().slice(0, 64);
   if (!themeText) {
     ctx.sendError(ws, "Theme text required");
@@ -404,10 +402,10 @@ function handleHostEditQuizQuestion(
 
   if (
     typeof rowIndex !== "number" ||
-    !Number.isFinite(rowIndex) ||
+    !Number.isInteger(rowIndex) ||
     rowIndex < 0 ||
     typeof colIndex !== "number" ||
-    !Number.isFinite(colIndex) ||
+    !Number.isInteger(colIndex) ||
     colIndex < 0
   )
     return;
@@ -545,7 +543,7 @@ function handleHostScoreStep(ctx: HandlerCtx, ws: WebSocket, meta: ClientMeta, p
   if (!isRecord(payload)) return;
   const seatIndex = payload["seatIndex"];
   const direction = payload["direction"];
-  if (typeof seatIndex !== "number" || seatIndex < 0 || seatIndex > 4) return;
+  if (typeof seatIndex !== "number" || !Number.isInteger(seatIndex) || seatIndex < 0 || seatIndex > 4) return;
   if (direction !== "up" && direction !== "down") return;
 
   const delta = direction === "up" ? 100 : -100;
@@ -564,7 +562,7 @@ function handleHostSetScore(ctx: HandlerCtx, ws: WebSocket, meta: ClientMeta, pa
   if (!isRecord(payload)) return;
   const seatIndex = payload["seatIndex"];
   const score = payload["score"];
-  if (typeof seatIndex !== "number" || seatIndex < 0 || seatIndex > 4) return;
+  if (typeof seatIndex !== "number" || !Number.isInteger(seatIndex) || seatIndex < 0 || seatIndex > 4) return;
   if (typeof score !== "number" || !Number.isFinite(score)) return;
 
   const clamped = Math.max(-999_999, Math.min(999_999, Math.trunc(score)));
@@ -604,10 +602,10 @@ function handleHostRevealQuizCell(ctx: HandlerCtx, ws: WebSocket, meta: ClientMe
 
   if (
     typeof rowIndex !== "number" ||
-    !Number.isFinite(rowIndex) ||
+    !Number.isInteger(rowIndex) ||
     rowIndex < 0 ||
     typeof colIndex !== "number" ||
-    !Number.isFinite(colIndex) ||
+    !Number.isInteger(colIndex) ||
     colIndex < 0
   )
     return;
@@ -652,7 +650,7 @@ function handleHostSetSeatName(ctx: HandlerCtx, ws: WebSocket, meta: ClientMeta,
   if (!isRecord(payload)) return;
   const seatIndex = payload["seatIndex"];
   const nameRaw = payload["name"];
-  if (typeof seatIndex !== "number" || seatIndex < 0 || seatIndex > 4) return;
+  if (typeof seatIndex !== "number" || !Number.isInteger(seatIndex) || seatIndex < 0 || seatIndex > 4) return;
 
   const name = String(nameRaw ?? "").trim().slice(0, 32) || `P${seatIndex + 1}`;
   const r = ctx.store.mutate(meta.showId, (snap) => {
@@ -721,10 +719,10 @@ function parseCellTarget(payload: unknown): {
   const colIndex = payload["colIndex"];
   if (
     typeof rowIndex !== "number" ||
-    !Number.isFinite(rowIndex) ||
+    !Number.isInteger(rowIndex) ||
     rowIndex < 0 ||
     typeof colIndex !== "number" ||
-    !Number.isFinite(colIndex) ||
+    !Number.isInteger(colIndex) ||
     colIndex < 0
   ) {
     return { error: "rowIndex/colIndex required" };
@@ -774,7 +772,6 @@ function runCardKindHooks(
     const cardCtx = makeCardCtx({
       snap,
       cardKind: kind,
-      applyTransition: (to) => applyHostTransition(snap, to),
     });
     const result = hook(def, cardCtx);
     if (!result.ok) return result;
@@ -863,7 +860,6 @@ function openCellCore(
     const cardCtx = makeCardCtx({
       snap,
       cardKind: kind,
-      applyTransition: (to) => applyHostTransition(snap, to),
     });
     const result = def.onOpen(cardCtx);
     if (!result.ok) return result;
@@ -1004,7 +1000,6 @@ function handlePluginCardEvent(ctx: HandlerCtx, ws: WebSocket, meta: ClientMeta,
     const cardCtx = makeCardCtx({
       snap,
       cardKind,
-      applyTransition: (to) => applyHostTransition(snap, to),
     });
     const hookResult = handler(event, eventPayload, actor, cardCtx);
     if (!hookResult.ok) return hookResult;

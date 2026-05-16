@@ -251,10 +251,8 @@ registerWheelOfAdepts(pluginRegistry);
 export function makeCardCtx(args: {
   snap: SessionSnapshot;
   cardKind: string;
-  applyTransition: (to: Phase) => MutatorResult;
 }): CardCtx & { drainPendingFollowUp(): CardCtxFollowUp | null } {
-  const { snap, cardKind, applyTransition } = args;
-  void applyTransition;
+  const { snap, cardKind } = args;
 
   let pendingFollowUp: CardCtxFollowUp | null = null;
 
